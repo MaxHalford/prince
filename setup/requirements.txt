@@ -1,0 +1,4 @@
+fbpca==1.0
+matplotlib==1.5.1
+numpy==1.11.0
+pandas==0.18.1

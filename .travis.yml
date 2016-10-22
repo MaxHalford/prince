@@ -1,0 +1,14 @@
+language: python
+sudo: false
+
+python:
+  - "3.5.1"
+env:
+  - PYTHONPATH=$PYTHONPATH:$PWD
+
+install:
+  - make install
+  - make install.hack
+
+script:
+  - make test
