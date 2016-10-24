@@ -5,8 +5,8 @@
 <br/>
 
 <div align="center">
-  <a href="https://landscape.io/github/Belekkk/Prince/master">
-    <img src="https://landscape.io/github/Belekkk/Prince/master/landscape.svg?style=flat" alt="Code Health"/>
+  <a href="https://travis-ci.org/MaxHalford/Prince">
+    <img src="https://travis-ci.org/MaxHalford/Prince.svg?branch=master&style=flat-square" alt="Build Status"/>
   </a>
 </div>
 
