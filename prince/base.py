@@ -39,7 +39,7 @@ class Base():
 
         util.verify_dataframe(dataframe)
 
-        self.X = dataframe.copy(deep=True)
+        self.X = dataframe
         self.n, self.p = self.X.shape
         # Determine the number of components computed during SVD
         self.k = self.p if k == -1 else min(k, self.p)

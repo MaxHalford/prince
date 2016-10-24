@@ -9,13 +9,13 @@ wines = {
     3: 'barbera'
 }
 
-df = pd.read_csv('examples/data/wine.csv')
+df = pd.read_csv('doc/data/wine.csv')
 df['kind'] = df['class'].apply(lambda x: wines[x])
 del df['class']
 
 pca = prince.PCA(df, nbr_components=-1)
 
-fig1, ax1 = pca.plot_inertia(threshold=0.8)
+fig1, ax1 = pca.plot_cumulative_inertia(threshold=0.8)
 fig2, ax2 = pca.plot_rows(show_points=True, show_labels=False, color_by='kind', ellipse_fill=True)
 fig3, ax3 = pca.plot_correlation_circle(axes=(0, 1))
 

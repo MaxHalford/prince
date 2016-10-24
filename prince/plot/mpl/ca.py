@@ -29,7 +29,8 @@ class MplCAPlotter(MplPlotter, CAPlotter):
                        label='Row projections')
 
         if show_row_labels:
-            ax.scatter(row_pc['X'], row_pc['Y'], alpha=0)
+            ax.scatter(row_pc['X'], row_pc['Y'], alpha=0,
+                       label=None if show_row_points else 'Row projections')
             for _, row in row_projections.iterrows():
                 ax.annotate(row.name, (row[axes[0]], row[axes[1]]), color=self.colors['green'])
 
@@ -38,7 +39,8 @@ class MplCAPlotter(MplPlotter, CAPlotter):
                        label='Column projections')
 
         if show_column_labels:
-            ax.scatter(col_pc['X'], col_pc['Y'], alpha=0)
+            ax.scatter(col_pc['X'], col_pc['Y'], alpha=0,
+                       label=None if show_column_points else 'Column projections')
             for _, row in column_projections.iterrows():
                 ax.annotate(row.name, (row[axes[0]], row[axes[1]]), color=self.colors['red'])
 

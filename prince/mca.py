@@ -19,11 +19,11 @@ class MCA(CA):
     def __init__(self, dataframe, nbr_components=2, ignored_variable_names=(), plotter='mpl',
                  use_benzecri_rates=False):
 
-        self.initial_dataframe = dataframe
+        util.verify_dataframe(dataframe)
+
+        self.initial_dataframe = dataframe.copy(deep=True)
         self.use_benzecri_rates = use_benzecri_rates
         self.ignored_variable_names = ignored_variable_names
-
-        util.verify_dataframe(dataframe)
 
         self._tidy(dataframe)
 
