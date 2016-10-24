@@ -65,13 +65,13 @@ def test_total_sum(ca, N):
 def test_frequencies(ca, N, df):
     """Check the frequencies sums up to 1 and that the original data can be obtained by
     multiplying the frequencies by `N`."""
-    assert ca.P.sum().sum() == 1
+    assert np.isclose(ca.P.sum().sum(), 1)
     assert np.allclose(ca.P * N, df)
 
 
 def test_row_sums_sum(ca):
     """Check the row sums sum up to 1."""
-    assert ca.row_sums.sum() == 1
+    assert np.isclose(ca.row_sums.sum(), 1)
 
 
 def test_row_sums_shape(ca, n):
@@ -81,7 +81,7 @@ def test_row_sums_shape(ca, n):
 
 def test_column_sums_sum(ca):
     """Check the column sums sum up to 1."""
-    assert ca.column_sums.sum() == 1
+    assert np.isclose(ca.column_sums.sum(), 1)
 
 
 def test_column_sums_shape(ca, p):
@@ -96,7 +96,7 @@ def test_expected_frequencies_shape(ca, n, p):
 
 def test_expected_frequencies_sum(ca, n, p):
     """Check the expected frequencies matrix sums to 1."""
-    assert np.sum(ca.expected_frequencies.values) == 1
+    assert np.isclose(np.sum(ca.expected_frequencies.values), 1)
 
 
 def test_eigenvalues_dimensions(ca, k):
