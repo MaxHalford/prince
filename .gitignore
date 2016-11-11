@@ -1,3 +1,8 @@
 *.pyc
 .cache/
 .ipynb_checkpoints/
+prince.egg-info/
+dist/
+build/
+
+DEV.md

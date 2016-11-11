@@ -13,7 +13,7 @@
 <br/>
 
 <br/>
-<div align="center">Prince is a factorial analysis library that focuses on big datasets and elegant visualization.</div>
+<div align="center">Prince is a factorial analysis library for datasets that fit in memory.</div>
 <br/>
 
 ## Example
@@ -81,7 +81,7 @@ The Rennes university published [FactoMineR](http://factominer.free.fr/) in 2008
 
 The goal with Prince is to provide a user-friendly library for performing all sorts of large-scale factorial analysis. Although [Facebook](https://research.facebook.com/blog/fast-randomized-svd/) and then [sklearn](http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.RandomizedPCA.html) have implemented randomized SVD, it isn't trivial for users to use them, let alone to understand and visualize results in a timely fashion.
 
-Prince builds on top of [fbpca](https://github.com/facebook/fbpca) to provide different kinds of algorithms with out-of-the-box charts. The main advantage of using randomized SVD is that the number of eigenvectors that are calculated can be chosen. This is particularly useful because often one only needs the first few to be able to plot relevant information.
+Prince builds on top of Randomized SVD engines such as [fbpca](https://github.com/facebook/fbpca) to provide different kinds of algorithms with out-of-the-box charts. The main advantage of using randomized SVD is that the number of eigenvectors that are calculated can be chosen. This is particularly useful because often one only needs the first few eigenvectors to be able to plot relevant information.
 
 
 ## Implemented methods
@@ -112,9 +112,7 @@ All of the usable properties and charts are detailed in the following Jupyter no
 
 ## Perfomance
 
-```
-
-```
+Speed and the ability to manage out-of-memory datasets is going to be one of Prince's priorities. Currently `fbpca` is the SVD engine; with a 1M times 100 PCA took ~6 seconds on a i5 MacBook Pro. A branch is looking into integrating [Dask](http://dask.pydata.org/en/latest/). Benchmarks incoming.
 
 ## Delving into the maths
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""Prince packaging instructions. """
+"""Prince packaging instructions."""
 
 from setuptools import setup, find_packages
 from prince import __version__, __authors__, __project__
@@ -28,14 +28,15 @@ def long_description():
 
 
 setup(
-    name=__project__,
-    version=__version__,
-    description='Factorial analysis in Python',
     author=__authors__,
     author_email=['axel.bellec@outlook.fr', 'maxhalford25@gmail.com'],
-    packages=find_packages(),
-    long_description=long_description(),
-    install_requires=get_requirements(),
     dependency_links=[],
-    url='https://github.com/belekkk/prince',
+    description='Factorial analysis in Python',
+    install_requires=get_requirements(),
+    license='MIT',
+    long_description=long_description(),
+    name=__project__,
+    packages=find_packages(exclude=['tests']),
+    url='https://github.com/MaxHalford/Prince',
+    version=__version__,
 )

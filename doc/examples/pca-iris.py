@@ -3,7 +3,7 @@ import pandas as pd
 import prince
 
 
-df = pd.read_csv('examples/data/iris.csv')
+df = pd.read_csv('doc/data/iris.csv')
 
 pca = prince.PCA(df, nbr_components=4)
 
