@@ -4,7 +4,7 @@ import pandas as pd
 import prince
 
 
-df = pd.read_csv('doc/data/presidentielles07.csv', index_col=0)
+df = pd.read_csv('../doc/data/presidentielles07.csv', index_col=0)
 
 ca = prince.CA(df, nbr_components=-1)
 

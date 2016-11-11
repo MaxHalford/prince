@@ -9,7 +9,7 @@ wines = {
     3: 'barbera'
 }
 
-df = pd.read_csv('doc/data/wine.csv')
+df = pd.read_csv('../doc/data/wine.csv')
 df['kind'] = df['class'].apply(lambda x: wines[x])
 del df['class']
 

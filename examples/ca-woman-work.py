@@ -4,7 +4,7 @@ import pandas as pd
 import prince
 
 
-df = pd.read_csv('examples/data/woman_work.csv', index_col=0)
+df = pd.read_csv('../doc/data/woman_work.csv', index_col=0)
 df = df[['Stay at home','Part-time work','Full-time work']]
 
 ca = prince.CA(df, nbr_components=-1)

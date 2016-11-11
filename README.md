@@ -18,7 +18,7 @@
 
 ## Example
 
-Prince uses [pandas](http://pandas.pydata.org/) to manipulate dataframe, as such it expects an initial dataframe to work with. In the following example, a *Principal Component Analysis* (PCA) is applied to the iris dataset. Under the hood Prince decomposes the dataframe into two eigenvector matrices and one eigenvalue array thanks to a *Singular Value Decomposition* (SVD). The eigenvectors can then be used to project the initial dataset on to lower dimensions.
+Prince uses [pandas](http://pandas.pydata.org/) to manipulate dataframe, as such it expects an initial dataframe to work with. In the following example, a [*Principal Component Analysis* (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) is applied to the iris dataset. Under the hood Prince decomposes the dataframe into two eigenvector matrices and one eigenvalue array thanks to a [*Singular Value Decomposition* (SVD)](https://www.wikiwand.com/en/Singular_value_decomposition). The eigenvectors can then be used to project the initial dataset onto lower dimensions.
 
 ```python
 import matplotlib.pyplot as plt
@@ -48,8 +48,16 @@ The second plot displays the cumulative contributions of each eigenvector (by lo
 
 ## Installation
 
+Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is a good idea in general for doing data science in Python.
+
 ```sh
 >>> pip install prince
+```
+
+Or
+
+```sh
+>>> pip install git+https://github.com/MaxHalford/Prince
 ```
 
 ### Dependencies
@@ -95,6 +103,7 @@ Basic methods are to be used when there isn't any intrinsic structure between va
 - [X] [Multiple Correspondence Analysis (MCA)](https://www.wikiwand.com/en/Multiple_correspondence_analysis) - For more than two categorical variables
 - [ ] [Factor Analysis of Mixed Data (FAMD)](https://www.wikiwand.com/en/Factor_analysis_of_mixed_data) - For both continuous and categorical variables (incoming)
 
+
 ### Advanced
 
 Advanced methods are to be used when variables or individuals are structured in a natural way (for example a survey with questions grouped around topics).
@@ -110,9 +119,11 @@ All of the usable properties and charts are detailed in the following Jupyter no
 
 - [PCA](doc/pca.ipynb)
 
+
 ## Perfomance
 
-Speed and the ability to manage out-of-memory datasets is going to be one of Prince's priorities. Currently `fbpca` is the SVD engine; with a 1M times 100 PCA took ~6 seconds on a i5 MacBook Pro. A branch is looking into integrating [Dask](http://dask.pydata.org/en/latest/). Benchmarks incoming.
+Prince is made to be used on datasets that fit in memory. Currently `fbpca` is the SVD engine. A PCA on a dataframe of 1M rows and 100 columns took ~6 seconds on an 2013 MacBook Pro (i5, 16G RAM). For out-of-memory SVD and whatnot, check out [Dask](http://dask.pydata.org/en/latest/array-api.html#dask.array.linalg.svd_compressed) and [Spark](https://spark.apache.org/docs/1.2.0/mllib-dimensionality-reduction.html).
+
 
 ## Delving into the maths
 
@@ -124,6 +135,8 @@ Factor analysis is quite a popular topic. A lot of material is available online.
 - [Correspondence Analysis](doc/papers/CA.pdf)
 - [Multiple Correspondence Analysis](doc/papers/MCA.pdf)
 - [Global overview](doc/papers/Overview.pdf)
+
+For math oriented minds, [Halko's paper](doc/papers/Halko.pdf) is worth reading through.
 
 
 ## License

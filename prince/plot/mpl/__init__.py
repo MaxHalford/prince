@@ -1,3 +1,6 @@
+import os
+
+import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -19,7 +22,13 @@ class MplPlotter(Plotter):
             'dark-gray': '#404040'
         }
 
-        plt.style.use('prince/plot/mpl/prince.mplstyle')
+        mpl.rcParams['lines.linewidth'] = 1.8 # line width in points
+        mpl.rcParams['lines.markeredgewidth'] = 0.3 # the line width around the marker symbol
+        mpl.rcParams['lines.markersize'] = 7  # markersize, in points
+
+        mpl.rcParams['grid.alpha'] = 0.4 # transparency, between 0.0 and 1.0
+
+
 
     def inertia(self, explained_inertia):
         fig, ax = plt.subplots()
