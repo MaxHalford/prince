@@ -8,8 +8,10 @@ env:
   - PYTHONPATH=$PYTHONPATH:$PWD
 
 install:
-  - pip install -r setup/requirements.txt
-  - pip install -r setup/dev-requirements.txt
+  - python setup.py install
+  - pip install pylint==1.5.5
+  - pip install pytest==2.9.1
+  - pip install pytest-cov==2.2.1
 
 script:
   - py.test --verbose --cov=prince tests/
