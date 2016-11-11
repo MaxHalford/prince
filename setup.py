@@ -12,10 +12,8 @@ setup(
     description='Factorial analysis in Python',
     install_requires=[
         'fbpca>=1.0',
-        'matplotlib>=1.5.0',
-        'numpy>=1.11.2',
-        'pandas>=0.19.0',
-        'scipy>=0.16.0'
+        'matplotlib>=1.5',
+        'pandas>=0.19.0'
     ],
     license='MIT',
     name=__project__,

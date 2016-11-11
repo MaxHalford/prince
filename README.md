@@ -63,6 +63,7 @@ Or
 ### Dependencies
 
 - [pandas](http://pandas.pydata.org/) for manipulating dataframes
+- [matplotlib](http://matplotlib.org/) as a default plotting backend
 - [fbpca](http://fbpca.readthedocs.org/en/latest/), [Facebook's randomized SVD implementation](https://research.facebook.com/blog/fast-randomized-svd/)
 
 ### Plotting backends
