@@ -8,8 +8,8 @@ env:
   - PYTHONPATH=$PYTHONPATH:$PWD
 
 install:
-  - make install
-  - make install.hack
+  - pip install -r setup/requirements.txt
+  - pip install -r setup/dev-requirements.txt
 
 script:
-  - make test
+  - py.test --verbose --cov=prince tests/
