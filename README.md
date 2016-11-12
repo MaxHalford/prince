@@ -5,11 +5,20 @@
 <br/>
 
 <div align="center">
+  <a href="https://badge.fury.io/py/prince">
+    <img src="https://badge.fury.io/py/prince.svg?style=flat-square" alt="PyPI version"/>
+  </a>
   <a href="https://travis-ci.org/MaxHalford/Prince?branch=master">
     <img src="https://travis-ci.org/MaxHalford/Prince.svg?branch=master&style=flat-square" alt="Build Status"/>
   </a>
   <a href="https://coveralls.io/github/MaxHalford/Prince?branch=master">
     <img src="https://coveralls.io/repos/github/MaxHalford/Prince/badge.svg?branch=master&style=flat-square" alt="Coverage Status"/>
+  </a>
+  <a href="https://www.codacy.com/app/maxhalford25/Prince?utm_source=github.com&utm_medium=referral&utm_content=MaxHalford/Prince&utm_campaign=Badge_Grade">
+    <img src="https://api.codacy.com/project/badge/Grade/d58aa963d6fa425b97d2b9364aecbba1?style=flat-square" alt="Codacy Badge"/>
+  </a>
+  <a href="https://requires.io/github/MaxHalford/Prince/requirements/?branch=master">
+    <img src="https://requires.io/github/MaxHalford/Prince/requirements.svg?branch=master&style=flat-square" alt="Requirements Status"/>
   </a>
 </div>
 
@@ -54,11 +63,13 @@ The second plot displays the cumulative contributions of each eigenvector (by lo
 
 Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is a good idea in general for doing data science in Python.
 
+**Via PyPI**
+
 ```sh
 >>> pip install prince
 ```
 
-Or
+**Via GitHub for the latest master version**
 
 ```sh
 >>> pip install git+https://github.com/MaxHalford/Prince
@@ -158,6 +169,21 @@ df = pd.read_csv('iris.csv')
 pca = prince.PCA(df.copy(deep=True))
 ```
 
+**Some of the information on my chart seems to be cut-off, how do I fix this?**
+
+Matplotlib, although being a great library, can be a pain to work with because it's quite low-level  -- things don't get done by magic. One way to fix this is simply to not really on Matplotlib viewer -- the one that appears after `plt.show()` -- but rather to directly save the figure with `bbox_inches='tight'`. Matplotlib has some [documentation](http://matplotlib.org/users/tight_layout_guide.html) covering the issue.
+
+```python
+import pandas as pd
+import prince
+
+
+df = pd.read_csv('.iris.csv')
+pca = prince.PCA(df, nbr_components=4)
+
+fig, ax = pca.plot_cumulative_inertia()
+fig.savefig('cumulative_inertia.png', bbox_inches='tight', pad_inches=0.5)
+```
 
 ## License
 
