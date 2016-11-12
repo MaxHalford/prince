@@ -26,9 +26,9 @@ class MplPlotter(Plotter):
         mpl.rcParams['lines.markeredgewidth'] = 0.3 # the line width around the marker symbol
         mpl.rcParams['lines.markersize'] = 7  # markersize, in points
 
-        mpl.rcParams['grid.alpha'] = 0.4 # transparency, between 0.0 and 1.0
-
-
+        mpl.rcParams['grid.alpha'] = 0.5 # transparency, between 0.0 and 1.0
+        mpl.rcParams['grid.linestyle'] = '-' # simple line
+        mpl.rcParams['grid.linewidth'] = 0.4 # in points
 
     def inertia(self, explained_inertia):
         fig, ax = plt.subplots()

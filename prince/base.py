@@ -1,6 +1,5 @@
 import numpy as np
-
-from prince import util
+import pandas as pd
 
 
 class Base():
@@ -11,9 +10,8 @@ class Base():
         nbr_components (int): The number of principal components that were calculated during SVD.
         plotter (prince.Plotter): A plotter instance used for displaying charts. The plotter is
             defined by the type of component analysis and the plotting backend. The plotter is
-            pre-configured with the methods needed to display the charts usually associated with
-            each kind of component analysis. The only interactions the user has with the plotting
-            methods are style related.
+            pre-configuredto display the charts usually associated with each kind of factorial
+            analysis.
         svd (prince.SVD): The object containing the results from the Singular Value Decomposition.
         X (pandas.DataFrame): The dataframe on which was applied the SVD. For various (good)
             reasons, this dataframe can differ from the one provided by the user.
@@ -31,13 +29,15 @@ class Base():
     nbr_components = None
     plotter = None
     svd = None
+    X = None
 
     def __init__(self, dataframe, k, plotter):
 
         if plotter not in 'mpl':
             raise ValueError('Unrecognized plotting backend; choose from: mpl')
 
-        util.verify_dataframe(dataframe)
+        if not isinstance(dataframe, pd.DataFrame):
+            raise ValueError('dataframe muse be a pandas.DataFrame')
 
         self.X = dataframe
         self.n, self.p = self.X.shape

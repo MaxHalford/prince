@@ -1,20 +1,4 @@
-import pandas as pd
-import pytest
-
 from prince import util
-
-
-def test_verify_dataframe_failure():
-    """Check verify_dataframe raises an exception if the passed argument is not a
-    `pandas.DataFrame`."""
-    with pytest.raises(ValueError):
-        util.verify_dataframe((1, 2, 3))
-
-
-def test_verify_dataframe_success():
-    """Check verify_dataframe doesn't raise and exception if the passed argument is a
-    pandas.DataFrame`."""
-    util.verify_dataframe(pd.DataFrame([1, 2, 3]))
 
 
 def test_cosine_similarity():

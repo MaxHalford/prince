@@ -11,8 +11,11 @@ class CA(Base):
     """Correspondance Analysis"""
 
     def __init__(self, dataframe, nbr_components=2, plotter='mpl'):
-        super(CA, self).__init__(dataframe=dataframe, k=nbr_components, plotter=plotter)
-
+        super(CA, self).__init__(
+            dataframe=dataframe,
+            k=nbr_components,
+            plotter=plotter
+        )
         self._set_plotter(plotter)
 
         # Compute the relative frequency of each cell by dividing it by the total sum of all cells
@@ -44,7 +47,7 @@ class CA(Base):
         """Compute expected frequencies by performing a matrix multiplication between the rows sums
         and the column sums."""
         return pd.DataFrame(
-            data=self.row_sums.reshape(-1, 1) @ self.column_sums.reshape(1, -1),
+            data=self.row_sums.values.reshape(-1, 1) @ self.column_sums.values.reshape(1, -1),
             index=self.P.index,
             columns=self.P.columns
         )

@@ -5,8 +5,11 @@
 <br/>
 
 <div align="center">
-  <a href="https://travis-ci.org/MaxHalford/Prince">
+  <a href="https://travis-ci.org/MaxHalford/Prince?branch=master">
     <img src="https://travis-ci.org/MaxHalford/Prince.svg?branch=master&style=flat-square" alt="Build Status"/>
+  </a>
+  <a href="https://coveralls.io/github/MaxHalford/Prince?branch=master">
+    <img src="https://coveralls.io/repos/github/MaxHalford/Prince/badge.svg?branch=master&style=flat-square" alt="Coverage Status"/>
   </a>
 </div>
 
@@ -15,6 +18,7 @@
 <br/>
 <div align="center">Prince is a factorial analysis library for datasets that fit in memory.</div>
 <br/>
+
 
 ## Example
 
@@ -86,7 +90,7 @@ Factorial analysis is a popular method for projecting/representing high-dimensio
 
 Although factorial analysis is popular, practitionners tend to mix concepts up -- *Principal Component Analysis* (PCA) **is not** *Singular Value Decomposition* (SVD). Moreover, more advanced methods that extend PCA such as *Correspondance Analysis* and *Factor Analysis of Mixed Data (FAMD)* are not very well known -- at least outside of French academia.
 
-The Rennes university published [FactoMineR](http://factominer.free.fr/) in 2008; whilst being a library which offers many possibilities, FactoMineR doesn't seem to be actively maintained. What's more, FactoMineR and the underlying SVD operation are written in pure R, which isn't very efficient. In parallel, [Fast Randomized SVD](https://arxiv.org/pdf/1509.00296.pdf) has become an efficient way to obtain eigen(vectors|values) approximations in drastically less time than classical SVD.
+The Rennes university published [FactoMineR](http://factominer.free.fr/) in 2008; whilst being a library which offers many possibilities, FactoMineR doesn't seem to be actively maintained. What's more, FactoMineR and the underlying SVD operation are written in pure R, which isn't very efficient. In parallel, [Fast Randomized SVD](https://arxiv.org/pdf/1509.00296.pdf) has become an efficient way to obtain eigen{vectors|values} approximations in drastically less time than regular SVD.
 
 The goal with Prince is to provide a user-friendly library for performing all sorts of large-scale factorial analysis. Although [Facebook](https://research.facebook.com/blog/fast-randomized-svd/) and then [sklearn](http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.RandomizedPCA.html) have implemented randomized SVD, it isn't trivial for users to use them, let alone to understand and visualize results in a timely fashion.
 
@@ -137,7 +141,22 @@ Factor analysis is quite a popular topic. A lot of material is available online.
 - [Multiple Correspondence Analysis](doc/papers/MCA.pdf)
 - [Global overview](doc/papers/Overview.pdf)
 
-For math oriented minds, [Halko's paper](doc/papers/Halko.pdf) is worth reading through.
+For math oriented minds, [Halko's paper](doc/papers/Halko.pdf) is worth knowing about.
+
+
+## FAQ
+
+**After having applied one of Prince's algorithm's on my dataframe, I noticed it's values changed. Why?**
+
+For performance reasons, Prince modifies the provided dataframe inplace. If you don't want the dataframe you provide to be modified, you can use the [`copy` method](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.copy.html):
+
+```python
+import pandas as pd
+import prince
+
+df = pd.read_csv('iris.csv')
+pca = prince.PCA(df.copy(deep=True))
+```
 
 
 ## License

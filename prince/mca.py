@@ -16,42 +16,33 @@ class MCA(CA):
 
     numerical_variables = pd.DataFrame()
 
-    def __init__(self, dataframe, nbr_components=2, ignored_variable_names=(), plotter='mpl',
-                 use_benzecri_rates=False):
+    def __init__(self, dataframe, nbr_components=2, plotter='mpl', use_benzecri_rates=False):
 
-        util.verify_dataframe(dataframe)
+        if not isinstance(dataframe, pd.DataFrame):
+            raise ValueError('dataframe muse be a pandas.DataFrame')
 
         self.initial_dataframe = dataframe.copy(deep=True)
+        self.q = self.initial_dataframe.shape[1] # Number of columns in the original dataset
         self.use_benzecri_rates = use_benzecri_rates
-        self.ignored_variable_names = ignored_variable_names
 
-        self._tidy(dataframe)
-
+        self._filter(dataframe)
         super(MCA, self).__init__(
             dataframe=pd.get_dummies(dataframe),
             nbr_components=nbr_components,
             plotter=plotter
         )
 
-        # Keep the number of columns in the original dataset
-        self.q = dataframe.shape[1]
-
-    def _tidy(self, dataframe):
-        """Remove the ignored columns and stash the numerical columns."""
-        self.numerical_variables = pd.DataFrame()
-        for column in dataframe.columns:
-            # Variable is ignored
-            if column in self.ignored_variable_names:
-                del dataframe[column]
-            # Variable is categorical
-            elif dataframe[column].dtype in ('int64', 'float64'):
-                self.numerical_variables[column] = dataframe[column]
-                del dataframe[column]
-
     def _set_plotter(self, plotter_name):
         self.plotter = {
             'mpl': MplMCAPlotter()
         }[plotter_name]
+
+    def _filter(self, dataframe):
+        """Stash the numerical columns."""
+        self.numerical_variables = pd.DataFrame()
+        for column in dataframe.columns:
+            if dataframe[column].dtype in ('int64', 'float64'):
+                self.numerical_variables[column] = dataframe.pop(column)
 
     @property
     def eigenvalues(self):
@@ -88,7 +79,7 @@ class MCA(CA):
         # Get color labels
         if color_by is None:
             color_labels = None
-        elif color_by not in self.initial_dataframe:
+        elif color_by not in self.initial_dataframe.columns():
             raise ValueError("Categorical variable '{}' can not be found".format(color_by))
         else:
             color_labels = self.initial_dataframe[color_by]

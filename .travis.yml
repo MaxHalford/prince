@@ -10,6 +10,10 @@ env:
 install:
   - pip install -r setup/requirements.txt
   - pip install -r setup/dev-requirements.txt
+  - pip install python-coveralls
 
 script:
   - py.test --verbose --cov=prince tests/
+
+after_success:
+  - coveralls

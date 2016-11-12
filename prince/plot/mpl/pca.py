@@ -11,8 +11,8 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
 
     """Matplotlib plotter for Principal Component Analysis"""
 
-    def row_projections(self, axes, projections, explained_inertia, show_points, show_labels,
-                        color_labels, ellipse_outline, ellipse_fill):
+    def row_projections(self, axes, projections, supplementary_projections, explained_inertia,
+                        show_points, show_labels, color_labels, ellipse_outline, ellipse_fill):
         fig, ax = plt.subplots()
 
         ax.grid('on')
@@ -21,41 +21,52 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
         ax.axhline(y=0, linestyle='-', linewidth=1.2, color=self.colors['dark-gray'], alpha=0.6)
         ax.axvline(x=0, linestyle='-', linewidth=1.2, color=self.colors['dark-gray'], alpha=0.6)
 
-        data = projections.iloc[:, axes].copy()
+        data = projections.iloc[:, axes].copy() # Active rows
+        supp = supplementary_projections.iloc[:, axes].copy() # Supplementary rows
         data.columns = ('X', 'Y')
+        supp.columns = ('X', 'Y')
 
         if (color_labels is not None) and (show_points or show_labels or ellipse_outline or ellipse_fill):
             data['label'] = color_labels
-            groups = data.groupby('label')
-            labels = [label for label, _ in groups]
+            supp['label'] = color_labels
+            group_by = data.groupby('label')
+            group_by_supp = supp.groupby('label')
+            labels = group_by.groups.keys()
 
         if color_labels is not None:
-            colors = self.qual_cmap(np.linspace(0, 1, len(groups)))
+            colors = self.qual_cmap(np.linspace(0, 1, len(group_by)))
             cax = fig.add_axes((0.9, 0.1, 0.03, 0.8))
-            bounds = list(range(len(groups)+1))
+            bounds = list(range(len(group_by)+1))
             norm = mpl.colors.BoundaryNorm(bounds, self.qual_cmap.N)
             cbar = mpl.colorbar.ColorbarBase(cax, cmap=self.qual_cmap, norm=norm, ticks=bounds)
             cbar.ax.set_yticklabels(labels)
 
         if show_points:
             if color_labels is not None:
-                for (label, group), color in zip(groups, colors):
+                for (label, group), color in zip(group_by, colors):
                     ax.scatter(group['X'], group['Y'], s=50, color=color, label=label)
+                for (label, group), color in zip(group_by_supp, colors):
+                    ax.scatter(group['X'], group['Y'], s=50, color=color, label=label, marker='x')
             else:
                 ax.scatter(data['X'], data['Y'], s=50, color=self.colors['blue'])
 
         if show_labels:
             ax.scatter(data['X'], data['Y'], alpha=0)
             if color_labels is not None:
-                for (label, group), color in zip(groups, colors):
+                for (label, group), color in zip(group_by, colors):
+                    for _, row in group.iterrows():
+                        ax.text(x=row['X'], y=row['Y'], s=row.name, color=color)
+                for (label, group), color in zip(group_by_supp, colors):
                     for _, row in group.iterrows():
                         ax.text(x=row['X'], y=row['Y'], s=row.name, color=color)
             else:
                 for _, row in data.iterrows():
                     ax.text(x=row['X'], y=row['Y'], s=row.name)
+                for _, row in supp.iterrows():
+                    ax.text(x=row['X'], y=row['Y'], s=row.name)
 
         if (ellipse_outline or ellipse_fill) and color_labels is not None:
-            for (label, group), color in zip(groups, colors):
+            for (label, group), color in zip(group_by, colors):
                 x_mean, y_mean, width, height, angle = util.build_ellipse(group['X'], group['Y'])
                 ax.add_patch(mpl.patches.Ellipse(
                     (x_mean, y_mean),

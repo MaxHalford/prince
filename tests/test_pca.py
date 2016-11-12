@@ -13,19 +13,12 @@ def load_df():
 
 
 @pytest.fixture
-def ignored_variable_names():
-    """The ignored columns."""
-    return ['Rank', 'Points']
-
-
-@pytest.fixture
-def df(load_df, ignored_variable_names):
-    """The original dataframe without categorical and ignored columns."""
+def df(load_df):
+    """The original dataframe without categorical columns."""
     valid_columns = [
         column
         for column in load_df.columns
-        if column not in ignored_variable_names
-        and load_df[column].dtype in ('int64', 'float64')
+        if load_df[column].dtype in ('int64', 'float64')
     ]
     return load_df[valid_columns]
 
@@ -51,9 +44,9 @@ def k(p):
 
 
 @pytest.fixture
-def pca(load_df, ignored_variable_names, k):
+def pca(load_df, k):
     """The executed PCA."""
-    return PCA(load_df, ignored_variable_names=ignored_variable_names, nbr_components=k, scaled=True)
+    return PCA(load_df, nbr_components=k, scaled=True)
 
 
 @pytest.fixture
@@ -63,11 +56,6 @@ def cov_matrix(df):
     df /= df.std()
     X = df.values
     return X.T @ X
-
-
-def test_ignored_variable_names(pca, ignored_variable_names):
-    """Check the variables have been ignored."""
-    assert len([col for col in pca.X.columns if col in ignored_variable_names]) == 0
 
 
 def test_categorical(pca, df):

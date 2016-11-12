@@ -20,21 +20,24 @@ class Plotter():
 
 class PCAPlotter():
 
-    def row_projections(self, axes, row_projections, explained_inertia, show_points, show_labels,
-                        color_labels, ellipse_labels):
+    def row_projections(self, axes, projections, supplementary_projections, explained_inertia,
+                        show_points, show_labels, color_labels, ellipse_outline, ellipse_fill):
         """Generate a plot displaying the row projections.
 
         Args:
             axes (list(int)): A list containing two distinct elements, each one indicating the index
                 of a principal component to plot.
-            row_projections (pandas.DataFrame)
+            projections (pandas.DataFrame)
+            supplementary_projections (pandas.DataFrame)
             explained_inertia (list(float))
-            show_points (bool): Indicates whether or not to display points.
-            show_labels (bool): Indicates whether or not to display labels above each point.
+            show_points (bool): Whether or not to display points.
+            show_labels (bool): Whether or not to display labels above each point.
             color_labels (pandas.Series): A series containing ordinal values according to which each
                 point and label will be colored.
-            ellipse_labels (pandas.Series): A series containing ordinal values with which ellispes
-                with belonging points will be plotted.
+            ellipse_outline (bool): Whether or not to draw the outline of an ellipse around each
+                group defined with `color_labels`.
+            ellipse_outline (bool): Whether or not to draw the filling of an ellipse around each
+                group defined with `color_labels`.
         """
         raise NotImplementedError
 

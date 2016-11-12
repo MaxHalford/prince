@@ -2,12 +2,6 @@ from itertools import groupby
 from operator import itemgetter
 
 import numpy as np
-import pandas as pd
-
-
-def verify_dataframe(X):
-    if not isinstance(X, pd.DataFrame):
-        raise ValueError('Argument is not a pandas.DataFrame')
 
 
 def calculate_benzecri_correction(eigenvalues):
