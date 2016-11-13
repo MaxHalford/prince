@@ -66,13 +66,13 @@ Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downl
 **Via PyPI**
 
 ```sh
->>> pip install prince
+$ pip install prince
 ```
 
-**Via GitHub for the latest master version**
+**Via GitHub for the latest development version**
 
 ```sh
->>> pip install git+https://github.com/MaxHalford/Prince
+$ pip install git+https://github.com/MaxHalford/Prince
 ```
 
 ### Dependencies

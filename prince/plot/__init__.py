@@ -41,14 +41,16 @@ class PCAPlotter():
         """
         raise NotImplementedError
 
-    def correlation_circle(self, axes, variable_correlations, explained_inertia, show_labels):
-        """Generate a plot displaying the variables/component Pearson correlations.
+    def correlation_circle(self, axes, column_correlations, supplementary_column_correlations,
+                           explained_inertia, show_labels):
+        """Generate a plot displaying the columns/component Pearson correlations.
 
         Args:
             axes (list(int)): A list containing two distinct elements, each one indicating the index
                 of a principal component to plot.
-            variable_correlations (pandas.DataFrame): A dataframe containing the correlations
-                between each initial variable and each row principal component.
+            column_correlations (pandas.DataFrame): A dataframe containing the correlations
+                between each initial column and each row principal component.
+            supplementary_column_correlations (pandas.DataFrame)
             explained_inertia (list(float))
             show_labels (bool): Indicates whether or not to display labels above each point.
         """
@@ -104,15 +106,15 @@ class MCAPlotter():
         """
         raise NotImplementedError
 
-    def relationship_square(self, axes, variable_correlations, explained_inertia, show_labels):
-        """Generate a plit displaying the correlations ratios between the initial variables and the
+    def relationship_square(self, axes, column_correlations, explained_inertia, show_labels):
+        """Generate a plit displaying the correlations ratios between the initial columns and the
         row principal components.
 
         Args:
             axes (list(int)): A list containing two distinct elements, each one indicating the index
                 of a principal component to plot.
-            variable_correlations (pandas.DataFrame): A dataframe containing the correlations
-                between each initial variable and each row principal component.
+            column_correlations (pandas.DataFrame): A dataframe containing the correlations
+                between each initial column and each row principal component.
             explained_inertia (list(float))
             show_labels (bool): Indicates whether or not to display labels above each point.
         """

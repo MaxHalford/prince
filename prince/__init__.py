@@ -10,5 +10,5 @@ from prince.svd import SVD
 """
 
 __project__ = 'prince'
-__authors__ = ['Axel Bellec', 'Max Halford']
+__author__ = 'Max Halford'
 __version__ = '0.1.2'

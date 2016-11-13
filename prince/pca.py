@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from . import util
 from .base import Base
 from .plot.mpl.pca import MplPCAPlotter
 from .svd import SVD
@@ -10,23 +11,23 @@ class PCA(Base):
 
     """Principal Component Analysis"""
 
-    categorical_variables = pd.DataFrame()
-    supplementary_variables = pd.DataFrame()
-    supplementary_rows = pd.DataFrame()
-
     def __init__(self, dataframe, nbr_components=2, scaled=True, supplementary_rows=None,
-                 supplementary_variables=None, plotter='mpl'):
+                 supplementary_columns=None, plotter='mpl'):
 
         if not isinstance(dataframe, pd.DataFrame):
             raise ValueError('dataframe muse be a pandas.DataFrame')
+
+        self.categorical_columns = pd.DataFrame()
+        self.supplementary_columns = pd.DataFrame()
+        self.supplementary_rows = pd.DataFrame()
 
         self.scaled = scaled
         self._set_plotter(plotter)
 
         self._filter(
             dataframe=dataframe,
-            supplementary_rows_names=supplementary_rows if supplementary_rows else [],
-            supplementary_variable_names=supplementary_variables if supplementary_variables else []
+            supplementary_row_names=supplementary_rows if supplementary_rows else [],
+            supplementary_column_names=supplementary_columns if supplementary_columns else []
         )
         super(PCA, self).__init__(
             dataframe=dataframe,
@@ -53,30 +54,31 @@ class PCA(Base):
             'mpl': MplPCAPlotter()
         }[plotter_name]
 
-    def _filter(self, dataframe, supplementary_rows_names, supplementary_variable_names):
+    def _filter(self, dataframe, supplementary_row_names, supplementary_column_names):
 
-        # The categorical variables are the ones whose values are not numerical
-        categorical_variable_names = [
+        # The categorical columns are the ones whose values are not numerical
+        categorical_column_names = [
             column
             for column in dataframe.columns
             if dataframe[column].dtype not in ('int64', 'float64')
         ]
 
-        # The categorical and the supplementary variables can be dropped once extracted
-        columns_to_drop = set(categorical_variable_names + supplementary_variable_names)
+        # The categorical and the supplementary columns can be dropped once extracted
+        columns_to_drop = set(categorical_column_names + supplementary_column_names)
 
         # Extract the supplementary rows
-        self.supplementary_rows = dataframe.loc[supplementary_rows_names].copy()
+        self.supplementary_rows = dataframe.loc[supplementary_row_names].copy()
         self.supplementary_rows.drop(columns_to_drop, axis=1, inplace=True)
 
-        # Extract the supplementary variables
-        self.supplementary_variables = dataframe[supplementary_variable_names].copy()
+        # Extract the supplementary columns
+        self.supplementary_columns = dataframe[supplementary_column_names].copy()
+        self.supplementary_columns.drop(supplementary_row_names, axis=0, inplace=True)
 
-        # Extract the categorical variables
-        self.categorical_variables = dataframe[categorical_variable_names].copy()
+        # Extract the categorical columns
+        self.categorical_columns = dataframe[categorical_column_names].copy()
 
-        # Remove the categorical and the supplementary variables from the main dataframe
-        dataframe.drop(supplementary_rows_names, axis=0, inplace=True)
+        # Remove the categorical and the supplementary columns from the main dataframe
+        dataframe.drop(supplementary_row_names, axis=0, inplace=True)
         dataframe.drop(columns_to_drop, axis=1, inplace=True)
 
     @property
@@ -127,9 +129,9 @@ class PCA(Base):
         return squared_row_pc.div(self.eigenvalues, axis='columns')
 
     @property
-    def variable_correlations(self):
+    def column_correlations(self):
         """A dataframe of shape (`p`, `k`) dataframe containing the Pearson correlations between the
-        initial variables and the row principal components."""
+        active columns and the row principal components."""
         row_pc = self.row_principal_components
         return pd.DataFrame(
             data=([col.corr(pc) for _, pc in row_pc.iteritems()] for _, col in self.X.iteritems()),
@@ -138,8 +140,26 @@ class PCA(Base):
         )
 
     @property
+    def supplementary_column_correlations(self):
+        """A dataframe of shape (*, `k`) dataframe containing the Pearson correlations between the
+        supplementary columns and the row principal components."""
+        row_pc = self.row_principal_components
+        return pd.DataFrame(
+            data=(
+                [
+                    col.corr(pc) if col.dtype in ('int64', 'float64')
+                                 else util.correlation_ratio(col, pc)
+                    for _, pc in row_pc.iteritems()
+                ]
+                for _, col in self.supplementary_columns.iteritems()
+            ),
+            columns=row_pc.columns,
+            index=self.supplementary_columns.columns
+        )
+
+    @property
     def total_inertia(self):
-        """The total inertia obtained by summing up the variance of each variable."""
+        """The total inertia obtained by summing up the variance of each column."""
         return np.sum(np.square(self.X.values))
 
     def plot_rows(self, axes=(0, 1), show_points=True, show_labels=False, color_by=None,
@@ -149,10 +169,10 @@ class PCA(Base):
         # Get color labels
         if color_by is None:
             color_labels = None
-        elif color_by not in self.categorical_variables.columns:
-            raise ValueError("Categorical variable '{}' can not be found".format(color_by))
+        elif color_by not in self.categorical_columns.columns:
+            raise ValueError("'{}' is not a categorial column".format(color_by))
         else:
-            color_labels = self.categorical_variables[color_by]
+            color_labels = self.categorical_columns[color_by]
 
         return self.plotter.row_projections(
             axes=axes,
@@ -167,10 +187,11 @@ class PCA(Base):
         )
 
     def plot_correlation_circle(self, axes=(0, 1), show_labels=True):
-        """Plot the Pearson correlations between the components and the original variables."""
+        """Plot the Pearson correlations between the components and the original columns."""
         return self.plotter.correlation_circle(
             axes=axes,
-            variable_correlations=self.variable_correlations,
+            column_correlations=self.column_correlations,
+            supplementary_column_correlations=self.supplementary_column_correlations,
             explained_inertia=self.explained_inertia,
             show_labels=show_labels
         )

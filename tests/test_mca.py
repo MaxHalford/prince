@@ -203,12 +203,12 @@ def test_column_profiles_sum(mca, n):
         assert np.isclose(column_sum, 1)
 
 
-def test_variable_correlations_shape(mca, q, k):
+def test_column_correlations_shape(mca, q, k):
     """Check the shape of the variable correlations is coherent."""
-    assert mca.variable_correlations.shape == (q, k)
+    assert mca.column_correlations.shape == (q, k)
 
 
-def test_variable_correlations_bounded(mca, q, k):
+def test_column_correlations_bounded(mca, q, k):
     """Check the variable correlations are bounded between -1 and 1."""
-    assert (-1 <= mca.variable_correlations).sum().sum() == q * k
-    assert (mca.variable_correlations <= 1).sum().sum() == q * k
+    assert (-1 <= mca.column_correlations).sum().sum() == q * k
+    assert (mca.column_correlations <= 1).sum().sum() == q * k

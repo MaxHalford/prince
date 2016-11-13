@@ -169,12 +169,12 @@ def test_row_cosine_similarities_bounded(pca, n, k):
     assert (pca.row_cosine_similarities <= 1).sum().sum() == n * k
 
 
-def test_variable_correlations_shape(pca, p, k):
+def test_column_correlations_shape(pca, p, k):
     """Check the shape of the variable correlations is coherent."""
-    assert pca.variable_correlations.shape == (p, k)
+    assert pca.column_correlations.shape == (p, k)
 
 
-def test_variable_correlations_bounded(pca, p, k):
+def test_column_correlations_bounded(pca, p, k):
     """Check the variable correlations are bounded between -1 and 1."""
-    assert (-1 <= pca.variable_correlations).sum().sum() == p * k
-    assert (pca.variable_correlations <= 1).sum().sum() == p * k
+    assert (-1 <= pca.column_correlations).sum().sum() == p * k
+    assert (pca.column_correlations <= 1).sum().sum() == p * k

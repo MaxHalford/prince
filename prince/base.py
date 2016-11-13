@@ -7,7 +7,6 @@ class Base():
     """Base contains the common operations performed during any factor analysis.
 
     Attributes:
-        nbr_components (int): The number of principal components that were calculated during SVD.
         plotter (prince.Plotter): A plotter instance used for displaying charts. The plotter is
             defined by the type of component analysis and the plotting backend. The plotter is
             pre-configuredto display the charts usually associated with each kind of factorial
@@ -26,11 +25,6 @@ class Base():
         cumulative_explained_inertia (list(float)): The cumsum of the explained inertia.
     """
 
-    nbr_components = None
-    plotter = None
-    svd = None
-    X = None
-
     def __init__(self, dataframe, k, plotter):
 
         if plotter not in 'mpl':
@@ -38,6 +32,10 @@ class Base():
 
         if not isinstance(dataframe, pd.DataFrame):
             raise ValueError('dataframe muse be a pandas.DataFrame')
+
+
+        self.plotter = None
+        self.svd = None
 
         self.X = dataframe
         self.n, self.p = self.X.shape
@@ -71,11 +69,11 @@ class Base():
         return np.cumsum(self.explained_inertia).tolist()
 
     def plot_inertia(self):
-        """Plot a Scree diagram of the explained inertia per variable."""
+        """Plot a Scree diagram of the explained inertia per column."""
         return self.plotter.inertia(explained_inertia=self.explained_inertia)
 
     def plot_cumulative_inertia(self, threshold=0.8):
-        """Plot a Scree diagram of the cumulative explained inertia per variable."""
+        """Plot a Scree diagram of the cumulative explained inertia per column."""
         return self.plotter.cumulative_inertia(
             cumulative_explained_inertia=self.cumulative_explained_inertia,
             threshold=threshold

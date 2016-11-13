@@ -1,10 +1,14 @@
 import matplotlib as mpl
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import numpy as np
 
-from .. import util
 from .. import PCAPlotter
+from .. import util as plot_util
+from ..palettes import GRAYS
+from ..palettes import SEABORN
 from . import MplPlotter
+from . import util as mpl_util
 
 
 class MplPCAPlotter(MplPlotter, PCAPlotter):
@@ -18,56 +22,58 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
         ax.grid('on')
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
-        ax.axhline(y=0, linestyle='-', linewidth=1.2, color=self.colors['dark-gray'], alpha=0.6)
-        ax.axvline(x=0, linestyle='-', linewidth=1.2, color=self.colors['dark-gray'], alpha=0.6)
+        ax.axhline(y=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
+        ax.axvline(x=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
 
         data = projections.iloc[:, axes].copy() # Active rows
         supp = supplementary_projections.iloc[:, axes].copy() # Supplementary rows
         data.columns = ('X', 'Y')
         supp.columns = ('X', 'Y')
 
+        # Choose colors and add corresponding colorbar if necessary
         if (color_labels is not None) and (show_points or show_labels or ellipse_outline or ellipse_fill):
             data['label'] = color_labels
             supp['label'] = color_labels
             group_by = data.groupby('label')
-            group_by_supp = supp.groupby('label')
-            labels = group_by.groups.keys()
-
-        if color_labels is not None:
-            colors = self.qual_cmap(np.linspace(0, 1, len(group_by)))
-            cax = fig.add_axes((0.9, 0.1, 0.03, 0.8))
-            bounds = list(range(len(group_by)+1))
-            norm = mpl.colors.BoundaryNorm(bounds, self.qual_cmap.N)
-            cbar = mpl.colorbar.ColorbarBase(cax, cmap=self.qual_cmap, norm=norm, ticks=bounds)
-            cbar.ax.set_yticklabels(labels)
+            if not supplementary_projections.empty:
+                group_by_supp = supp.groupby('label')
+            labels = list(group_by.groups.keys())
+            nbr_colors = len(labels)
+            cmap = mpl_util.create_discrete_cmap(nbr_colors)
+            colors = cmap(range(nbr_colors))
+            mpl_util.add_color_bar(ax, cmap, labels)
 
         if show_points:
             if color_labels is not None:
                 for (label, group), color in zip(group_by, colors):
                     ax.scatter(group['X'], group['Y'], s=50, color=color, label=label)
-                for (label, group), color in zip(group_by_supp, colors):
-                    ax.scatter(group['X'], group['Y'], s=50, color=color, label=label, marker='x')
+                if not supplementary_projections.empty:
+                    for (label, group), color in zip(group_by_supp, colors):
+                        ax.scatter(group['X'], group['Y'], s=90, color=color, label=label,
+                                   marker='*')
             else:
-                ax.scatter(data['X'], data['Y'], s=50, color=self.colors['blue'])
+                ax.scatter(data['X'], data['Y'], s=50, color=SEABORN['blue'])
 
         if show_labels:
-            ax.scatter(data['X'], data['Y'], alpha=0)
+            ax.scatter(data['X'], data['Y'], alpha=0, label=None)
             if color_labels is not None:
                 for (label, group), color in zip(group_by, colors):
                     for _, row in group.iterrows():
                         ax.text(x=row['X'], y=row['Y'], s=row.name, color=color)
-                for (label, group), color in zip(group_by_supp, colors):
-                    for _, row in group.iterrows():
-                        ax.text(x=row['X'], y=row['Y'], s=row.name, color=color)
+                if not supplementary_projections.empty:
+                    for (label, group), color in zip(group_by_supp, colors):
+                        for _, row in group.iterrows():
+                            ax.text(x=row['X'], y=row['Y'], s=row.name, color=color)
             else:
                 for _, row in data.iterrows():
                     ax.text(x=row['X'], y=row['Y'], s=row.name)
-                for _, row in supp.iterrows():
-                    ax.text(x=row['X'], y=row['Y'], s=row.name)
+                if not supplementary_projections.empty:
+                    for _, row in supp.iterrows():
+                        ax.text(x=row['X'], y=row['Y'], s=row.name)
 
         if (ellipse_outline or ellipse_fill) and color_labels is not None:
             for (label, group), color in zip(group_by, colors):
-                x_mean, y_mean, width, height, angle = util.build_ellipse(group['X'], group['Y'])
+                x_mean, y_mean, width, height, angle = plot_util.build_ellipse(group['X'], group['Y'])
                 ax.add_patch(mpl.patches.Ellipse(
                     (x_mean, y_mean),
                     width,
@@ -79,7 +85,12 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
                     alpha=0.2 + (0.3 if not show_points else 0) if ellipse_fill else 1
                 ))
 
-        ax.axis('equal')
+        if not supplementary_projections.empty:
+            active_legend = mlines.Line2D([], [], marker='.', linestyle='', color=GRAYS['dark'],
+                                          markersize=14, label='Active rows')
+            supp_legend = mlines.Line2D([], [], marker='*', linestyle='', color=GRAYS['dark'],
+                                             markersize=14, label='Supplementary rows')
+            ax.legend(handles=[active_legend, supp_legend])
 
         ax.set_title('Row projections')
         ax.set_xlabel('Component {} ({}%)'.format(axes[0], 100 * round(explained_inertia[axes[0]], 2)))
@@ -88,27 +99,39 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
         return fig, ax
 
 
-    def correlation_circle(self, axes, variable_correlations, explained_inertia, show_labels):
+    def correlation_circle(self, axes, column_correlations, supplementary_column_correlations,
+                           explained_inertia, show_labels):
         fig, ax = plt.subplots()
 
         ax.grid('on')
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
-        ax.axhline(y=0, linestyle='--', linewidth=1.2, color=self.colors['dark-gray'], alpha=0.6)
-        ax.axvline(x=0, linestyle='--', linewidth=1.2, color=self.colors['dark-gray'], alpha=0.6)
+        ax.axhline(y=0, linestyle='--', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
+        ax.axvline(x=0, linestyle='--', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
 
         # Plot the arrows and add text
-        for _, row in variable_correlations.iterrows():
-            x = row[axes[0]]
-            y = row[axes[1]]
+        for _, row in column_correlations.iterrows():
             ax.annotate(
                 row.name if show_labels else '',
                 xy=(0, 0),
-                xytext=(x, y),
-                arrowprops={'arrowstyle': '<-'}
+                xytext=(row[axes[0]], row[axes[1]]),
+                arrowprops=dict(arrowstyle='<-', edgecolor='black')
             )
 
-        circle = plt.Circle((0, 0), radius=1, color=self.colors['dark-gray'], fill=False, lw=1.4)
+        if not supplementary_column_correlations.empty:
+            for _, row in supplementary_column_correlations.iterrows():
+                ax.annotate(
+                    row.name if show_labels else '',
+                    xy=(0, 0),
+                    xytext=(row[axes[0]], row[axes[1]]),
+                    arrowprops=dict(arrowstyle='<-', edgecolor='red')
+                )
+            # Add legend to distinguish active and supplementary columns
+            active_legend = mpatches.Patch(color='black', label='Active columns')
+            supp_legend = mpatches.Patch(color='red', label='Supplementary columns')
+            plt.legend(handles=[active_legend, supp_legend])
+
+        circle = plt.Circle((0, 0), radius=1, color=GRAYS['dark'], fill=False, lw=1.4)
         ax.add_patch(circle)
 
         ax.margins(0.01)

@@ -2,12 +2,12 @@
 
 from setuptools import setup, find_packages
 
-from prince import __version__, __authors__, __project__
+from prince import __version__, __author__, __project__
 
 
 setup(
-    author=__authors__,
-    author_email=['axel.bellec@outlook.fr', 'maxhalford25@gmail.com'],
+    author=__author__,
+    author_email='maxhalford25@gmail.com',
     dependency_links=[],
     description='Factorial analysis in Python',
     install_requires=[
