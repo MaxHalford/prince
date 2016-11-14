@@ -27,6 +27,8 @@ install:
 
 script:
   - py.test --verbose --cov=prince tests/
+  - travis-sphinx build
 
 after_success:
   - coveralls
+  - travis-sphinx deploy
