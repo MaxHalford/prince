@@ -1,8 +1,17 @@
 DEV.md
 *.pyc
+
 .cache/
 .ipynb_checkpoints/
 build/
 dist/
-doc/build/
 prince.egg-info/
+
+# Documentation
+objects.inv
+*.html
+*.js
+
+doc/build/
+doc/_sources/
+doc/_static/
