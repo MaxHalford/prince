@@ -13,5 +13,3 @@ objects.inv
 *.js
 
 docs/build/
-docs/_sources/
-docs/_static/
