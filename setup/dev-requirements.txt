@@ -3,3 +3,4 @@ pytest>=2.9.1
 pytest-cov>=2.2.1
 Sphinx>=1.4.8
 sphinx-rtd-theme>=0.1.9
+travis-sphinx>=1.4.2
