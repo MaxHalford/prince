@@ -12,6 +12,6 @@ objects.inv
 *.html
 *.js
 
-doc/build/
-doc/_sources/
-doc/_static/
+docs/build/
+docs/_sources/
+docs/_static/

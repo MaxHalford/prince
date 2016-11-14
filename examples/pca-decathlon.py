@@ -5,7 +5,7 @@ import prince
 
 
 # Load a dataframe
-df = pd.read_csv('doc/data/decathlon.csv', index_col=0)
+df = pd.read_csv('data/decathlon.csv', index_col=0)
 
 # Compute the PCA
 pca = prince.PCA(df, nbr_components=-1, supplementary_rows=['Uldal'],

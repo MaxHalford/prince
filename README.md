@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="doc/img/logo.png" alt="prince_logo"/>
+  <img src="docs/img/logo.png" alt="prince_logo"/>
 </div>
 
 <br/>
@@ -52,11 +52,11 @@ plt.show()
 
 The first plot displays the rows in the initial dataset projected on to the two first right eigenvectors (the projections are called principal components). The ellipses are 90% confidence intervals.
 
-![row_projections](doc/img/row_projections.png)
+![row_projections](docs/img/row_projections.png)
 
 The second plot displays the cumulative contributions of each eigenvector (by looking at the corresponding eigenvalues). In this case the total contribution is above 95% while only considering the two first eigenvectors.
 
-![cumulative_inertia](doc/img/cumulative_inertia.png)
+![cumulative_inertia](docs/img/cumulative_inertia.png)
 
 
 ## Installation
@@ -133,7 +133,7 @@ Advanced methods are to be used when variables or individuals are structured in 
 
 All of the usable properties and charts are detailed in the following Jupyter notebooks. The notebooks also serve as examples.
 
-- [PCA](doc/pca.ipynb)
+- [PCA](docs/pca.ipynb)
 
 
 ## Perfomance
@@ -145,14 +145,14 @@ Prince is made to be used on datasets that fit in memory. Currently `fbpca` is t
 
 Factor analysis is quite a popular topic. A lot of material is available online. The following papers are the ones we recommend. We find them short, thorough and kind to the eyes.
 
-- [Eigenvalues](doc/papers/Eigenvalues.pdf)
-- [Singular Value Decomposition](doc/papers/SVD.pdf)
-- [Principal Component Analysis](doc/papers/PCA.pdf)
-- [Correspondence Analysis](doc/papers/CA.pdf)
-- [Multiple Correspondence Analysis](doc/papers/MCA.pdf)
-- [Global overview](doc/papers/Overview.pdf)
+- [Eigenvalues](docs/papers/Eigenvalues.pdf)
+- [Singular Value Decomposition](docs/papers/SVD.pdf)
+- [Principal Component Analysis](docs/papers/PCA.pdf)
+- [Correspondence Analysis](docs/papers/CA.pdf)
+- [Multiple Correspondence Analysis](docs/papers/MCA.pdf)
+- [Global overview](docs/papers/Overview.pdf)
 
-For math oriented minds, [Halko's paper](doc/papers/Halko.pdf) is worth knowing about.
+For math oriented minds, [Halko's paper](docs/papers/Halko.pdf) is worth knowing about.
 
 
 ## FAQ
