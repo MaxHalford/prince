@@ -8,8 +8,4 @@ dist/
 prince.egg-info/
 
 # Documentation
-objects.inv
-*.html
-*.js
-
 docs/build/
