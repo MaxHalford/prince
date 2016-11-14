@@ -25,13 +25,13 @@
 <br/>
 
 <br/>
-<div align="center">Prince is a factorial analysis library for datasets that fit in memory.</div>
+<div align="center">Prince is a factor analysis library for datasets that fit in memory.</div>
 <br/>
 
 
 ## Example
 
-Prince uses [pandas](http://pandas.pydata.org/) to manipulate dataframe, as such it expects an initial dataframe to work with. In the following example, a [*Principal Component Analysis* (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) is applied to the iris dataset. Under the hood Prince decomposes the dataframe into two eigenvector matrices and one eigenvalue array thanks to a [*Singular Value Decomposition* (SVD)](https://www.wikiwand.com/en/Singular_value_decomposition). The eigenvectors can then be used to project the initial dataset onto lower dimensions.
+Prince uses [pandas](http://pandas.pydata.org/) to manipulate dataframe, as such it expects an initial dataframe to work with. In the following example, a [Principal Component Analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) is applied to the iris dataset. Under the hood Prince decomposes the dataframe into two eigenvector matrices and one eigenvalue array thanks to a [Singular Value Decomposition (SVD)](https://www.wikiwand.com/en/Singular_value_decomposition). The eigenvectors can then be used to project the initial dataset onto lower dimensions.
 
 ```python
 import matplotlib.pyplot as plt
@@ -99,11 +99,11 @@ Factorial analysis is a popular method for projecting/representing high-dimensio
 - visualizing (the data can be projected on a 2 or 3 dimensional chart),
 - creating smaller datasets which preserve as much as possible the information contained in original dataset.
 
-Although factorial analysis is popular, practitionners tend to mix concepts up -- *Principal Component Analysis* (PCA) **is not** *Singular Value Decomposition* (SVD). Moreover, more advanced methods that extend PCA such as *Correspondance Analysis* and *Factor Analysis of Mixed Data (FAMD)* are not very well known -- at least outside of French academia.
+Although factor analysis is popular, practitionners tend to mix concepts up -- *Principal Component Analysis* (PCA) **is not** *Singular Value Decomposition* (SVD). Moreover, more advanced methods that extend PCA such as *Correspondance Analysis* and *Factor Analysis of Mixed Data (FAMD)* are not very well known -- at least outside of French academia.
 
 The Rennes university published [FactoMineR](http://factominer.free.fr/) in 2008; whilst being a library which offers many possibilities, FactoMineR doesn't seem to be actively maintained. What's more, FactoMineR and the underlying SVD operation are written in pure R, which isn't very efficient. In parallel, [Fast Randomized SVD](https://arxiv.org/pdf/1509.00296.pdf) has become an efficient way to obtain eigen{vectors|values} approximations in drastically less time than regular SVD.
 
-The goal with Prince is to provide a user-friendly library for performing all sorts of large-scale factorial analysis. Although [Facebook](https://research.facebook.com/blog/fast-randomized-svd/) and then [sklearn](http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.RandomizedPCA.html) have implemented randomized SVD, it isn't trivial for users to use them, let alone to understand and visualize results in a timely fashion.
+The goal with Prince is to provide a user-friendly library for performing all sorts of large-scale factor analysis. Although [Facebook](https://research.facebook.com/blog/fast-randomized-svd/) and then [sklearn](http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.RandomizedPCA.html) have implemented randomized SVD, it isn't trivial for users to use them, let alone to understand and visualize results in a timely fashion.
 
 Prince builds on top of Randomized SVD engines such as [fbpca](https://github.com/facebook/fbpca) to provide different kinds of algorithms with out-of-the-box charts. The main advantage of using randomized SVD is that the number of eigenvectors that are calculated can be chosen. This is particularly useful because often one only needs the first few eigenvectors to be able to plot relevant information.
 
@@ -166,7 +166,7 @@ import pandas as pd
 import prince
 
 df = pd.read_csv('iris.csv')
-pca = prince.PCA(df.copy(deep=True))
+pca = prince.PCA(df.copy())
 ```
 
 **Some of the information on my chart seems to be cut-off, how do I fix this?**

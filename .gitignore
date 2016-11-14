@@ -1,8 +1,8 @@
+DEV.md
 *.pyc
 .cache/
 .ipynb_checkpoints/
-prince.egg-info/
-dist/
 build/
-
-DEV.md
+dist/
+doc/build/
+prince.egg-info/

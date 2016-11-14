@@ -9,7 +9,7 @@ class Base():
     Attributes:
         plotter (prince.Plotter): A plotter instance used for displaying charts. The plotter is
             defined by the type of component analysis and the plotting backend. The plotter is
-            pre-configuredto display the charts usually associated with each kind of factorial
+            pre-configuredto display the charts usually associated with each kind of factor
             analysis.
         svd (prince.SVD): The object containing the results from the Singular Value Decomposition.
         X (pandas.DataFrame): The dataframe on which was applied the SVD. For various (good)

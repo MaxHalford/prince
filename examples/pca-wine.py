@@ -9,9 +9,9 @@ wines = {
     3: 'barbera'
 }
 
-df = pd.read_csv('../doc/data/wine.csv')
+df = pd.read_csv('data/wine.csv')
 df['kind'] = df['class'].apply(lambda x: wines[x])
-del df['class']
+df.drop('class', axis=1, inplace=True)
 
 pca = prince.PCA(df, nbr_components=-1)
 

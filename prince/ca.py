@@ -16,7 +16,7 @@ class CA(Base):
             k=nbr_components,
             plotter=plotter
         )
-        self._set_plotter(plotter)
+        self._set_plotter(plotter_name=plotter)
 
         # Compute the relative frequency of each cell by dividing it by the total sum of all cells
         self.N = np.sum(self.X.values)

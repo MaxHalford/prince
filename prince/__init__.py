@@ -11,4 +11,4 @@ from prince.svd import SVD
 
 __project__ = 'prince'
 __author__ = 'Max Halford'
-__version__ = '0.1.2'
+__version__ = '0.1.3'

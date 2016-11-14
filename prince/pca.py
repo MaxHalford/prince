@@ -21,8 +21,6 @@ class PCA(Base):
         self.supplementary_columns = pd.DataFrame()
         self.supplementary_rows = pd.DataFrame()
 
-        self.scaled = scaled
-        self._set_plotter(plotter)
 
         self._filter(
             dataframe=dataframe,
@@ -34,7 +32,9 @@ class PCA(Base):
             k=nbr_components,
             plotter=plotter
         )
+        self._set_plotter(plotter_name=plotter)
 
+        self.scaled = scaled
         if self.scaled:
             mean = self.X.mean()
             std = self.X.std()

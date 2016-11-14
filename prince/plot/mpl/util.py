@@ -6,8 +6,8 @@ from ..palettes import SEABORN
 
 
 def create_discrete_cmap(n):
-    """Create an n-bin discrete colormap from the specified input map."""
-    if n <= 6:
+    """Create an n-bin discrete colormap."""
+    if n <= len(SEABORN):
         colors = list(SEABORN.values())[:n]
     else:
         base = plt.cm.get_cmap('Paired')
