@@ -161,11 +161,11 @@ html_theme_options = {
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
 #
-html_title = 'Prince v' + release
+html_title = 'Prince'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #
-html_short_title = 'Prince documentation'
+#html_short_title = ''
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
