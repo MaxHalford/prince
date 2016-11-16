@@ -12,7 +12,6 @@ setup(
     install_requires=[
         'fbpca>=1.0',
         'matplotlib>=1.5',
-        'numpy>=1.11.2',
         'pandas>=0.19.0'
     ],
     license=__license__,
