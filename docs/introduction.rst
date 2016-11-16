@@ -2,4 +2,4 @@
 Introduction
 ============
 
-.. image:: ../img/logo.png
+.. image:: _static/logo.png

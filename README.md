@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/img/logo.png" alt="prince_logo"/>
+  <img src="docs/_static/logo.png" alt="prince_logo"/>
 </div>
 
 <br/>
@@ -55,11 +55,11 @@ plt.show()
 
 The first plot displays the rows in the initial dataset projected on to the two first right eigenvectors (the projections are called principal components). The ellipses are 90% confidence intervals.
 
-![row_projections](docs/img/row_projections.png)
+![row_projections](docs/_static/row_projections.png)
 
 The second plot displays the cumulative contributions of each eigenvector (by looking at the corresponding eigenvalues). In this case the total contribution is above 95% while only considering the two first eigenvectors.
 
-![cumulative_inertia](docs/img/cumulative_inertia.png)
+![cumulative_inertia](docs/_static/cumulative_inertia.png)
 
 
 ## Installation

@@ -47,7 +47,7 @@ help:
 
 .PHONY: server
 server:
-	sphinx-autobuild source build
+	sphinx-autobuild . build
 
 .PHONY: clean
 clean:

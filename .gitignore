@@ -5,7 +5,5 @@ DEV.md
 .ipynb_checkpoints/
 build/
 dist/
-prince.egg-info/
-
-# Documentation
 docs/build/
+prince.egg-info/
