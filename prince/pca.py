@@ -90,7 +90,7 @@ class PCA(Base):
     def supplementary_row_principal_components(self):
         """A dataframe of shape (*, `k`) containing the supplementary row principal components."""
         return pd.DataFrame(
-            data=self.supplementary_rows @ self.svd.V.T,
+            data=self.supplementary_rows.dot(self.svd.V.T),
             index=self.supplementary_rows.index
         )
 
