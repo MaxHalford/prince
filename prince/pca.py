@@ -84,13 +84,13 @@ class PCA(Base):
     def row_principal_components(self):
         """A dataframe of shape (`n`, `k`) containing the row principal components obtained by
         projecting `X` on it's right eigenvectors."""
-        return pd.DataFrame(data=self.X @ self.svd.V.T, index=self.X.index)
+        return pd.DataFrame(data=self.X.dot(self.svd.V.T), index=self.X.index)
 
     @property
     def supplementary_row_principal_components(self):
         """A dataframe of shape (*, `k`) containing the supplementary row principal components."""
         return pd.DataFrame(
-            data=self.supplementary_rows @ self.svd.V.T,
+            data=self.supplementary_rows.dot(self.svd.V.T),
             index=self.supplementary_rows.index
         )
 

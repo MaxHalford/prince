@@ -44,10 +44,9 @@ class CA(Base):
 
     @property
     def expected_frequencies(self):
-        """Compute expected frequencies by performing a matrix multiplication between the rows sums
-        and the column sums."""
+        """Compute expected frequencies by performing a matrix multiplication between the row sums and the column sums."""
         return pd.DataFrame(
-            data=self.row_sums.values.reshape(-1, 1) @ self.column_sums.values.reshape(1, -1),
+            data=np.dot(self.row_sums.values.reshape(-1, 1), self.column_sums.values.reshape(1, -1)),
             index=self.P.index,
             columns=self.P.columns
         )
@@ -63,13 +62,13 @@ class CA(Base):
     @property
     def standardized_residuals(self):
         """The matrix of standardized residuals."""
-        return self.row_weights @ (self.P - self.expected_frequencies).values @ self.column_weights
+        return self.row_weights.dot((self.P - self.expected_frequencies).values).dot(self.column_weights)
 
     @property
     def row_principal_components(self):
         """The row principal components."""
         return pd.DataFrame(
-            data=self.row_weights @ self.svd.U @ np.diag(self.svd.s),
+            data=self.row_weights.dot(self.svd.U).dot(np.diag(self.svd.s)),
             index=self.P.index
         )
 
@@ -97,7 +96,7 @@ class CA(Base):
     @property
     def row_profiles(self):
         return pd.DataFrame(
-            data=np.diag(1 / self.row_sums) @ self.P,
+            data=np.diag(1 / self.row_sums).dot(self.P),
             index=self.P.index,
             columns=self.P.columns
         )
@@ -105,7 +104,7 @@ class CA(Base):
     @property
     def column_principal_components(self):
         return pd.DataFrame(
-            data=self.column_weights @ self.svd.V.T @ np.diag(self.svd.s),
+            data=self.column_weights.dot(self.svd.V.T).dot(np.diag(self.svd.s)),
             index=self.P.columns
         )
 
@@ -131,7 +130,7 @@ class CA(Base):
     @property
     def column_profiles(self):
         return pd.DataFrame(
-            data=(np.diag(1 / self.column_sums) @ self.P.T).T,
+            data=(np.diag(1 / self.column_sums).dot(self.P.T).T),
             index=self.P.index,
             columns=self.P.columns
         )
