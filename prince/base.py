@@ -49,10 +49,6 @@ class Base():
         raise NotImplementedError
 
     @property
-    def n(self):
-        return self.n
-
-    @property
     def total_inertia(self):
         """The total inertia can be obtained differently for each kind of component analysis."""
         raise NotImplementedError
