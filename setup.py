@@ -2,21 +2,21 @@
 
 from setuptools import setup, find_packages
 
-from prince import __version__, __author__, __project__
+from prince import  __author__, __license__, __title__, __version__
 
 
 setup(
     author=__author__,
     author_email='maxhalford25@gmail.com',
-    dependency_links=[],
-    description='Factorial analysis in Python',
+    description='Factor analysis for in-memory datasets in Python',
     install_requires=[
         'fbpca>=1.0',
         'matplotlib>=1.5',
         'pandas>=0.19.0'
     ],
-    license='MIT',
-    name=__project__,
+    license=__license__,
+    long_description=open('README.md', 'r').read(),
+    name=__title__,
     packages=find_packages(exclude=['tests']),
     url='https://github.com/MaxHalford/Prince',
     version=__version__,

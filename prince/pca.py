@@ -21,7 +21,6 @@ class PCA(Base):
         self.supplementary_columns = pd.DataFrame()
         self.supplementary_rows = pd.DataFrame()
 
-
         self._filter(
             dataframe=dataframe,
             supplementary_row_names=supplementary_rows if supplementary_rows else [],

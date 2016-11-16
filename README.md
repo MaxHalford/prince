@@ -5,6 +5,9 @@
 <br/>
 
 <div align="center">
+  <a href='http://prince.readthedocs.io/en/latest/?badge=latest'>
+    <img src='https://readthedocs.org/projects/prince/badge/?version=latest' alt='Documentation Status' />
+  </a>
   <a href="https://badge.fury.io/py/prince">
     <img src="https://badge.fury.io/py/prince.svg?style=flat-square" alt="PyPI version"/>
   </a>
@@ -31,7 +34,7 @@
 
 ## Example
 
-Prince uses [pandas](http://pandas.pydata.org/) to manipulate dataframe, as such it expects an initial dataframe to work with. In the following example, a [Principal Component Analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) is applied to the iris dataset. Under the hood Prince decomposes the dataframe into two eigenvector matrices and one eigenvalue array thanks to a [Singular Value Decomposition (SVD)](https://www.wikiwand.com/en/Singular_value_decomposition). The eigenvectors can then be used to project the initial dataset onto lower dimensions.
+Prince uses [pandas](http://pandas.pydata.org/) to manipulate dataframes, as such it expects an initial dataframe to work with. In the following example, a [Principal Component Analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) is applied to the iris dataset. Under the hood Prince decomposes the dataframe into two eigenvector matrices and one eigenvalue array thanks to a [Singular Value Decomposition (SVD)](https://www.wikiwand.com/en/Singular_value_decomposition). The eigenvectors can then be used to project the initial dataset onto lower dimensions.
 
 ```python
 import matplotlib.pyplot as plt
@@ -40,7 +43,7 @@ import pandas as pd
 import prince
 
 
-df = pd.read_csv('examples/data/iris.csv')
+df = pd.read_csv('data/iris.csv')
 
 pca = prince.PCA(df, nbr_components=4)
 

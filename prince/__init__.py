@@ -9,6 +9,8 @@ from prince.svd import SVD
     --------------------------------
 """
 
-__project__ = 'prince'
-__author__ = 'Max Halford'
+__title__ = 'prince'
 __version__ = '0.1.3'
+__author__ = 'Max Halford'
+__license__ = 'MIT'
+__copyright__ = 'Copyright 2016 Max Halford'
