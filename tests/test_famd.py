@@ -53,7 +53,7 @@ def N(indicator_matrix):
 @pytest.fixture
 def famd(df, k):
     """The executed CA."""
-    return FAMD(df, nbr_components=k)
+    return FAMD(df, n_components=k)
 
 
 def test_dimensions(famd, n, p):

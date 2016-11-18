@@ -1,3 +1,4 @@
+"""Multiple Correspondence Analysis"""
 import pandas as pd
 
 from . import util
@@ -8,14 +9,13 @@ from .plot.mpl.mca import MplMCAPlotter
 
 class MCA(CA):
 
-    """Multiple Correspondence Analysis
-
+    """
     Attributes:
         q (int): The number of columns in the initial dataframe; as opposed to `p` which is the
             number of columns in the indicator matrix of the initial dataframe.
     """
 
-    def __init__(self, dataframe, nbr_components=2, supplementary_rows=None,
+    def __init__(self, dataframe, n_components=2, supplementary_rows=None,
                  supplementary_columns=None, use_benzecri_rates=False, plotter='mpl'):
 
         if not isinstance(dataframe, pd.DataFrame):
@@ -37,7 +37,7 @@ class MCA(CA):
 
         super(MCA, self).__init__(
             dataframe=pd.get_dummies(dataframe),
-            nbr_components=nbr_components,
+            n_components=n_components,
             plotter=plotter
         )
 
@@ -89,14 +89,14 @@ class MCA(CA):
         return pd.DataFrame({
             column.name: [
                 util.correlation_ratio(column.tolist(), principal_component)
-                for _, principal_component in self.row_principal_components.iteritems()
+                for _, principal_component in self.row_projections.iteritems()
             ]
             for _, column in self.initial_dataframe.iteritems()
         }).T
 
     @property
     def total_inertia(self):
-        return (self.p - self.q) / self.q
+        return (self.n_columns- self.q) / self.q
 
     def plot_rows(self, axes=(0, 1), show_points=True, show_labels=False, color_by=None,
                   ellipse_outline=False, ellipse_fill=False):
@@ -112,8 +112,8 @@ class MCA(CA):
 
         return self.plotter.row_projections(
             axes=axes,
-            projections=self.row_principal_components,
-            supplementary_projections=pd.DataFrame(columns=self.row_principal_components.columns), # To do
+            projections=self.row_projections,
+            supplementary_projections=pd.DataFrame(columns=self.row_projections.columns), # To do
             explained_inertia=self.explained_inertia,
             show_points=show_points,
             show_labels=show_labels,
@@ -127,7 +127,7 @@ class MCA(CA):
         """Plot the row and column projections."""
         return self.plotter.row_column_projections(
             axes=axes,
-            row_projections=self.row_principal_components,
+            row_projections=self.row_projections,
             column_projections=self.column_principal_components,
             explained_inertia=self.explained_inertia,
             show_row_points=show_row_points,

@@ -38,9 +38,9 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
             if not supplementary_projections.empty:
                 group_by_supp = supp.groupby('label')
             labels = list(group_by.groups.keys())
-            nbr_colors = len(labels)
-            cmap = mpl_util.create_discrete_cmap(nbr_colors)
-            colors = cmap(range(nbr_colors))
+            n_colors = len(labels)
+            cmap = mpl_util.create_discrete_cmap(n_colors)
+            colors = cmap(range(n_colors))
             mpl_util.add_color_bar(ax, cmap, labels)
 
         if show_points:

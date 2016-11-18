@@ -6,7 +6,7 @@ import prince
 
 df = pd.read_csv('data/ogm.csv')
 
-mca = prince.MCA(df, nbr_components=-1)
+mca = prince.MCA(df, n_components=-1)
 
 fig1, ax1 = mca.plot_cumulative_inertia()
 fig2, ax2 = mca.plot_rows(show_points=True, show_labels=False,

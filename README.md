@@ -45,7 +45,7 @@ import prince
 
 df = pd.read_csv('data/iris.csv')
 
-pca = prince.PCA(df, nbr_components=4)
+pca = prince.PCA(df, n_components=4)
 
 fig1, ax1 = pca.plot_cumulative_inertia()
 fig2, ax2 = pca.plot_rows(color_by='class', ellipse_fill=True)
@@ -55,11 +55,11 @@ plt.show()
 
 The first plot displays the rows in the initial dataset projected on to the two first right eigenvectors (the projections are called principal components). The ellipses are 90% confidence intervals.
 
-![row_projections](docs/_static/row_projections.png)
+![row_projections](docs/_static/pca_row_projections.png)
 
 The second plot displays the cumulative contributions of each eigenvector (by looking at the corresponding eigenvalues). In this case the total contribution is above 95% while only considering the two first eigenvectors.
 
-![cumulative_inertia](docs/_static/cumulative_inertia.png)
+![cumulative_inertia](docs/_static/pca_cumulative_inertia.png)
 
 
 ## Installation
@@ -182,7 +182,7 @@ import prince
 
 
 df = pd.read_csv('.iris.csv')
-pca = prince.PCA(df, nbr_components=4)
+pca = prince.PCA(df, n_components=4)
 
 fig, ax = pca.plot_cumulative_inertia()
 fig.savefig('cumulative_inertia.png', bbox_inches='tight', pad_inches=0.5)

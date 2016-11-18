@@ -13,6 +13,8 @@ Contents:
 
    introduction
    pca
+   ca
+   mca
 
 
 Indices and tables

@@ -46,7 +46,7 @@ def k(p):
 @pytest.fixture
 def pca(load_df, k):
     """The executed PCA."""
-    return PCA(load_df, nbr_components=k, scaled=True)
+    return PCA(load_df, n_components=k, scaled=True)
 
 
 @pytest.fixture
@@ -118,7 +118,7 @@ def test_cov_trace_total_inertia(pca, cov_matrix):
 
 def test_eigenvalues_column_inertias(pca):
     """Check the eigenvalues are the sums of the column inertias."""
-    squared_row_pc = np.square(pca.row_principal_components)
+    squared_row_pc = np.square(pca.row_projections)
     col_inertias = squared_row_pc.sum(axis='rows')
     for eig, col_inertia in zip(pca.eigenvalues, col_inertias):
         assert np.isclose(eig, col_inertia)
@@ -144,8 +144,8 @@ def test_row_components_variance(pca, k):
     covariance between each row projection is nil."""
     eigenvalues = pca.eigenvalues
 
-    for i, (_, p1) in enumerate(pca.row_principal_components.iteritems()):
-        for j, (_, p2) in enumerate(pca.row_principal_components.iteritems()):
+    for i, (_, p1) in enumerate(pca.row_projections.iteritems()):
+        for j, (_, p2) in enumerate(pca.row_projections.iteritems()):
             if i == j:
                 assert np.isclose(p1.var() * pca.total_inertia / k, eigenvalues[i])
             else:

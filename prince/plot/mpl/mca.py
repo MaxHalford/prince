@@ -41,9 +41,9 @@ class MplMCAPlotter(MplPlotter, MCAPlotter):
             data['label'] = column_projections.index.to_series().apply(lambda x: x.split('_')[0])
             group_by = data.groupby('label')
             labels = list(group_by.groups.keys())
-            nbr_colors = len(labels)
-            cmap = mpl_util.create_discrete_cmap(nbr_colors)
-            colors = cmap(range(nbr_colors))
+            n_colors = len(labels)
+            cmap = mpl_util.create_discrete_cmap(n_colors)
+            colors = cmap(range(n_colors))
             mpl_util.add_color_bar(ax, cmap, labels)
 
         if show_column_points:

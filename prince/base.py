@@ -4,26 +4,7 @@ import pandas as pd
 
 class Base():
 
-    """Base contains the common operations performed during any factor analysis.
-
-    Attributes:
-        plotter (prince.Plotter): A plotter instance used for displaying charts. The plotter is
-            defined by the type of component analysis and the plotting backend. The plotter is
-            pre-configuredto display the charts usually associated with each kind of factor
-            analysis.
-        svd (prince.SVD): The object containing the results from the Singular Value Decomposition.
-        X (pandas.DataFrame): The dataframe on which was applied the SVD. For various (good)
-            reasons, this dataframe can differ from the one provided by the user.
-        n (int): The number of rows in `X`.
-        p (int): The number of columns in `X`.
-        k (int): The number of computed principal components, if inferior or equal to `p`.
-        eigenvalues (list(float)): The list of eigenvalues resulting from the SVD operation.
-        total_inertia (float): The total inertia, which is equivalent to the sum of the
-            eigenvalues if they have all been calculated.
-        explained_inertia (list(float)): The percentage of inertia associated to each principal
-            component calculated by dividing the eigenvalues by the total inertia.
-        cumulative_explained_inertia (list(float)): The cumsum of the explained inertia.
-    """
+    """Base contains the common operations performed during any factor analysis."""
 
     def __init__(self, dataframe, k, plotter):
 
@@ -33,14 +14,13 @@ class Base():
         if not isinstance(dataframe, pd.DataFrame):
             raise ValueError('dataframe muse be a pandas.DataFrame')
 
-
         self.plotter = None
         self.svd = None
 
-        self.X = dataframe
-        self.n, self.p = self.X.shape
+        self.__x = dataframe
+        self.__n, self.__p = dataframe.shape
         # Determine the number of components computed during SVD
-        self.k = self.p if k == -1 else min(k, self.p)
+        self.__k = self.__p if k == -1 else min(k, self.__p)
 
     def _compute_svd(self):
         raise NotImplementedError
@@ -49,23 +29,63 @@ class Base():
         raise NotImplementedError
 
     @property
+    def X(self):
+        """The dataset that is used to perform the SVD."""
+        return self.__x
+
+    @X.setter
+    def X(self, matrix):
+        self.__x = matrix
+
+    @property
+    def n_rows(self):
+        """The number of rows in `X`."""
+        return self.__n
+
+    @property
+    def n_columns(self):
+        """The number of columns in `X`."""
+        return self.__p
+
+    @property
+    def n_components(self):
+        """The number of principal components that are calculated."""
+        return self.__k
+
+    @property
     def total_inertia(self):
         """The total inertia can be obtained differently for each kind of component analysis."""
         raise NotImplementedError
 
     @property
     def eigenvalues(self):
-        """The eigenvalues obtained by squaring the singular values obtained from an SVD."""
+        """The eigenvalues associated to each principal component.
+
+        The eigenvalues are obtained by squaring the singular values obtained from a SVD.
+
+        Returns:
+            List[float]: The eigenvalues ordered increasingly.
+        """
         return np.square(self.svd.s).tolist()
 
     @property
     def explained_inertia(self):
-        """The percentage of explained inertia per principal component."""
+        """The percentage of explained inertia per principal component.
+
+        The explained inertia is obtained by dividing each eigenvalue by the total inertia.
+
+        Returns:
+            List[float]: The explained inertias ordered increasingly.
+        """
         return [eig / self.total_inertia for eig in self.eigenvalues]
 
     @property
     def cumulative_explained_inertia(self):
-        """The cumulative percentage of explained inertia per principal component."""
+        """The cumulative percentage of explained inertia per principal component.
+
+        Returns:
+            List[float]: The cumulative explained inertias ordered increasingly.
+        """
         return np.cumsum(self.explained_inertia).tolist()
 
     def plot_inertia(self):
@@ -73,7 +93,13 @@ class Base():
         return self.plotter.inertia(explained_inertia=self.explained_inertia)
 
     def plot_cumulative_inertia(self, threshold=0.8):
-        """Plot a Scree diagram of the cumulative explained inertia per column."""
+        """Plot a Scree diagram of the cumulative explained inertia per column.
+
+        Args:
+            threshold (float): The threshold at which a vertical line should be drawn. This is
+                useful for finding the number of principal components required to reach a certain
+                amount of cumulative inertia.
+        """
         return self.plotter.cumulative_inertia(
             cumulative_explained_inertia=self.cumulative_explained_inertia,
             threshold=threshold

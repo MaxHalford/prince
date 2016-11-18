@@ -41,7 +41,7 @@ def N(df):
 @pytest.fixture
 def ca(df, k):
     """The executed CA."""
-    return CA(df, nbr_components=k)
+    return CA(df, n_components=k)
 
 
 def test_dimensions(ca, n, p):

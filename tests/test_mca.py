@@ -54,7 +54,7 @@ def N(indicator_matrix):
 @pytest.fixture
 def mca(df, k):
     """The executed CA."""
-    return MCA(df, nbr_components=k)
+    return MCA(df, n_components=k)
 
 
 def test_dimensions(mca, n, p):

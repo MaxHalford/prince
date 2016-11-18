@@ -1,3 +1,4 @@
+"""Correspondance Analysis"""
 import numpy as np
 import pandas as pd
 
@@ -8,12 +9,10 @@ from .svd import SVD
 
 class CA(Base):
 
-    """Correspondance Analysis"""
-
-    def __init__(self, dataframe, nbr_components=2, plotter='mpl'):
+    def __init__(self, dataframe, n_components=2, plotter='mpl'):
         super(CA, self).__init__(
             dataframe=dataframe,
-            k=nbr_components,
+            k=n_components,
             plotter=plotter
         )
         self._set_plotter(plotter_name=plotter)
@@ -25,7 +24,7 @@ class CA(Base):
         self._compute_svd()
 
     def _compute_svd(self):
-        self.svd = SVD(X=self.standardized_residuals, k=self.k)
+        self.svd = SVD(X=self.standardized_residuals, k=self.n_components)
 
     def _set_plotter(self, plotter_name):
         self.plotter = {
@@ -65,7 +64,7 @@ class CA(Base):
         return self.row_weights.dot((self.P - self.expected_frequencies).values).dot(self.column_weights)
 
     @property
-    def row_principal_components(self):
+    def row_projections(self):
         """The row principal components."""
         return pd.DataFrame(
             data=self.row_weights.dot(self.svd.U).dot(np.diag(self.svd.s)),
@@ -76,20 +75,20 @@ class CA(Base):
     def row_standard_components(self):
         """The row standard components by projecting X on it's right eigenvectors before dividing it
         by the eigenvalues."""
-        principal_components = self.row_principal_components
+        principal_components = self.row_projections
         return principal_components.div(self.eigenvalues, axis='columns')
 
     @property
     def row_component_contributions(self):
         """The contribution of each row towards eacb principal component."""
-        squared_row_pc = np.square(self.row_principal_components)
+        squared_row_pc = np.square(self.row_projections)
         squared_row_pc_scaled = squared_row_pc.multiply(self.row_sums, axis='rows')
         return squared_row_pc_scaled.div(self.eigenvalues, axis='columns')
 
     @property
     def row_cosine_similarities(self):
         """The cosine of the angle shaped by the row principal components and the eigenvectors."""
-        squared_row_pc = np.square(self.row_principal_components)
+        squared_row_pc = np.square(self.row_projections)
         total_squares = squared_row_pc.sum(axis='columns')
         return squared_row_pc.div(total_squares, axis='rows')
 
@@ -147,7 +146,7 @@ class CA(Base):
         """Plot the row and column projections."""
         return self.plotter.row_column_projections(
             axes=axes,
-            row_projections=self.row_principal_components,
+            row_projections=self.row_projections,
             column_projections=self.column_principal_components,
             explained_inertia=self.explained_inertia,
             show_row_points=show_row_points,
