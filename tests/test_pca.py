@@ -152,7 +152,7 @@ def test_row_components_variance(pca, k):
                 assert np.isclose(np.cov(p1, p2)[0][1], 0)
 
 
-def test_row_components_contributions(pca, k):
+def test_row_components_contributions(pca):
     """Check the sum of row contributions is equal to the total inertia."""
     for _, col_sum in pca.row_component_contributions.sum(axis='rows').iteritems():
         assert np.isclose(col_sum, 1)

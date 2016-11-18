@@ -21,7 +21,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-import prince
 from prince import __version__
 
 # -- General configuration ------------------------------------------------

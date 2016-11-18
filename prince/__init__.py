@@ -4,11 +4,6 @@ from prince.mca import MCA
 from prince.pca import PCA
 from prince.svd import SVD
 
-"""
-    Prince library
-    --------------------------------
-"""
-
 __title__ = 'prince'
 __version__ = '0.1.3'
 __author__ = 'Max Halford'

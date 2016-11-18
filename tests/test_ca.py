@@ -94,7 +94,7 @@ def test_expected_frequencies_shape(ca, n, p):
     assert ca.expected_frequencies.shape == (n, p)
 
 
-def test_expected_frequencies_sum(ca, n, p):
+def test_expected_frequencies_sum(ca, p):
     """Check the expected frequencies matrix sums to 1."""
     assert np.isclose(np.sum(ca.expected_frequencies.values), 1)
 
@@ -157,13 +157,13 @@ def test_row_profiles_shape(ca, n, p):
     assert ca.row_profiles.shape == (n, p)
 
 
-def test_row_profiles_sum(ca, n):
+def test_row_profiles_sum(ca):
     """Check the row profiles sum up to 1 for each row."""
     for _, row_sum in ca.row_profiles.sum(axis='columns').iteritems():
         assert np.isclose(row_sum, 1)
 
 
-def test_column_component_contributions(ca, k):
+def test_column_component_contributions(ca):
     """Check the sum of column contributions is equal to the total inertia."""
     for _, col_sum in ca.column_component_contributions.sum(axis='columns').iteritems():
         assert np.isclose(col_sum, 1)
@@ -185,7 +185,7 @@ def test_column_profiles_shape(ca, n, p):
     assert ca.column_profiles.shape == (n, p)
 
 
-def test_column_profiles_sum(ca, n):
+def test_column_profiles_sum(ca):
     """Check the column profiles sum up to 1 for each column."""
     for _, column_sum in ca.column_profiles.sum(axis='rows').iteritems():
         assert np.isclose(column_sum, 1)

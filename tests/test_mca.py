@@ -106,7 +106,7 @@ def test_expected_frequencies_shape(mca, n, p):
     assert mca.expected_frequencies.shape == (n, p)
 
 
-def test_expected_frequencies_sum(mca, n, p):
+def test_expected_frequencies_sum(mca, p):
     """Check the expected frequencies matrix sums to 1."""
     assert np.isclose(np.sum(mca.expected_frequencies.values), 1)
 
@@ -147,7 +147,7 @@ def test_cumulative_explained_inertia(mca):
     assert np.array_equal(mca.cumulative_explained_inertia, np.cumsum(mca.explained_inertia))
 
 
-def test_row_component_contributions(mca, k):
+def test_row_component_contributions(mca):
     """Check the sum of row contributions is equal to the total inertia."""
     for _, col_sum in mca.row_component_contributions.sum(axis='rows').iteritems():
         assert np.isclose(col_sum, 1)
@@ -169,13 +169,13 @@ def test_row_profiles_shape(mca, n, p):
     assert mca.row_profiles.shape == (n, p)
 
 
-def test_row_profiles_sum(mca, n):
+def test_row_profiles_sum(mca):
     """Check the row profiles sum up to 1 for each row."""
     for _, row_sum in mca.row_profiles.sum(axis='columns').iteritems():
         assert np.isclose(row_sum, 1)
 
 
-def test_column_component_contributions(mca, k):
+def test_column_component_contributions(mca):
     """Check the sum of column contributions is equal to the total inertia."""
     for _, col_sum in mca.column_component_contributions.sum(axis='columns').iteritems():
         assert np.isclose(col_sum, 1)
@@ -197,7 +197,7 @@ def test_column_profiles_shape(mca, n, p):
     assert mca.column_profiles.shape == (n, p)
 
 
-def test_column_profiles_sum(mca, n):
+def test_column_profiles_sum(mca):
     """Check the column profiles sum up to 1 for each column."""
     for _, column_sum in mca.column_profiles.sum(axis='rows').iteritems():
         assert np.isclose(column_sum, 1)

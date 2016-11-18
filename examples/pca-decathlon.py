@@ -8,7 +8,7 @@ import prince
 df = pd.read_csv('data/decathlon.csv', index_col=0)
 
 # Compute the PCA
-pca = prince.PCA(df, nbr_components=-1, supplementary_rows=['Uldal'],
+pca = prince.PCA(df, n_components=-1, supplementary_rows=['Uldal'],
                  supplementary_columns=['Rank', 'Points'])
 
 fig1, ax1 = pca.plot_cumulative_inertia()

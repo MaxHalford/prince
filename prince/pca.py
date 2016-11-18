@@ -20,7 +20,7 @@ class PCA(Base):
         scaled (bool): Whether or not to rescale each variable by subtracting it's mean to it and
             then dividing it by it's standard deviation. This is advised when variables are not of
             the same order of magnitude.
-        supplementary_rows (Listint/str]): A list of rows that won't be used to compute the PCA.
+        supplementary_rows (List[int/str]): A list of rows that won't be used to compute the PCA.
             These rows can however be displayed together with the active rows on a row
             projections chart.
         supplementary_columns (List[str]): A list of columns that won't be used to compute the PCA.

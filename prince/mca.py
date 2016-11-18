@@ -3,7 +3,6 @@ import pandas as pd
 
 from . import util
 from .ca import CA
-from .pca import PCA
 from .plot.mpl.mca import MplMCAPlotter
 
 
