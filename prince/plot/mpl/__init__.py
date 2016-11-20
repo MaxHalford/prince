@@ -68,7 +68,7 @@ class MplPlotter(Plotter):
         # Plot inertia percentages curve
         ax.plot(cumulative_explained_inertia, color=SEABORN['blue'],
                 label='Normalized cumulative inertia')
-        ax.plot(cumulative_explained_inertia, 'o', color=SEABORN['cyan'])
+        ax.plot(cumulative_explained_inertia, 'o', color=SEABORN['blue'])
 
         ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 

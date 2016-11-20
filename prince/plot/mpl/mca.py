@@ -12,11 +12,12 @@ class MplMCAPlotter(MplPlotter, MCAPlotter):
 
     """Matplotlib plotter for Multiple Correspondence Analysis"""
 
-    row_projections = MplPCAPlotter.row_projections
+    row_principal_coordinates = MplPCAPlotter.row_principal_coordinates
 
-    def row_column_projections(self, axes, row_projections, column_projections, explained_inertia,
-                               show_row_points, show_row_labels, show_column_points,
-                               show_column_labels):
+    def row_column_principal_coordinates(self, axes, row_principal_coordinates,
+                                         column_principal_coordinates, explained_inertia,
+                                         show_row_points, show_row_labels, show_column_points,
+                                         show_column_labels):
         fig, ax = plt.subplots()
 
         ax.grid('on')
@@ -26,19 +27,26 @@ class MplMCAPlotter(MplPlotter, MCAPlotter):
         ax.axvline(x=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
 
         if show_row_points:
-            ax.plot(row_projections.iloc[:, axes[0]], row_projections.iloc[:, axes[1]], marker='+',
-                    linestyle='', ms=7, label='Row projections', color=GRAYS['dark'])
+            ax.plot(
+                row_principal_coordinates.iloc[:, axes[0]],
+                row_principal_coordinates.iloc[:, axes[1]],
+                marker='+',
+                linestyle='',
+                ms=7,
+                label='Row principal coordinates',
+                color=GRAYS['dark']
+            )
 
         if show_row_labels:
-            for _, row in row_projections.iterrows():
+            for _, row in row_principal_coordinates.iterrows():
                 ax.annotate(row.name, (row[axes[0]], row[axes[1]]))
 
         # Extract the prefixes from each column name for coloring
         if show_column_points or show_column_labels:
-            data = column_projections.iloc[:, axes].copy()
+            data = column_principal_coordinates.iloc[:, axes].copy()
             data.columns = ('X', 'Y')
             # Only keep the prefix of each label
-            data['label'] = column_projections.index.to_series().apply(lambda x: x.split('_')[0])
+            data['label'] = column_principal_coordinates.index.to_series().apply(lambda x: x.split('_')[0])
             group_by = data.groupby('label')
             labels = list(group_by.groups.keys())
             n_colors = len(labels)
@@ -55,7 +63,7 @@ class MplMCAPlotter(MplPlotter, MCAPlotter):
                 for _, row in group.iterrows():
                     ax.text(row['X'], row['Y'], s=row.name, color=color)
 
-        ax.set_title('Row and column projections')
+        ax.set_title('Row and column principal coordinates')
         ax.set_xlabel('Component {} ({}%)'.format(axes[0], 100 * round(explained_inertia[axes[0]], 2)))
         ax.set_ylabel('Component {} ({}%)'.format(axes[1], 100 * round(explained_inertia[axes[1]], 2)))
 

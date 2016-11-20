@@ -10,8 +10,6 @@ Principal Component Analysis (PCA)
 Chart gallery
 -------------
 
-The following charts are based on the `iris dataset <http://archive.ics.uci.edu/ml/datasets/Iris>`_. They are done with `Matplotlib <http://matplotlib.org/>`_.
-
 ::
 
     import pandas as pd
@@ -20,15 +18,15 @@ The following charts are based on the `iris dataset <http://archive.ics.uci.edu/
     df = pd.read_csv('data/iris.csv')
     pca = prince.PCA(df, n_components=4)
 
-^^^^^^^^^^^^^^^
-Row projections
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Row principal coordinates
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
     pca.plot_rows(color_by='class', ellipse_fill=True)
 
-.. image:: _static/pca_row_projections.png
+.. image:: _static/pca_row_principal_coordinates.png
 
 ^^^^^^^^^^^^^^^^^^
 Correlation circle

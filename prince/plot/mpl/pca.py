@@ -15,8 +15,10 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
 
     """Matplotlib plotter for Principal Component Analysis"""
 
-    def row_projections(self, axes, projections, supplementary_projections, explained_inertia,
-                        show_points, show_labels, color_labels, ellipse_outline, ellipse_fill):
+    def row_principal_coordinates(self, axes, principal_coordinates,
+                                  supplementary_principal_coordinates, explained_inertia,
+                                  show_points, show_labels, color_labels, ellipse_outline,
+                                  ellipse_fill):
         fig, ax = plt.subplots()
 
         ax.grid('on')
@@ -25,8 +27,8 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
         ax.axhline(y=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
         ax.axvline(x=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
 
-        data = projections.iloc[:, axes].copy() # Active rows
-        supp = supplementary_projections.iloc[:, axes].copy() # Supplementary rows
+        data = principal_coordinates.iloc[:, axes].copy() # Active rows
+        supp = supplementary_principal_coordinates.iloc[:, axes].copy() # Supplementary rows
         data.columns = ('X', 'Y')
         supp.columns = ('X', 'Y')
 
@@ -35,7 +37,7 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
             data['label'] = color_labels
             supp['label'] = color_labels
             group_by = data.groupby('label')
-            if not supplementary_projections.empty:
+            if not supplementary_principal_coordinates.empty:
                 group_by_supp = supp.groupby('label')
             labels = list(group_by.groups.keys())
             n_colors = len(labels)
@@ -47,7 +49,7 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
             if color_labels is not None:
                 for (label, group), color in zip(group_by, colors):
                     ax.scatter(group['X'], group['Y'], s=50, color=color, label=label)
-                if not supplementary_projections.empty:
+                if not supplementary_principal_coordinates.empty:
                     for (label, group), color in zip(group_by_supp, colors):
                         ax.scatter(group['X'], group['Y'], s=90, color=color, label=label,
                                    marker='*')
@@ -60,14 +62,14 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
                 for (label, group), color in zip(group_by, colors):
                     for _, row in group.iterrows():
                         ax.text(x=row['X'], y=row['Y'], s=row.name, color=color)
-                if not supplementary_projections.empty:
+                if not supplementary_principal_coordinates.empty:
                     for (label, group), color in zip(group_by_supp, colors):
                         for _, row in group.iterrows():
                             ax.text(x=row['X'], y=row['Y'], s=row.name, color=color)
             else:
                 for _, row in data.iterrows():
                     ax.text(x=row['X'], y=row['Y'], s=row.name)
-                if not supplementary_projections.empty:
+                if not supplementary_principal_coordinates.empty:
                     for _, row in supp.iterrows():
                         ax.text(x=row['X'], y=row['Y'], s=row.name)
 
@@ -85,14 +87,14 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
                     alpha=0.2 + (0.3 if not show_points else 0) if ellipse_fill else 1
                 ))
 
-        if not supplementary_projections.empty:
+        if not supplementary_principal_coordinates.empty:
             active_legend = mlines.Line2D([], [], marker='.', linestyle='', color=GRAYS['dark'],
                                           markersize=14, label='Active rows')
             supp_legend = mlines.Line2D([], [], marker='*', linestyle='', color=GRAYS['dark'],
                                              markersize=14, label='Supplementary rows')
             ax.legend(handles=[active_legend, supp_legend])
 
-        ax.set_title('Row projections')
+        ax.set_title('Row principal coordinates')
         ax.set_xlabel('Component {} ({}%)'.format(axes[0], 100 * round(explained_inertia[axes[0]], 2)))
         ax.set_ylabel('Component {} ({}%)'.format(axes[1], 100 * round(explained_inertia[axes[1]], 2)))
 

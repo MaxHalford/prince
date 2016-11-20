@@ -6,20 +6,14 @@
 Welcome to Prince's documentation!
 ==================================
 
-Contents:
+.. image:: _static/logo.png
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    introduction
    pca
    ca
    mca
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   performance
+   faq

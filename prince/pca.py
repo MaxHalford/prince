@@ -12,8 +12,8 @@ class PCA(Base):
 
     """
     Args:
-        dataframe (pandas.DataFrame): The columns containing categorial data will be removed from
-            the dataframe provided by the user, they will be stored in a separate dataframe at
+        dataframe (pandas.DataFrame): The columns containing categorical data will be removed from
+            the dataframe provided by the user; they will be stored in a separate dataframe at
             initialization.
         n_components (int): The number of principal components that have to be computed. The lower
             `n_components` is, the lesser time the PCA will take to compute.
@@ -22,7 +22,7 @@ class PCA(Base):
             the same order of magnitude.
         supplementary_rows (List[int/str]): A list of rows that won't be used to compute the PCA.
             These rows can however be displayed together with the active rows on a row
-            projections chart.
+            principal coordinates chart.
         supplementary_columns (List[str]): A list of columns that won't be used to compute the PCA.
             The columns can however be displayed together with the active columns on a column
             correlation chart.
@@ -108,27 +108,28 @@ class PCA(Base):
         return self.supplementary_columns.shape[1]
 
     @property
-    def row_projections(self):
-        """The row projections.
+    def row_principal_coordinates(self):
+        """The row principal coordinates.
 
-        The row projections are obtained by projecting `X` on it's right eigenvectors. This is done
-        by calculating the dot product between `X` and `X`'s right eigenvectors.
+        The row principal coordinates are obtained by projecting `X` on it's right eigenvectors.
+        This is done by calculating the dot product between `X` and `X`'s right eigenvectors.
 
         Returns:
-            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row projections.
+            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row principal
+            coordinates.
         """
         return pd.DataFrame(data=self.X.dot(self.svd.V.T), index=self.X.index)
 
     @property
-    def supplementary_row_projections(self):
-        """The supplementary row projections.
+    def supplementary_row_principal_coordinates(self):
+        """The supplementary row principal coordinates.
 
-        The row projections are obtained by projecting the supplementary rows on the right
+        The row principal coordinates are obtained by projecting the supplementary rows on the right
         eigenvectors of `X`.
 
         Returns:
             pandas.DataFrame: A dataframe of shape (`n_supplementary_rows`, `k`) containing the
-            supplementary row projections.
+            supplementary row principal coordinates.
         """
         return pd.DataFrame(
             data=self.supplementary_rows.dot(self.svd.V.T),
@@ -136,46 +137,61 @@ class PCA(Base):
         )
 
     @property
-    def row_standard_projections(self):
-        """The row standard projections.
+    def row_standard_coordinates(self):
+        """The row standard coordinates.
 
-        The row standard projections are obtained by scaling/dividing each row projection by
-        it's associated eigenvalue.
+        The row standard coordinates are obtained by scaling/dividing each row projection by it's
+        associated eigenvalue.
 
         Returns:
             pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row standard
-            projections.
+            coordinates.
         """
-        return self.row_projections.div(self.eigenvalues, axis='columns')
+        return self.row_principal_coordinates.div(self.eigenvalues, axis='columns')
 
     @property
     def supplementary_row_standard_components(self):
-        """The supplementary row standard projections.
+        """The supplementary row standard coordinates.
 
-        The supplementary row standard projections are obtained by scaling/dividing each
+        The supplementary row standard coordinates are obtained by scaling/dividing each
         supplementary row projection by it's associated eigenvalue.
 
         Returns:
             pandas.DataFrame: A dataframe of shape (`n_supplementary_rows`, `k`) containing the
-            supplementary row standard projections.
+            supplementary row standard coordinates.
         """
-        return self.supplementary_row_projections.div(self.eigenvalues, axis='columns')
+        return self.supplementary_row_principal_coordinates.div(self.eigenvalues, axis='columns')
+
+    @property
+    def row_component_contributions(self):
+        """The row component contributions.
+
+        Each row contribution towards each principal component is equivalent to the amount of
+        inertia it contributes. This is calculated by dividing the squared row coordinates by the
+        eigenvalue associated to each principal component.
+
+        Returns:
+            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row component
+            contributions.
+        """
+        squared_coordinates = np.square(self.row_principal_coordinates)
+        return squared_coordinates.div(self.eigenvalues, axis='columns')
 
     @property
     def row_cosine_similarities(self):
         """The squared row cosine similarities.
 
         The row cosine similarities are obtained by calculating the cosine of the angle shaped by
-        the row projections and the row principal components. This is calculated by squaring each
-        row projection coordinate and dividing each squared coordinate by the sum of the squared
-        coordinates, which results in a ratio comprised between 0 and 1 representing the squared
-        cosine.
+        the row principal coordinates and the row principal components. This is calculated by
+        squaring each row projection coordinate and dividing each squared coordinate by the sum of
+        the squared coordinates, which results in a ratio comprised between 0 and 1 representing the
+        squared cosine.
 
         Returns:
             pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the squared row cosine
             similarities.
         """
-        squared_coordinates = np.square(self.row_projections)
+        squared_coordinates = np.square(self.row_principal_coordinates)
         total_squares = squared_coordinates.sum(axis='columns')
         return squared_coordinates.div(total_squares, axis='rows')
 
@@ -184,41 +200,26 @@ class PCA(Base):
         """The supplementary squared row cosine similarities.
 
         The supplementary row cosine similarities are obtained by calculating the cosine of the
-        angle shaped by the supplementary row projections and the supplementary row principal
-        components.
+        angle shaped by the supplementary row principal coordinates and the supplementary row
+        principal components.
 
         Returns:
             pandas.DataFrame: A dataframe of shape (`n_supplementary_rows`, `k`) containing the
             squared supplementary row cosine similarities.
         """
-        squared_coordinates = np.square(self.supplementary_row_projections)
+        squared_coordinates = np.square(self.supplementary_row_principal_coordinates)
         total_squares = squared_coordinates.sum(axis='columns')
         return squared_coordinates.div(total_squares, axis='rows')
-
-    @property
-    def row_component_contributions(self):
-        """The row component contributions.
-
-        Each row contribution towards each principal component is equivalent to the amount of
-        inertia it contributes. This is calculated by dividing the squared row coordinates and
-        dividing each squared coordinate by the eigenvalue associated to each principal component.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row component
-            contributions.
-        """
-        squared_coordinates = np.square(self.row_projections)
-        return squared_coordinates.div(self.eigenvalues, axis='columns')
 
     @property
     def column_correlations(self):
         """The column correlations with each principal component.
 
         Returns:
-            pandas.DataFrame: A dataframe of shape (`p`, `k`) containing the Pearson correlations
-            between the columns and the principal components.
+            pandas.DataFrame: A dataframe of shape (`p`, `k`) containing the Pearson
+            correlations between the columns and the principal components.
         """
-        row_pc = self.row_projections
+        row_pc = self.row_principal_coordinates
         return pd.DataFrame(
             data=([col.corr(pc) for _, pc in row_pc.iteritems()] for _, col in self.X.iteritems()),
             columns=row_pc.columns,
@@ -230,10 +231,10 @@ class PCA(Base):
         """The supplementary column correlations with each principal component.
 
         Returns:
-            pandas.DataFrame: A dataframe of shape (`n_supplementary_columns`, `k`) containing the
-            Pearson correlations between the supplementary columns and the principal components.
+            pandas.DataFrame: A dataframe of shape (`n_supplementary_columns`, `k`) containing
+            the Pearson correlations between the supplementary columns and the principal components.
         """
-        row_pc = self.row_projections
+        row_pc = self.row_principal_coordinates
         return pd.DataFrame(
             data=(
                 [
@@ -249,7 +250,9 @@ class PCA(Base):
 
     @property
     def total_inertia(self):
-        """The total inertia obtained by summing up the variance of each column.
+        """The total inertia.
+
+        Obtained by summing up the variance of each column.
 
         Returns:
             float: The total inertia.
@@ -258,12 +261,13 @@ class PCA(Base):
 
     def plot_rows(self, axes=(0, 1), show_points=True, show_labels=False, color_by=None,
                   ellipse_outline=False, ellipse_fill=False):
-        """Plot the row projections.
+        """Plot the row principal coordinates.
 
         Args:
-            axes (List(int)): A list of length two indicating which row projections to display.
-            show_points (bool): Whether or not to show a point for each the row projection.
-            show_labels (bool): Whether or not to show the name of each row projection.
+            axes (List(int)): A list of length two indicating which row principal coordinates to
+                display.
+            show_points (bool): Whether or not to show a point for each row principal coordinate.
+            show_labels (bool): Whether or not to show the name of each row principal coordinate.
             color_by (str): Indicates according to which categorical variable the information should
                 be colored by.
             ellipse_outline (bool): Whether or not to display an ellipse outline around each class
@@ -280,10 +284,10 @@ class PCA(Base):
         else:
             color_labels = self.categorical_columns[color_by]
 
-        return self.plotter.row_projections(
+        return self.plotter.row_principal_coordinates(
             axes=axes,
-            projections=self.row_projections,
-            supplementary_projections=self.supplementary_row_projections,
+            principal_coordinates=self.row_principal_coordinates,
+            supplementary_principal_coordinates=self.supplementary_row_principal_coordinates,
             explained_inertia=self.explained_inertia,
             show_points=show_points,
             show_labels=show_labels,
@@ -296,7 +300,8 @@ class PCA(Base):
         """Plot the Pearson correlations between the components and the original columns.
 
         Args:
-            axes (List(int)): A list of length two indicating which row projections to display.
+            axes (List(int)): A list of length two indicating which row principal coordinates to
+                display.
             show_labels (bool): Whether or not to show the name of each column.
         """
         return self.plotter.correlation_circle(

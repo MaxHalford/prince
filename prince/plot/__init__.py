@@ -20,15 +20,17 @@ class Plotter():
 
 class PCAPlotter():
 
-    def row_projections(self, axes, projections, supplementary_projections, explained_inertia,
-                        show_points, show_labels, color_labels, ellipse_outline, ellipse_fill):
-        """Generate a plot displaying the row projections.
+    def row_principal_coordinates(self, axes, principal_coordinates,
+                                  supplementary_principal_coordinates, explained_inertia,
+                                  show_points, show_labels, color_labels, ellipse_outline,
+                                  ellipse_fill):
+        """Generate a plot displaying the row principal coordinates.
 
         Args:
             axes (list(int)): A list containing two distinct elements, each one indicating the index
-                of a principal component to plot.
-            projections (pandas.DataFrame)
-            supplementary_projections (pandas.DataFrame)
+                of a principal coordinates to plot.
+            principal_coordinates (pandas.DataFrame)
+            supplementary_principal_coordinates (pandas.DataFrame)
             explained_inertia (list(float))
             show_points (bool): Whether or not to display points.
             show_labels (bool): Whether or not to display labels above each point.
@@ -47,7 +49,7 @@ class PCAPlotter():
 
         Args:
             axes (list(int)): A list containing two distinct elements, each one indicating the index
-                of a principal component to plot.
+                of a principal coordinates to plot.
             column_correlations (pandas.DataFrame): A dataframe containing the correlations
                 between each initial column and each row principal component.
             supplementary_column_correlations (pandas.DataFrame)
@@ -59,23 +61,24 @@ class PCAPlotter():
 
 class CAPlotter():
 
-    def row_column_projections(self, axes, row_projections, column_projections, explained_inertia,
-                               show_row_points, show_row_labels, show_column_points,
-                               show_column_labels):
-        """Generate a plot displaying the row and column projections simultaneously.
+    def row_column_principal_coordinates(self, axes, row_principal_coordinates,
+                                         column_principal_coordinates, explained_inertia,
+                                         show_row_points, show_row_labels, show_column_points,
+                                         show_column_labels):
+        """Generate a plot displaying the row and column principal coordinates simultaneously.
 
         Args:
             axes (list(int)): A list containing two distinct elements, each one indicating the index
-                of a principal component to plot.
-            row_projections (pandas.DataFrame)
-            column_projections (pandas.DataFrame)
+                of a principal coordinate to plot.
+            row_principal_coordinates (pandas.DataFrame)
+            column_principal_coordinates (pandas.DataFrame)
             explained_inertia (list(float))
             show_row_points (bool): Indicates whether or not to display points for the row
-                projections.
+                principal_coordinates.
             show_row_labels (bool): Indicates whether or not to display labels above each row
                 projection point.
             show_row_points (bool): Indicates whether or not to display points for the column
-                projections.
+                principal_coordinates.
             show_row_labels (bool): Indicates whether or not to display labels above each column
                 projection point.
         """
@@ -84,23 +87,24 @@ class CAPlotter():
 
 class MCAPlotter():
 
-    def row_column_projections(self, axes, row_projections, column_projections, explained_inertia,
-                               show_row_points, show_row_labels, show_column_points,
-                               show_column_labels):
-        """Generate a plot displaying the row and column projections simultaneously.
+    def row_column_principal_coordinates(self, axes, row_principal_coordinates,
+                                         column_principal_coordinates, explained_inertia,
+                                         show_row_points, show_row_labels, show_column_points,
+                                         show_column_labels):
+        """Generate a plot displaying the row and column principal coordinates simultaneously.
 
         Args:
             axes (list(int)): A list containing two distinct elements, each one indicating the index
-                of a principal component to plot.
-            row_projections (pandas.DataFrame)
-            column_projections (pandas.DataFrame)
+                of a principal coordinate to plot.
+            row_principal_coordinates (pandas.DataFrame)
+            column_principal_coordinates (pandas.DataFrame)
             explained_inertia (list(float))
             show_row_points (bool): Indicates whether or not to display points for the row
-                projections.
+                principal coordinates.
             show_row_labels (bool): Indicates whether or not to display labels above each row
                 projection point.
             show_row_points (bool): Indicates whether or not to display points for the column
-                projections.
+                principal coordinates.
             show_row_labels (bool): Indicates whether or not to display labels above each column
                 projection point.
         """
