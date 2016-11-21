@@ -1,4 +1,5 @@
 """Multiple Correspondence Analysis"""
+import numpy as np
 import pandas as pd
 
 from . import util
@@ -10,7 +11,7 @@ class MCA(CA):
 
     """
     Args:
-        dataframe (pandas.DataFrame): A contingency table.
+        dataframe (pandas.DataFrame): A dataframe where each column is a variable.
         n_components (int): The number of principal components that have to be computed. The lower
             `n_components` is, the lesser time the CA will take to compute.
         use_benzecri_rates (bool): Whether to use Benzecri rates to inflate the eigenvalues.
@@ -51,12 +52,8 @@ class MCA(CA):
 
     def _filter(self, dataframe, supplementary_row_names, supplementary_column_names):
 
-        # The categorical columns are the ones whose values are not numerical
-        categorical_column_names = [
-            column
-            for column in dataframe.columns
-            if dataframe[column].dtype not in ('int64', 'float64')
-        ]
+        # Extract the categorical columns
+        self.categorical_columns = dataframe.select_dtypes(exclude=[np.number])
 
         # Extract the supplementary rows
         self.supplementary_rows = dataframe.loc[supplementary_row_names].copy()
@@ -66,10 +63,7 @@ class MCA(CA):
         self.supplementary_columns = dataframe[supplementary_column_names].copy()
         self.supplementary_columns.drop(supplementary_row_names, axis=0, inplace=True)
 
-        # Extract the categorical columns
-        self.categorical_columns = dataframe[categorical_column_names].copy()
-
-        # Remove the categorical and the supplementary columns from the main dataframe
+        # Remove the the supplementary columns and rows from the dataframe
         dataframe.drop(supplementary_row_names, axis=0, inplace=True)
         dataframe.drop(supplementary_column_names, axis=1, inplace=True)
 

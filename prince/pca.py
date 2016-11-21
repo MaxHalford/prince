@@ -72,30 +72,21 @@ class PCA(Base):
 
     def _filter(self, dataframe, supplementary_row_names, supplementary_column_names):
 
-        # The categorical columns are the ones whose values are not numerical
-        categorical_column_names = [
-            column
-            for column in dataframe.columns
-            if dataframe[column].dtype not in ('int64', 'float64')
-        ]
-
-        # The categorical and the supplementary columns can be dropped once extracted
-        columns_to_drop = set(categorical_column_names + supplementary_column_names)
+        # Extract the categorical columns
+        self.categorical_columns = dataframe.select_dtypes(exclude=[np.number])
 
         # Extract the supplementary rows
         self.supplementary_rows = dataframe.loc[supplementary_row_names].copy()
-        self.supplementary_rows.drop(columns_to_drop, axis=1, inplace=True)
+        self.supplementary_rows.drop(self.categorical_columns.columns, axis=1, inplace=True)
 
         # Extract the supplementary columns
         self.supplementary_columns = dataframe[supplementary_column_names].copy()
         self.supplementary_columns.drop(supplementary_row_names, axis=0, inplace=True)
 
-        # Extract the categorical columns
-        self.categorical_columns = dataframe[categorical_column_names].copy()
-
-        # Remove the categorical and the supplementary columns from the main dataframe
+        # Remove the categorical column and the supplementary columns and rows from the dataframe
         dataframe.drop(supplementary_row_names, axis=0, inplace=True)
-        dataframe.drop(columns_to_drop, axis=1, inplace=True)
+        dataframe.drop(supplementary_column_names, axis=1, inplace=True)
+        dataframe.drop(self.categorical_columns.columns, axis=1, inplace=True)
 
     @property
     def n_supplementary_rows(self):
