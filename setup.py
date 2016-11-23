@@ -15,7 +15,6 @@ setup(
         'pandas>=0.19.0'
     ],
     license=__license__,
-    long_description=open('README.md', 'r').read(),
     name=__title__,
     packages=find_packages(exclude=['tests']),
     url='https://github.com/MaxHalford/Prince',
