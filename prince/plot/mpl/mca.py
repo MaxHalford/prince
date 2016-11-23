@@ -48,7 +48,7 @@ class MplMCAPlotter(MplPlotter, MCAPlotter):
             # Only keep the prefix of each label
             data['label'] = column_principal_coordinates.index.to_series().apply(lambda x: x.split('_')[0])
             group_by = data.groupby('label')
-            labels = list(group_by.groups.keys())
+            labels = sorted(group_by.groups.keys())
             n_colors = len(labels)
             cmap = mpl_util.create_discrete_cmap(n_colors)
             colors = cmap(range(n_colors))

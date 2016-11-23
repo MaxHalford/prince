@@ -39,7 +39,7 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
             group_by = data.groupby('label')
             if not supplementary_principal_coordinates.empty:
                 group_by_supp = supp.groupby('label')
-            labels = list(group_by.groups.keys())
+            labels = sorted(group_by.groups.keys())
             n_colors = len(labels)
             cmap = mpl_util.create_discrete_cmap(n_colors)
             colors = cmap(range(n_colors))
