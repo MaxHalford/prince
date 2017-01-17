@@ -64,7 +64,7 @@ The second plot displays the cumulative contributions of each eigenvector (by lo
 
 ## Installation
 
-Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is a good idea in general for doing data science in Python.
+Prince is only compatible with Python 3. Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is generally a good idea for doing data science in Python.
 
 **Via PyPI**
 
