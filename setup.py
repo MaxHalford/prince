@@ -12,7 +12,7 @@ setup(
     install_requires=[
         'fbpca>=1.0',
         'matplotlib>=1.5',
-        'pandas>=0.19.0'
+        'pandas>=0.18.0'
     ],
     license=__license__,
     name=__title__,

@@ -4,7 +4,7 @@ import pandas as pd
 import prince
 
 
-df = pd.read_csv('examples/data/ogm.csv')
+df = pd.read_csv('data/ogm.csv')
 
 mca = prince.MCA(df, n_components=-1)
 
