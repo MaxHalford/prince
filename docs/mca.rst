@@ -16,7 +16,7 @@ Chart gallery
     import prince
 
     df = pd.read_csv('data/ogm.csv')
-    pca = prince.MCA(df, n_components=-1)
+    mca = prince.MCA(df, n_components=-1)
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 Row principal coordinates
