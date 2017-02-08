@@ -16,7 +16,7 @@ Chart gallery
     import prince
 
     df = pd.read_csv('data/presidentielles07.csv')
-    pca = prince.CA(df, n_components=-1)
+    ca = prince.CA(df, n_components=-1)
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Row and column principal coordinates
