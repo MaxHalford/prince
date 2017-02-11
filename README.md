@@ -5,23 +5,33 @@
 <br/>
 
 <div align="center">
+  <!-- Read the Docs -->
   <a href='http://prince.readthedocs.io/en/latest/?badge=latest'>
     <img src='https://readthedocs.org/projects/prince/badge/?version=latest' alt='Documentation Status' />
   </a>
+  <!-- PyPi version -->
   <a href="https://badge.fury.io/py/prince">
     <img src="https://badge.fury.io/py/prince.svg?style=flat-square" alt="PyPI version"/>
   </a>
+  <!-- Build status -->
   <a href="https://travis-ci.org/MaxHalford/Prince?branch=master">
     <img src="https://travis-ci.org/MaxHalford/Prince.svg?branch=master&style=flat-square" alt="Build Status"/>
   </a>
+  <!-- Test coverage -->
   <a href="https://coveralls.io/github/MaxHalford/Prince?branch=master">
     <img src="https://coveralls.io/repos/github/MaxHalford/Prince/badge.svg?branch=master&style=flat-square" alt="Coverage Status"/>
   </a>
+  <!-- Codacy -->
   <a href="https://www.codacy.com/app/maxhalford25/Prince?utm_source=github.com&utm_medium=referral&utm_content=MaxHalford/Prince&utm_campaign=Badge_Grade">
     <img src="https://api.codacy.com/project/badge/Grade/d58aa963d6fa425b97d2b9364aecbba1?style=flat-square" alt="Codacy Badge"/>
   </a>
+  <!-- Requirements -->
   <a href="https://requires.io/github/MaxHalford/Prince/requirements/?branch=master">
     <img src="https://requires.io/github/MaxHalford/Prince/requirements.svg?branch=master&style=flat-square" alt="Requirements Status"/>
+  </a>
+  <!-- License -->
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="http://img.shields.io/:license-mit-ff69b4.svg?style=flat-square" alt="license"/>
   </a>
 </div>
 
@@ -64,7 +74,7 @@ The second plot displays the cumulative contributions of each eigenvector (by lo
 
 ## Installation
 
-Prince is only compatible with Python 3. Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is highly recommended as it generally a good idea for doing data science in Python.
+Prince is only compatible with Python 3. Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is recommended as it is generally a good idea for doing data science in Python.
 
 **Via PyPI**
 
@@ -92,6 +102,4 @@ Please check out the [documentation](http://prince.readthedocs.io) for a list of
 
 ## License
 
-<a href="https://opensource.org/licenses/MIT">
-<img src="http://img.shields.io/:license-mit-ff69b4.svg?style=flat-square" alt="mit"/>
-</a>
+The MIT License (MIT). Please see [license file](LICENSE) for more information.

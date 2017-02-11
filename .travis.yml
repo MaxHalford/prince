@@ -22,8 +22,7 @@ before_install:
   - conda update --yes conda
 
 install:
-  - pip install -r setup/requirements.txt
-  - pip install -r setup/dev-requirements.txt
+  - pip install -r requirements.dev.txt
 
 script:
   - pytest --verbose --cov=prince tests/
