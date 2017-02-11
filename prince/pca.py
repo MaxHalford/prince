@@ -77,16 +77,16 @@ class PCA(Base):
 
         # Extract the supplementary rows
         self.supplementary_rows = dataframe.loc[supplementary_row_names].copy()
-        self.supplementary_rows.drop(self.categorical_columns.columns, axis=1, inplace=True)
+        self.supplementary_rows.drop(self.categorical_columns.columns, axis='columns', inplace=True)
 
         # Extract the supplementary columns
         self.supplementary_columns = dataframe[supplementary_column_names].copy()
-        self.supplementary_columns.drop(supplementary_row_names, axis=0, inplace=True)
+        self.supplementary_columns.drop(supplementary_row_names, axis='rows', inplace=True)
 
         # Remove the categorical column and the supplementary columns and rows from the dataframe
-        dataframe.drop(supplementary_row_names, axis=0, inplace=True)
-        dataframe.drop(supplementary_column_names, axis=1, inplace=True)
-        dataframe.drop(self.categorical_columns.columns, axis=1, inplace=True)
+        dataframe.drop(supplementary_row_names, axis='rows', inplace=True)
+        dataframe.drop(supplementary_column_names, axis='columns', inplace=True)
+        dataframe.drop(self.categorical_columns.columns, axis='columns', inplace=True)
 
     @property
     def n_supplementary_rows(self):

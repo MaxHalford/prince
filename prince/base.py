@@ -12,7 +12,7 @@ class Base():
             raise ValueError('Unrecognized plotting backend; choose from: mpl')
 
         if not isinstance(dataframe, pd.DataFrame):
-            raise ValueError('dataframe muse be a pandas.DataFrame')
+            raise ValueError('dataframe must be a pandas.DataFrame')
 
         self.plotter = None
         self.svd = None

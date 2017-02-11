@@ -1,5 +1,0 @@
-fbpca>=1.0
-matplotlib>=1.5.0
-numpy>=1.11.2
-pandas>=0.18.0
-scipy>=0.16.0

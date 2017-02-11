@@ -1,180 +1,126 @@
+import unittest
+
 import numpy as np
 import pandas as pd
-import pytest
 
 from prince import PCA
-from tests import util as test_util
 
 
-@pytest.fixture
-def load_df():
-    """The original dataframe."""
-    return pd.read_csv('tests/data/decathlon.csv', index_col=0)
+class TestPCA(unittest.TestCase):
 
+    @classmethod
+    def setup_class(cls):
+        # Load a dataframe
+        dataframe = pd.read_csv('tests/data/decathlon.csv', index_col=0)
 
-@pytest.fixture
-def df(load_df):
-    """The original dataframe without categorical columns."""
-    valid_columns = [
-        column
-        for column in load_df.columns
-        if load_df[column].dtype in ('int64', 'float64')
-    ]
-    return load_df[valid_columns]
+        # Determine the categorical columns
+        cls.df_categorical = dataframe.select_dtypes(exclude=[np.number])
 
+        # Determine the numerical columns
+        cls.df_numeric = dataframe.drop(cls.df_categorical.columns, axis='columns')
 
-@pytest.fixture
-def n(df):
-    """The number of rows."""
-    n, _ = df.shape
-    return n
+        # Determine the covariance matrix
+        X = cls.df_numeric.copy()
+        cls.center_reduced = ((X - X.mean()) / X.std()).values
+        cls.cov = cls.center_reduced.T @ cls.center_reduced
 
+        # Calculate a full PCA
+        cls.n_components = len(cls.df_numeric.columns)
+        cls.pca = PCA(dataframe, n_components=cls.n_components, scaled=True)
 
-@pytest.fixture
-def p(df):
-    """The number of columns."""
-    _, p = df.shape
-    return p
+    def test_dimensions_matches(self):
+        self.assertEqual(self.pca.X.shape, self.df_numeric.shape)
 
+    def test_column_names(self):
+        self.assertListEqual(list(self.pca.X.columns), list(self.df_numeric.columns))
 
-@pytest.fixture
-def k(p):
-    """The number of principal components to compute."""
-    return p
+    def test_center_reduced(self):
+        self.assertTrue(np.allclose(self.pca.X, self.center_reduced))
 
+    def test_eigenvectors_dimensions_matches(self):
+        self.assertEqual(self.pca.svd.U.shape, (self.df_numeric.shape[0], self.n_components))
+        self.assertEqual(self.pca.svd.s.shape, (self.n_components,))
+        self.assertEqual(self.pca.svd.V.shape, (self.n_components, self.df_numeric.shape[1]))
 
-@pytest.fixture
-def pca(load_df, k):
-    """The executed PCA."""
-    return PCA(load_df, n_components=k, scaled=True)
+    def test_eigenvectors_form_orthonormal_basis(self):
+        for i, v1 in enumerate(self.pca.svd.V.T):
+            for j, v2 in enumerate(self.pca.svd.V.T):
+                if i == j:
+                    self.assertTrue(np.isclose(np.dot(v1, v2), 1))
+                else:
+                    self.assertTrue(np.isclose(np.dot(v1, v2), 0))
 
+    def test_number_of_eigenvalues(self):
+        self.assertEqual(len(self.pca.eigenvalues), self.n_components)
 
-@pytest.fixture
-def cov_matrix(df):
-    """The covariance matrix of the filtered original dataframe."""
-    df -= df.mean()
-    df /= df.std()
-    X = df.values
-    return X.T @ X
+    def test_eigenvalues_sorted_desc(self):
+        self.assertListEqual(self.pca.eigenvalues, list(reversed(sorted(self.pca.eigenvalues))))
 
+    def test_eigenvalues_sum_equals_total_inertia(self):
+        self.assertTrue(np.isclose(sum(self.pca.eigenvalues), self.pca.total_inertia))
 
-def test_categorical(pca, df):
-    """Check the categorical variable has been ignored."""
-    assert np.array_equal(pca.X.columns, df.columns)
+    def test_eigenvalues_equals_squared_singular_values(self):
+        for eigenvalue, singular_value in zip(self.pca.eigenvalues, self.pca.svd.s):
+            self.assertTrue(np.isclose(eigenvalue, np.square(singular_value)))
 
+    def test_cov_trace_equals_total_inertia(self):
+        self.assertTrue(np.isclose(self.cov.trace(), self.pca.total_inertia))
 
-def test_dimensions(pca, n, p):
-    """Check the dimensions are correct."""
-    assert pca.X.shape == (n, p)
+    def test_eigenvalues_equals_column_inertias(self):
+        col_inertias = np.square(self.pca.row_principal_coordinates).sum(axis='rows')
+        for eigenvalue, col_inertia in zip(self.pca.eigenvalues, col_inertias):
+            self.assertTrue(np.isclose(eigenvalue, col_inertia))
 
+    def test_explained_inertia_sorted_desc(self):
+        self.assertListEqual(
+            self.pca.explained_inertia,
+            list(reversed(sorted(self.pca.explained_inertia)))
+        )
 
-def test_center_reduce(pca, df):
-    """Check the data was centered and reduced."""
-    assert np.allclose(pca.X, (df - df.mean()) / df.std())
+    def test_explained_inertia_sum(self):
+        self.assertTrue(np.isclose(sum(self.pca.explained_inertia), 1))
 
+    def test_cumulative_explained_inertia(self):
+        self.assertListEqual(
+            self.pca.cumulative_explained_inertia,
+            list(np.cumsum(self.pca.explained_inertia))
+        )
 
-def test_eigenvectors_dimensions(pca, n, p, k):
-    """Check the eigenvectors have the expected dimensions."""
-    assert pca.svd.U.shape == (n, k)
-    assert pca.svd.s.shape == (k,)
-    assert pca.svd.V.shape == (k, p)
+    def test_row_components_inertia(self):
+        """Check the inertia of each row projection is equal to the associated eigenvalue and that
+        the covariance between each row projection is nil."""
+        for i, (_, p1) in enumerate(self.pca.row_principal_coordinates.iteritems()):
+            for j, (_, p2) in enumerate(self.pca.row_principal_coordinates.iteritems()):
+                if i == j:
+                    self.assertTrue(np.isclose(
+                        p1.var() * self.pca.total_inertia / self.n_components,
+                        self.pca.eigenvalues[i])
+                    )
+                else:
+                    self.assertTrue(np.isclose(np.cov(p1, p2)[0][1], 0))
 
+    def test_row_components_contributions_sum_equals_total_inertia(self):
+        for _, col_sum in self.pca.row_component_contributions.sum(axis='rows').iteritems():
+            self.assertTrue(np.isclose(col_sum, 1))
 
-def test_eigenvectors_orthnormal(pca):
-    """Check the eigenvectors define an orthonormal base."""
-    for i, v1 in enumerate(pca.svd.V.T):
-        for j, v2 in enumerate(pca.svd.V.T):
-            if i == j:
-                assert np.isclose(np.dot(v1, v2), 1)
-            else:
-                assert np.isclose(np.dot(v1, v2), 0)
+    def test_row_cosine_similarities_shape_matches(self):
+        self.assertEqual(
+            self.pca.row_cosine_similarities.shape,
+            (self.df_numeric.shape[0], self.n_components)
+        )
 
+    def test_row_cosine_similarities_are_bounded(self):
+        n_cells = self.df_numeric.shape[0] * self.n_components
+        self.assertEqual((-1 <= self.pca.row_cosine_similarities).sum().sum(), n_cells)
+        self.assertEqual((self.pca.row_cosine_similarities <= 1).sum().sum(), n_cells)
 
-def test_eigenvalues_dimensions(pca, k):
-    """Check the eigenvalues is a vector of length `k`."""
-    assert len(pca.eigenvalues) == k
+    def test_column_correlations_shape_matches(self):
+        self.assertEqual(
+            self.pca.column_correlations.shape,
+            (self.df_numeric.shape[1], self.n_components)
+        )
 
-
-def test_eigenvalues_sorted(pca):
-    """Check the eigenvalues are sorted in descending order."""
-    assert test_util.is_sorted(pca.eigenvalues)
-
-
-def test_eigenvalues_total_inertia(pca):
-    """Check the eigenvalues sums to the same amount as the total inertia."""
-    assert np.isclose(sum(pca.eigenvalues), pca.total_inertia)
-
-
-def test_eigenvalues_singular_values(pca):
-    """Check the eigenvalues are the squares of the singular values."""
-    for eigenvalue, singular_value in zip(pca.eigenvalues, pca.svd.s):
-        assert np.isclose(eigenvalue, np.square(singular_value))
-
-
-def test_cov_trace_total_inertia(pca, cov_matrix):
-    """Check the trace of the covariance matrix is equal to the total inertia."""
-    assert np.isclose(cov_matrix.trace(), pca.total_inertia)
-
-
-def test_eigenvalues_column_inertias(pca):
-    """Check the eigenvalues are the sums of the column inertias."""
-    squared_row_pc = np.square(pca.row_principal_coordinates)
-    col_inertias = squared_row_pc.sum(axis='rows')
-    for eig, col_inertia in zip(pca.eigenvalues, col_inertias):
-        assert np.isclose(eig, col_inertia)
-
-
-def test_explained_inertia_decreases(pca):
-    """Check the explained inertia decreases."""
-    assert test_util.is_sorted(pca.explained_inertia)
-
-
-def test_explained_inertia_sum(pca):
-    """Check the explained inertia sums to 1."""
-    assert np.isclose(sum(pca.explained_inertia), 1)
-
-
-def test_cumulative_explained_inertia(pca):
-    """Check the cumulative explained inertia is correct."""
-    assert np.array_equal(pca.cumulative_explained_inertia, np.cumsum(pca.explained_inertia))
-
-
-def test_row_components_variance(pca, k):
-    """Check the variance of each row projection is equal to the associated eigenvalue and that the
-    covariance between each row projection is nil."""
-    eigenvalues = pca.eigenvalues
-
-    for i, (_, p1) in enumerate(pca.row_principal_coordinates.iteritems()):
-        for j, (_, p2) in enumerate(pca.row_principal_coordinates.iteritems()):
-            if i == j:
-                assert np.isclose(p1.var() * pca.total_inertia / k, eigenvalues[i])
-            else:
-                assert np.isclose(np.cov(p1, p2)[0][1], 0)
-
-
-def test_row_components_contributions(pca):
-    """Check the sum of row contributions is equal to the total inertia."""
-    for _, col_sum in pca.row_component_contributions.sum(axis='rows').iteritems():
-        assert np.isclose(col_sum, 1)
-
-
-def test_row_cosine_similarities_shape(pca, n, k):
-    """Check the shape of the variable cosines is coherent."""
-    assert pca.row_cosine_similarities.shape == (n, k)
-
-
-def test_row_cosine_similarities_bounded(pca, n, k):
-    """Check the variable correlations are bounded between -1 and 1."""
-    assert (-1 <= pca.row_cosine_similarities).sum().sum() == n * k
-    assert (pca.row_cosine_similarities <= 1).sum().sum() == n * k
-
-
-def test_column_correlations_shape(pca, p, k):
-    """Check the shape of the variable correlations is coherent."""
-    assert pca.column_correlations.shape == (p, k)
-
-
-def test_column_correlations_bounded(pca, p, k):
-    """Check the variable correlations are bounded between -1 and 1."""
-    assert (-1 <= pca.column_correlations).sum().sum() == p * k
-    assert (pca.column_correlations <= 1).sum().sum() == p * k
+    def test_column_correlations_bounded(self):
+        n_cells = self.df_numeric.shape[1] * self.n_components
+        self.assertEqual((-1 <= self.pca.column_correlations).sum().sum(), n_cells)
+        self.assertEqual((self.pca.column_correlations <= 1).sum().sum(), n_cells)

@@ -64,18 +64,18 @@ The second plot displays the cumulative contributions of each eigenvector (by lo
 
 ## Installation
 
-Prince is only compatible with Python 3. Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is generally a good idea for doing data science in Python.
+Prince is only compatible with Python 3. Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is highly recommended as it generally a good idea for doing data science in Python.
 
 **Via PyPI**
 
 ```sh
-$ pip install prince
+>>> pip install prince
 ```
 
 **Via GitHub for the latest development version**
 
 ```sh
-$ pip install git+https://github.com/MaxHalford/Prince
+>>> pip install git+https://github.com/MaxHalford/Prince
 ```
 
 Prince has the following dependencies:
@@ -87,7 +87,7 @@ Prince has the following dependencies:
 
 ## Documentation
 
-Please check out the [documentation](http://prince.readthedocs.io) for a list of available methods.
+Please check out the [documentation](http://prince.readthedocs.io) for a list of available methods and properties.
 
 
 ## License

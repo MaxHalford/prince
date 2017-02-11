@@ -1,7 +1,6 @@
-pylint>=1.5.5
-pytest>=2.9.1
+fbpca>=1.0
+pytest>=3.0.5
 pytest-cov>=2.2.1
-python-coveralls>=2.9.0
 Sphinx>=1.4.8
 sphinx-autobuild>=0.6.0
 sphinx-rtd-theme>=0.1.9
