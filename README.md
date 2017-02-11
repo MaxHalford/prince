@@ -21,9 +21,9 @@
   <a href="https://coveralls.io/github/MaxHalford/Prince?branch=master">
     <img src="https://coveralls.io/repos/github/MaxHalford/Prince/badge.svg?branch=master&style=flat-square" alt="Coverage Status"/>
   </a>
-  <!-- Codacy -->
-  <a href="https://www.codacy.com/app/maxhalford25/Prince?utm_source=github.com&utm_medium=referral&utm_content=MaxHalford/Prince&utm_campaign=Badge_Grade">
-    <img src="https://api.codacy.com/project/badge/Grade/d58aa963d6fa425b97d2b9364aecbba1?style=flat-square" alt="Codacy Badge"/>
+  <!-- Code Climate -->
+  <a href="https://codeclimate.com/github/MaxHalford/Prince">
+    <img src="https://codeclimate.com/github/MaxHalford/Prince/badges/gpa.svg" alt="Code Climate" />
   </a>
   <!-- Requirements -->
   <a href="https://requires.io/github/MaxHalford/Prince/requirements/?branch=master">
