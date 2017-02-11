@@ -38,7 +38,7 @@
 <br/>
 
 <br/>
-<div align="center">Prince is a factor analysis library for datasets that fit in memory.</div>
+<div align="center">Prince is an easy-to-use factor analysis library</div>
 <br/>
 
 
