@@ -2,9 +2,6 @@
 engines:
   duplication:
     enabled: true
-    config:
-      languages:
-        - python
   fixme:
     enabled: true
   radon:
@@ -13,5 +10,6 @@ ratings:
   paths:
     - "*.py"
 exclude_paths:
+  - "docs/*"
   - "examples/*"
   - "tests/*"
