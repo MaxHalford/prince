@@ -1,9 +1,11 @@
 import pandas as pd
 
+import os
 import prince
 
-
-df = pd.read_csv('data/iris.csv')
+org_dir = os.path.dirname(__file__)
+absolute_path = os.path.join(org_dir, 'data/iris.csv')
+df = pd.read_csv(absolute_path)
 
 pca = prince.PCA(df, n_components=4)
 
