@@ -100,6 +100,16 @@ Prince has the following dependencies:
 Please check out the [documentation](http://prince.readthedocs.io) for a list of available methods and properties.
 
 
+## Example usage
+
+You can examples in the `examples/` folder, you have to navigate to the folder to use them.
+
+```sh
+>>> cd examples/
+>>> python pca-iris.py
+```
+
+
 ## License
 
 The MIT License (MIT). Please see [license file](LICENSE) for more information.
