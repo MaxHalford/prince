@@ -1,191 +1,122 @@
+import unittest
+
 import numpy as np
 import pandas as pd
-import pytest
 
 from prince import CA
-from tests import util as test_util
 
 
-@pytest.fixture
-def df():
-    """The original dataframe."""
-    return pd.read_csv('tests/data/presidentielles07.csv', index_col=0)
+class TestCA(unittest.TestCase):
 
+    @classmethod
+    def setup_class(cls):
+        # Load a dataframe
+        cls.initial_dataframe = pd.read_csv('tests/data/presidentielles07.csv', index_col=0)
 
-@pytest.fixture
-def n(df):
-    """The number of rows."""
-    n, _ = df.shape
-    return n
+        # Detemine the shape of the initial dataframe
+        (cls.n, cls.p) = cls.initial_dataframe.shape
 
+        # Determine the total number of observations
+        cls.N = np.sum(cls.initial_dataframe.values)
 
-@pytest.fixture
-def p(df):
-    """The number of columns."""
-    _, p = df.shape
-    return p
+        # Calculate a full CA
+        cls.n_components = cls.p
+        cls.ca = CA(cls.initial_dataframe, n_components=cls.n_components)
 
+    def test_eigenvectors_dimensions_match(self):
+        self.assertEqual(self.ca.svd.U.shape, (self.n, self.n_components))
+        self.assertEqual(self.ca.svd.s.shape, (self.n_components,))
+        self.assertEqual(self.ca.svd.V.shape, (self.n_components, self.p))
 
-@pytest.fixture
-def k(p):
-    """The number of principal components to compute."""
-    return p
+    def test_number_of_observations(self):
+        self.assertEqual(self.ca.N, self.N)
 
+    def test_frequencies(self):
+        """Check the frequencies sums up to 1 and that the original data can be obtained by
+        multiplying the frequencies by `N`."""
+        self.assertTrue(np.isclose(self.ca.P.sum().sum(), 1))
+        self.assertTrue(np.allclose(self.ca.P * self.ca.N, self.initial_dataframe))
 
-@pytest.fixture
-def N(df):
-    """The total number of observed value."""
-    return np.sum(df.values)
+    def test_row_sums_shape(self):
+        self.assertEqual(self.ca.row_sums.shape, (self.n,))
 
+    def test_row_sums_sum(self):
+        self.assertTrue(np.isclose(self.ca.row_sums.sum(), 1))
 
-@pytest.fixture
-def ca(df, k):
-    """The executed CA."""
-    return CA(df, n_components=k)
+    def test_column_sums_shape(self):
+        self.assertEqual(self.ca.column_sums.shape, (self.p,))
 
+    def test_column_sums_sum(self):
+        self.assertTrue(np.isclose(self.ca.column_sums.sum(), 1))
 
-def test_dimensions(ca, n, p):
-    """Check the dimensions are correct."""
-    assert ca.X.shape == (n, p)
-    assert ca.P.shape == (n, p)
+    def test_expected_frequencies_shape(self):
+        self.assertEqual(self.ca.expected_frequencies.shape, (self.n, self.p))
 
+    def test_expected_frequencies_sum(self):
+        self.assertTrue(np.isclose(np.sum(self.ca.expected_frequencies.values), 1))
 
-def test_eigenvectors_dimensions(ca, n, p, k):
-    """Check the eigenvectors have the expected dimensions."""
-    assert ca.svd.U.shape == (n, k)
-    assert ca.svd.s.shape == (k,)
-    assert ca.svd.V.shape == (k, p)
+    def test_number_of_eigenvalues(self):
+        self.assertEqual(len(self.ca.eigenvalues), self.n_components)
 
+    def test_eigenvalues_sorted_desc(self):
+        self.assertListEqual(self.ca.eigenvalues, list(reversed(sorted(self.ca.eigenvalues))))
 
-def test_total_sum(ca, N):
-    """Check the total number of values is correct."""
-    assert ca.N == N
+    def test_eigenvalues_sum_equals_total_inertia(self):
+        self.assertTrue(np.isclose(sum(self.ca.eigenvalues), self.ca.total_inertia, rtol=10e-3))
 
+    def test_eigenvalues_equals_squared_singular_values(self):
+        for eigenvalue, singular_value in zip(self.ca.eigenvalues, self.ca.svd.s):
+            self.assertTrue(np.isclose(eigenvalue, np.square(singular_value)))
 
-def test_frequencies(ca, N, df):
-    """Check the frequencies sums up to 1 and that the original data can be obtained by
-    multiplying the frequencies by `N`."""
-    assert np.isclose(ca.P.sum().sum(), 1)
-    assert np.allclose(ca.P * N, df)
+    def test_explained_inertia_sorted_desc(self):
+        self.assertListEqual(
+            self.ca.explained_inertia,
+            list(reversed(sorted(self.ca.explained_inertia)))
+        )
 
+    def test_explained_inertia_sum(self):
+        self.assertTrue(np.isclose(sum(self.ca.explained_inertia), 1, rtol=10e-3))
 
-def test_row_sums_sum(ca):
-    """Check the row sums sum up to 1."""
-    assert np.isclose(ca.row_sums.sum(), 1)
+    def test_cumulative_explained_inertia(self):
+        self.assertListEqual(
+            self.ca.cumulative_explained_inertia,
+            list(np.cumsum(self.ca.explained_inertia))
+        )
 
+    def test_row_components_contributions_sum_equals_total_inertia(self):
+            for _, col_sum in self.ca.row_component_contributions.sum(axis='rows').iteritems():
+                self.assertTrue(np.isclose(col_sum, 1))
 
-def test_row_sums_shape(ca, n):
-    """Check the row sums is a vector of length `n`."""
-    assert ca.row_sums.shape == (n,)
+    def test_row_cosine_similarities_shape_matches(self):
+        self.assertEqual(self.ca.row_cosine_similarities.shape, (self.n, self.n_components))
 
+    def test_row_cosine_similarities_are_bounded(self):
+        n_cells = self.n * self.n_components
+        self.assertEqual((-1 <= self.ca.row_cosine_similarities).sum().sum(), n_cells)
+        self.assertEqual((self.ca.row_cosine_similarities <= 1).sum().sum(), n_cells)
 
-def test_column_sums_sum(ca):
-    """Check the column sums sum up to 1."""
-    assert np.isclose(ca.column_sums.sum(), 1)
+    def test_row_profiles_shape(self):
+        self.assertEqual(self.ca.row_profiles.shape, (self.n, self.p))
 
+    def test_row_profiles_sum(self):
+        for _, row_sum in self.ca.row_profiles.sum(axis='columns').iteritems():
+            self.assertTrue(np.isclose(row_sum, 1))
 
-def test_column_sums_shape(ca, p):
-    """Check the row sums is a vector of length `p`."""
-    assert ca.column_sums.shape == (p,)
+    def test_column_component_contributions(self):
+        for _, col_sum in self.ca.column_component_contributions.sum(axis='columns').iteritems():
+            self.assertTrue(np.isclose(col_sum, 1))
 
+    def test_column_cosine_similarities_shape(self):
+        self.assertEqual(self.ca.column_cosine_similarities.shape, (self.p, self.n_components))
 
-def test_expected_frequencies_shape(ca, n, p):
-    """Check the expected frequencies matrix is of shape `(n, p)`."""
-    assert ca.expected_frequencies.shape == (n, p)
+    def test_column_cosine_similarities_bounded(self):
+        n_cells = self.p * self.n_components
+        self.assertEqual((-1 <= self.ca.column_cosine_similarities).sum().sum(), n_cells)
+        self.assertEqual((self.ca.column_cosine_similarities <= 1).sum().sum(), n_cells)
 
+    def test_column_profiles_shape(self):
+        self.assertEqual(self.ca.column_profiles.shape, (self.n, self.p))
 
-def test_expected_frequencies_sum(ca, p):
-    """Check the expected frequencies matrix sums to 1."""
-    assert np.isclose(np.sum(ca.expected_frequencies.values), 1)
-
-
-def test_eigenvalues_dimensions(ca, k):
-    """Check the eigenvalues is a vector of length `k`."""
-    assert len(ca.eigenvalues) == k
-
-
-def test_eigenvalues_sorted(ca):
-    """Check the eigenvalues are sorted in descending order."""
-    assert test_util.is_sorted(ca.eigenvalues)
-
-
-def test_eigenvalues_total_inertia(ca):
-    """Check the eigenvalues sums to the same amount as the total inertia."""
-    assert np.isclose(sum(ca.eigenvalues), ca.total_inertia, rtol=10e-3)
-
-
-def test_eigenvalues_singular_values(ca):
-    """Check the eigenvalues are the squares of the singular values."""
-    for eigenvalue, singular_value in zip(ca.eigenvalues, ca.svd.s):
-        assert np.isclose(eigenvalue, np.square(singular_value))
-
-
-def test_explained_inertia_decreases(ca):
-    """Check the explained inertia decreases."""
-    assert test_util.is_sorted(ca.explained_inertia)
-
-
-def test_explained_inertia_sum(ca):
-    """Check the explained inertia sums to 1."""
-    assert np.isclose(sum(ca.explained_inertia), 1, rtol=10e-3)
-
-
-def test_cumulative_explained_inertia(ca):
-    """Check the cumulative explained inertia is correct."""
-    assert np.array_equal(ca.cumulative_explained_inertia, np.cumsum(ca.explained_inertia))
-
-
-def test_row_component_contributions(ca, k):
-    """Check the sum of row contributions is equal to the total inertia."""
-    for _, col_sum in ca.row_component_contributions.sum(axis='rows').iteritems():
-        assert np.isclose(col_sum, 1)
-
-
-def test_row_cosine_similarities_shape(ca, n, k):
-    """Check the shape of the variable correlations is coherent."""
-    assert ca.row_cosine_similarities.shape == (n, k)
-
-
-def test_row_cosine_similarities_bounded(ca, n, k):
-    """Check the variable correlations are bounded between -1 and 1."""
-    assert (-1 <= ca.row_cosine_similarities).sum().sum() == n * k
-    assert (ca.row_cosine_similarities <= 1).sum().sum() == n * k
-
-
-def test_row_profiles_shape(ca, n, p):
-    """Check the row profiles is a matrix of shape `(n, p)`."""
-    assert ca.row_profiles.shape == (n, p)
-
-
-def test_row_profiles_sum(ca):
-    """Check the row profiles sum up to 1 for each row."""
-    for _, row_sum in ca.row_profiles.sum(axis='columns').iteritems():
-        assert np.isclose(row_sum, 1)
-
-
-def test_column_component_contributions(ca):
-    """Check the sum of column contributions is equal to the total inertia."""
-    for _, col_sum in ca.column_component_contributions.sum(axis='columns').iteritems():
-        assert np.isclose(col_sum, 1)
-
-
-def test_column_cosine_similarities_shape(ca, p, k):
-    """Check the shape of the variable correlations is coherent."""
-    assert ca.column_cosine_similarities.shape == (p, k)
-
-
-def test_column_cosine_similarities_bounded(ca, p, k):
-    """Check the variable correlations are bounded between -1 and 1."""
-    assert (-1 <= ca.column_cosine_similarities).sum().sum() == p * k
-    assert (ca.column_cosine_similarities <= 1).sum().sum() == p * k
-
-
-def test_column_profiles_shape(ca, n, p):
-    """Check the column profiles is a matrix of shape `(n, p)`."""
-    assert ca.column_profiles.shape == (n, p)
-
-
-def test_column_profiles_sum(ca):
-    """Check the column profiles sum up to 1 for each column."""
-    for _, column_sum in ca.column_profiles.sum(axis='rows').iteritems():
-        assert np.isclose(column_sum, 1)
+    def test_column_profiles_sum(self):
+        for _, col_sum in self.ca.column_profiles.sum(axis='rows').iteritems():
+            self.assertTrue(np.isclose(col_sum, 1))

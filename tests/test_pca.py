@@ -19,6 +19,9 @@ class TestPCA(unittest.TestCase):
         # Determine the numerical columns
         cls.df_numeric = dataframe.drop(cls.df_categorical.columns, axis='columns')
 
+        # Determine the size of the numerical part of the dataframe
+        (cls.n, cls.p) = cls.df_numeric.shape
+
         # Determine the covariance matrix
         X = cls.df_numeric.copy()
         cls.center_reduced = ((X - X.mean()) / X.std()).values
@@ -28,7 +31,7 @@ class TestPCA(unittest.TestCase):
         cls.n_components = len(cls.df_numeric.columns)
         cls.pca = PCA(dataframe, n_components=cls.n_components, scaled=True)
 
-    def test_dimensions_matches(self):
+    def test_dimensions_match(self):
         self.assertEqual(self.pca.X.shape, self.df_numeric.shape)
 
     def test_column_names(self):
@@ -37,10 +40,10 @@ class TestPCA(unittest.TestCase):
     def test_center_reduced(self):
         self.assertTrue(np.allclose(self.pca.X, self.center_reduced))
 
-    def test_eigenvectors_dimensions_matches(self):
-        self.assertEqual(self.pca.svd.U.shape, (self.df_numeric.shape[0], self.n_components))
+    def test_eigenvectors_dimensions_match(self):
+        self.assertEqual(self.pca.svd.U.shape, (self.n, self.n_components))
         self.assertEqual(self.pca.svd.s.shape, (self.n_components,))
-        self.assertEqual(self.pca.svd.V.shape, (self.n_components, self.df_numeric.shape[1]))
+        self.assertEqual(self.pca.svd.V.shape, (self.n_components, self.p))
 
     def test_eigenvectors_form_orthonormal_basis(self):
         for i, v1 in enumerate(self.pca.svd.V.T):
@@ -104,23 +107,17 @@ class TestPCA(unittest.TestCase):
             self.assertTrue(np.isclose(col_sum, 1))
 
     def test_row_cosine_similarities_shape_matches(self):
-        self.assertEqual(
-            self.pca.row_cosine_similarities.shape,
-            (self.df_numeric.shape[0], self.n_components)
-        )
+        self.assertEqual(self.pca.row_cosine_similarities.shape, (self.n, self.n_components))
 
     def test_row_cosine_similarities_are_bounded(self):
-        n_cells = self.df_numeric.shape[0] * self.n_components
+        n_cells = self.n * self.n_components
         self.assertEqual((-1 <= self.pca.row_cosine_similarities).sum().sum(), n_cells)
         self.assertEqual((self.pca.row_cosine_similarities <= 1).sum().sum(), n_cells)
 
     def test_column_correlations_shape_matches(self):
-        self.assertEqual(
-            self.pca.column_correlations.shape,
-            (self.df_numeric.shape[1], self.n_components)
-        )
+        self.assertEqual(self.pca.column_correlations.shape, (self.p, self.n_components))
 
     def test_column_correlations_bounded(self):
-        n_cells = self.df_numeric.shape[1] * self.n_components
+        n_cells = self.p * self.n_components
         self.assertEqual((-1 <= self.pca.column_correlations).sum().sum(), n_cells)
         self.assertEqual((self.pca.column_correlations <= 1).sum().sum(), n_cells)
