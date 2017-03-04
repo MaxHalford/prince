@@ -112,4 +112,4 @@ You can examples in the `examples/` folder, you have to navigate to the folder t
 
 ## License
 
-The MIT License (MIT). Please see [license file](LICENSE) for more information.
+The MIT License (MIT). Please see the [license file](LICENSE) for more information.
