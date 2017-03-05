@@ -48,13 +48,13 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
         if show_points:
             if color_labels is not None:
                 for (label, group), color in zip(group_by, colors):
-                    ax.scatter(group['X'], group['Y'], s=50, color=color, label=label)
+                    ax.scatter(group['X'], group['Y'], s=16, color=color, label=label)
                 if not supplementary_principal_coordinates.empty:
                     for (label, group), color in zip(group_by_supp, colors):
-                        ax.scatter(group['X'], group['Y'], s=90, color=color, label=label,
+                        ax.scatter(group['X'], group['Y'], s=32, color=color, label=label,
                                    marker='*')
             else:
-                ax.scatter(data['X'], data['Y'], s=50, color=SEABORN['blue'])
+                ax.scatter(data['X'], data['Y'], s=16, color=SEABORN['blue'])
 
         if show_labels:
             ax.scatter(data['X'], data['Y'], alpha=0, label=None)
