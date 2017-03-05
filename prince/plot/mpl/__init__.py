@@ -12,7 +12,7 @@ class MplPlotter(Plotter):
 
     def __init__(self):
 
-        mpl.rcParams['figure.dpi'] = 140
+        mpl.rcParams['figure.figsize'] = (9.6, 7.2)
 
         mpl.rcParams['lines.linewidth'] = 1.8 # line width in points
         mpl.rcParams['lines.markeredgewidth'] = 0.3 # the line width around the marker symbol
