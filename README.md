@@ -6,8 +6,8 @@
 
 <div align="center">
   <!-- Read the Docs -->
-  <a href='http://prince.readthedocs.io/en/latest/?badge=latest'>
-    <img src='https://readthedocs.org/projects/prince/badge/?version=latest' alt='Documentation Status' />
+  <a href="http://prince.readthedocs.io/en/latest/?badge=latest">
+    <img src="https://readthedocs.org/projects/prince/badge/?version=latest" alt="Documentation Status" />
   </a>
   <!-- PyPi version -->
   <a href="https://badge.fury.io/py/prince">
@@ -65,11 +65,15 @@ plt.show()
 
 The first plot displays the rows in the initial dataset projected on to the two first right eigenvectors (the obtained projections are called principal coordinates). The ellipses are 90% confidence intervals.
 
-![row_principal coordinates](docs/_static/pca_row_principal_coordinates.png)
+<div align="center">
+  <img src="examples/pca_row_principal_coordinates.png" alt='pca_row_principal_coordinates' />
+</div>
 
 The second plot displays the cumulative contributions of each eigenvector (by looking at the corresponding eigenvalues). In this case the total contribution is above 95% while only considering the two first eigenvectors.
 
-![cumulative_inertia](docs/_static/pca_cumulative_inertia.png)
+<div align="center">
+  <img src="examples/pca_cumulative_inertia.png" alt='pca_cumulative_inertia' />
+</div>
 
 
 ## Installation
