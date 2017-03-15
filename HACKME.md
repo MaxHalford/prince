@@ -4,6 +4,7 @@
 
 - Finish refactoring tests
 - Test Matplotlib
+- Make a command that does everything for uploading and pushing to git
 
 ## Development setup
 
