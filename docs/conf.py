@@ -21,7 +21,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-from prince import __version__
+from setup import VERSION
 
 # -- General configuration ------------------------------------------------
 
@@ -78,7 +78,7 @@ author = 'Max Halford'
 #from prince import __version__
 
 # The full version, including alpha/beta/rc tags.
-release = __version__
+release = VERSION
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
 

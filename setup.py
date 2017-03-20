@@ -3,6 +3,8 @@
 from setuptools import setup, find_packages
 
 
+VERSION = '0.2.6'
+
 setup(
     author='Max Halford',
     author_email='maxhalford25@gmail.com',
@@ -18,5 +20,5 @@ setup(
     name='prince',
     packages=find_packages(exclude=['tests']),
     url='https://github.com/MaxHalford/Prince',
-    version='0.2.6',
+    version=VERSION,
 )
