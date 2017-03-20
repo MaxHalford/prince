@@ -104,7 +104,7 @@ class MCA(CA):
         """
         return pd.DataFrame({
             column.name: [
-                util.correlation_ratio(column.tolist(), principal_component)
+                util.intraclass_correlation(column.tolist(), principal_component)
                 for _, principal_component in self.row_principal_coordinates.iteritems()
             ]
             for _, column in self.initial_dataframe.iteritems()

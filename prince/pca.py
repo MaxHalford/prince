@@ -230,7 +230,7 @@ class PCA(Base):
             data=(
                 [
                     col.corr(pc) if col.dtype in ('int64', 'float64')
-                                 else util.correlation_ratio(col, pc)
+                                 else util.intraclass_correlation(col, pc)
                     for _, pc in row_pc.iteritems()
                 ]
                 for _, col in self.supplementary_columns.iteritems()

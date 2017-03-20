@@ -38,7 +38,7 @@ def cosine_similarity(A, B):
     return np.dot(A, B) / (np.sqrt(np.dot(A, A)) * np.sqrt(np.dot(B, B)))
 
 
-def correlation_ratio(A, B):
+def intraclass_correlation(A, B):
     """Calculate the correlation ratio between a categorical array and a numerical array one.
 
     Args:

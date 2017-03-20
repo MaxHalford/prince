@@ -9,13 +9,17 @@
   <a href="http://prince.readthedocs.io/en/latest/?badge=latest">
     <img src="https://readthedocs.org/projects/prince/badge/?version=latest" alt="Documentation Status" />
   </a>
+  <!-- Python version -->
+  <a href="https://pypi.python.org/pypi/prince">
+    <img src="https://img.shields.io/badge/python-3.x-blue.svg?style=flat-square" alt="PyPI version"/>
+  </a>
   <!-- PyPi version -->
-  <a href="https://badge.fury.io/py/prince">
+  <a href="https://pypi.python.org/pypi/prince">
     <img src="https://badge.fury.io/py/prince.svg?style=flat-square" alt="PyPI version"/>
   </a>
   <!-- Build status -->
   <a href="https://travis-ci.org/MaxHalford/Prince?branch=master">
-    <img src="https://travis-ci.org/MaxHalford/Prince.svg?branch=master&style=flat-square" alt="Build Status"/>
+    <img src="https://img.shields.io/travis/MaxHalford/Prince/master.svg?style=flat-square" alt="Build Status"/>
   </a>
   <!-- Test coverage -->
   <a href="https://coveralls.io/github/MaxHalford/Prince?branch=master">
