@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import os
 import prince
 
 wines = {
@@ -9,7 +10,10 @@ wines = {
     3: 'barbera'
 }
 
-df = pd.read_csv('data/wine.csv')
+org_dir = os.path.dirname(__file__)
+absolute_path = os.path.join(org_dir, 'data/wine.csv')
+df = pd.read_csv(absolute_path)
+
 df['kind'] = df['class'].apply(lambda x: wines[x])
 df.drop('class', axis=1, inplace=True)
 

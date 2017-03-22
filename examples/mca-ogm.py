@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import os
 import prince
 
-
-df = pd.read_csv('data/ogm.csv')
+org_dir = os.path.dirname(__file__)
+absolute_path = os.path.join(org_dir, 'data/ogm.csv')
+df = pd.read_csv(absolute_path)
 
 mca = prince.MCA(df, n_components=-1)
 

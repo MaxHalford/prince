@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import os
 import prince
 
-
-df = pd.read_csv('data/woman_work.csv', index_col=0)
+org_dir = os.path.dirname(__file__)
+absolute_path = os.path.join(org_dir, 'data/woman_work.csv')
+df = pd.read_csv(absolute_path, index_col=0)
 df = df[['Stay at home','Part-time work','Full-time work']]
 
 ca = prince.CA(df, n_components=-1)
