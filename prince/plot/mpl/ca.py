@@ -22,9 +22,9 @@ class MplCAPlotter(MplPlotter, CAPlotter):
         ax.axhline(y=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
         ax.axvline(x=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
 
-        row_pc = row_principal_coordinates.iloc[:, axes].copy()
+        row_pc = row_principal_coordinates.loc[:, slice(*axes)].copy()
         row_pc.columns = ('X', 'Y')
-        col_pc = column_principal_coordinates.iloc[:, axes].copy()
+        col_pc = column_principal_coordinates.loc[:, slice(*axes)].copy()
         col_pc.columns = ('X', 'Y')
 
         if show_row_points:
