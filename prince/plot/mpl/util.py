@@ -13,7 +13,7 @@ def create_discrete_cmap(n):
         base = plt.cm.get_cmap('Paired')
         color_list = base([(i + 1) / (n + 1) for i in range(n)])
         cmap_name = base.name + str(n)
-        return base.from_list(cmap_name, color_list, n)
+        return clr.LinearSegmentedColormap.from_list(cmap_name, color_list, n)
     return clr.ListedColormap(colors)
 
 
