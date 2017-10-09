@@ -27,8 +27,8 @@ class MplPCAPlotter(MplPlotter, PCAPlotter):
         ax.axhline(y=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
         ax.axvline(x=0, linestyle='-', linewidth=1.2, color=GRAYS['dark'], alpha=0.6)
 
-        data = principal_coordinates.iloc[:, axes].copy() # Active rows
-        supp = supplementary_principal_coordinates.iloc[:, axes].copy() # Supplementary rows
+        data = principal_coordinates.loc[:, slice(*axes)].copy() # Active rows
+        supp = supplementary_principal_coordinates.loc[:, slice(*axes)].copy() # Supplementary rows
         data.columns = ('X', 'Y')
         supp.columns = ('X', 'Y')
 

@@ -43,7 +43,7 @@ class MplMCAPlotter(MplPlotter, MCAPlotter):
 
         # Extract the prefixes from each column name for coloring
         if show_column_points or show_column_labels:
-            data = column_principal_coordinates.iloc[:, axes].copy()
+            data = column_principal_coordinates.loc[:, slice(*axes)].copy()
             data.columns = ('X', 'Y')
             # Only keep the prefix of each label
             data['label'] = column_principal_coordinates.index.to_series().apply(lambda x: x.split('_')[0])
@@ -76,7 +76,7 @@ class MplMCAPlotter(MplPlotter, MCAPlotter):
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
 
-        data = column_correlations.iloc[:, axes].copy()
+        data = column_correlations.loc[:, slice(*axes)].copy()
         data.columns = ('X', 'Y')
 
         for _, row in data.iterrows():
