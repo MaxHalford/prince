@@ -1,175 +1,117 @@
 """Principal Component Analysis"""
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn import base
+from sklearn import preprocessing
+from sklearn import utils
 
-from . import util
-from .base import Base
-from .plot.mpl.pca import MplPCAPlotter
-from .svd import SVD
+from . import plot
+from . import svd
 
 
-class PCA(Base):
+class PCA(base.BaseEstimator, base.TransformerMixin):
 
     """
     Args:
-        dataframe (pandas.DataFrame): The columns containing categorical data will be removed from
-            the dataframe provided by the user; they will be stored in a separate dataframe at
-            initialization.
-        n_components (int): The number of principal components that have to be computed. The lower
-            `n_components` is, the lesser time the PCA will take to compute.
-        scaled (bool): Whether or not to rescale each variable by subtracting it's mean to it and
-            then dividing it by it's standard deviation. This is advised when variables are not of
-            the same order of magnitude.
-        supplementary_rows (List[int/str]): A list of rows that won't be used to compute the PCA.
-            These rows can however be displayed together with the active rows on a row
-            principal coordinates chart.
-        supplementary_columns (List[str]): A list of columns that won't be used to compute the PCA.
-            The columns can however be displayed together with the active columns on a column
-            correlation chart.
-        plotter (str): The plotting backend used to build the charts. Can be any of: 'mpl'.
+        n_components (int): The number of principal components to compute.
+        n_iter (int): The number of iterations used for computing the SVD.
+        rescale_with_mean (bool): Whether to substract each column's mean or not.
+        rescale_with_std (bool): Whether to divide each column by it's standard deviation or not.
+        copy (bool): Whether to perform the computations inplace or not.
     """
 
-    def __init__(self, dataframe, n_components=2, scaled=True, supplementary_rows=None,
-                 supplementary_columns=None, plotter='mpl'):
+    def __init__(self, n_components=2, n_iter=3, rescale_with_mean=True, rescale_with_std=True,
+                 copy=True, engine='auto'):
 
-        if not isinstance(dataframe, pd.DataFrame):
-            raise ValueError('dataframe muse be a pandas.DataFrame')
+        self.n_components = n_components
+        self.n_iter = n_iter
+        self.rescale_with_mean = rescale_with_mean
+        self.rescale_with_std = rescale_with_std
+        self.copy = copy
+        self.engine = engine
 
-        self.categorical_columns = pd.DataFrame()
-        self.supplementary_columns = pd.DataFrame()
-        self.supplementary_rows = pd.DataFrame()
+    def fit(self, X, y=None):
 
-        self._filter(
-            dataframe=dataframe,
-            supplementary_row_names=supplementary_rows if supplementary_rows else [],
-            supplementary_column_names=supplementary_columns if supplementary_columns else []
-        )
-        super(PCA, self).__init__(
-            dataframe=dataframe,
-            k=n_components,
-            plotter=plotter
-        )
-        self._set_plotter(plotter_name=plotter)
+        # Check input
+        utils.check_array(X)
 
-        self.scaled = scaled
-        if self.scaled:
-            mean = self.X.mean()
-            std = self.X.std()
-            self.X = (self.X - mean) / std
-            if not self.supplementary_rows.empty:
-                self.supplementary_rows -= mean
-                self.supplementary_rows /= std
+        # Convert pandas DataFrame to numpy array
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
-        self._compute_svd()
+        # Copy data
+        if self.copy:
+            X = np.copy(X)
 
-    def _compute_svd(self):
-        self.svd = SVD(X=self.X.values, k=self.n_components)
+        # Scale data
+        if self.rescale_with_mean or self.rescale_with_std:
+            self.scaler_ = preprocessing.StandardScaler(
+                copy=False,
+                with_mean=self.rescale_with_mean,
+                with_std=self.rescale_with_std
+            ).fit(X)
+            X = self.scaler_.transform(X)
 
-    def _set_plotter(self, plotter_name):
-        self.plotter = {
-            'mpl': MplPCAPlotter()
-        }[plotter_name]
+        # Compute SVD
+        self.U_, self.s_, self.V_ = svd.compute_svd(X, self.n_components, self.n_iter, self.engine)
 
-    def _filter(self, dataframe, supplementary_row_names, supplementary_column_names):
+        # Compute total inertia
+        self.total_inertia_ = np.sum(np.square(X))
 
-        # Extract the categorical columns
-        self.categorical_columns = dataframe.select_dtypes(exclude=[np.number])
+        return self
 
-        # Extract the supplementary rows
-        self.supplementary_rows = dataframe.loc[supplementary_row_names].copy()
-        self.supplementary_rows.drop(self.categorical_columns.columns, axis='columns', inplace=True)
+    def transform(self, X):
+        """Computes the row principal coordinates of a dataset.
 
-        # Extract the supplementary columns
-        self.supplementary_columns = dataframe[supplementary_column_names].copy()
-        self.supplementary_columns.drop(supplementary_row_names, axis='rows', inplace=True)
+        In most cases you should be using the same dataset as you did when calling the `fit`
+        method.
+        """
+        utils.validation.check_is_fitted(self, 's_')
+        utils.check_array(X)
+        return self.row_principal_coordinates(X)
 
-        # Remove the categorical column and the supplementary columns and rows from the dataframe
-        dataframe.drop(supplementary_row_names, axis='rows', inplace=True)
-        dataframe.drop(supplementary_column_names, axis='columns', inplace=True)
-        dataframe.drop(self.categorical_columns.columns, axis='columns', inplace=True)
-
-    @property
-    def n_supplementary_rows(self):
-        """The number of supplementary rows."""
-        return self.supplementary_rows.shape[0]
-
-    @property
-    def n_supplementary_columns(self):
-        """The number of supplementary columns."""
-        return self.supplementary_columns.shape[1]
-
-    @property
-    def row_principal_coordinates(self):
+    def row_principal_coordinates(self, X):
         """The row principal coordinates.
 
-        The row principal coordinates are obtained by projecting `X` on it's right eigenvectors.
-        This is done by calculating the dot product between `X` and `X`'s right eigenvectors.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row principal
-            coordinates.
+        The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
         """
-        return pd.DataFrame(data=self.X.dot(self.svd.V.T), index=self.X.index)
+        utils.validation.check_is_fitted(self, 's_')
 
-    @property
-    def supplementary_row_principal_coordinates(self):
-        """The supplementary row principal coordinates.
+        # Copy data
+        if self.copy:
+            X = np.copy(X)
 
-        The row principal coordinates are obtained by projecting the supplementary rows on the right
-        eigenvectors of `X`.
+        # Scale data
+        if hasattr(self, 'scaler_'):
+            X = self.scaler_.transform(X)
 
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n_supplementary_rows`, `k`) containing the
-            supplementary row principal coordinates.
-        """
         return pd.DataFrame(
-            data=self.supplementary_rows.dot(self.svd.V.T),
-            index=self.supplementary_rows.index
+            data=X.dot(self.V_.T),
+            index=X.index if isinstance(X, pd.DataFrame) else None
         )
 
-    @property
-    def row_standard_coordinates(self):
+    def row_standard_coordinates(self, X):
         """The row standard coordinates.
 
-        The row standard coordinates are obtained by scaling/dividing each row projection by it's
+        The row standard coordinates are obtained by dividing each row principal coordinate by it's
         associated eigenvalue.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row standard
-            coordinates.
         """
-        return self.row_principal_coordinates.div(self.eigenvalues, axis='columns')
+        utils.validation.check_is_fitted(self, 's_')
+        return self.row_principal_coordinates(X).div(self.eigenvalues_, axis='columns')
 
-    @property
-    def supplementary_row_standard_components(self):
-        """The supplementary row standard coordinates.
-
-        The supplementary row standard coordinates are obtained by scaling/dividing each
-        supplementary row projection by it's associated eigenvalue.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n_supplementary_rows`, `k`) containing the
-            supplementary row standard coordinates.
-        """
-        return self.supplementary_row_principal_coordinates.div(self.eigenvalues, axis='columns')
-
-    @property
-    def row_component_contributions(self):
+    def row_component_contributions(self, X):
         """The row component contributions.
 
         Each row contribution towards each principal component is equivalent to the amount of
         inertia it contributes. This is calculated by dividing the squared row coordinates by the
         eigenvalue associated to each principal component.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the row component
-            contributions.
         """
-        squared_coordinates = np.square(self.row_principal_coordinates)
-        return squared_coordinates.div(self.eigenvalues, axis='columns')
+        utils.validation.check_is_fitted(self, 's_')
+        return np.square(self.row_principal_coordinates(X)).div(self.eigenvalues_, axis='columns')
 
-    @property
-    def row_cosine_similarities(self):
+    def row_cosine_similarities(self, X):
         """The squared row cosine similarities.
 
         The row cosine similarities are obtained by calculating the cosine of the angle shaped by
@@ -177,128 +119,97 @@ class PCA(Base):
         squaring each row projection coordinate and dividing each squared coordinate by the sum of
         the squared coordinates, which results in a ratio comprised between 0 and 1 representing the
         squared cosine.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n`, `k`) containing the squared row cosine
-            similarities.
         """
-        squared_coordinates = np.square(self.row_principal_coordinates)
+        utils.validation.check_is_fitted(self, 's_')
+        squared_coordinates = np.square(self.row_principal_coordinates(X))
         total_squares = squared_coordinates.sum(axis='columns')
         return squared_coordinates.div(total_squares, axis='rows')
 
-    @property
-    def supplementary_row_cosine_similarities(self):
-        """The supplementary squared row cosine similarities.
+    def column_correlations(self, X):
+        """The column correlations with each principal component."""
+        utils.validation.check_is_fitted(self, 's_')
 
-        The supplementary row cosine similarities are obtained by calculating the cosine of the
-        angle shaped by the supplementary row principal coordinates and the supplementary row
-        principal components.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n_supplementary_rows`, `k`) containing the
-            squared supplementary row cosine similarities.
-        """
-        squared_coordinates = np.square(self.supplementary_row_principal_coordinates)
-        total_squares = squared_coordinates.sum(axis='columns')
-        return squared_coordinates.div(total_squares, axis='rows')
-
-    @property
-    def column_correlations(self):
-        """The column correlations with each principal component.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`p`, `k`) containing the Pearson
-            correlations between the columns and the principal components.
-        """
-        row_pc = self.row_principal_coordinates
-        return pd.DataFrame(
-            data=([col.corr(pc) for _, pc in row_pc.iteritems()] for _, col in self.X.iteritems()),
-            columns=row_pc.columns,
-            index=self.X.columns
-        )
-
-    @property
-    def supplementary_column_correlations(self):
-        """The supplementary column correlations with each principal component.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`n_supplementary_columns`, `k`) containing
-            the Pearson correlations between the supplementary columns and the principal components.
-        """
-        row_pc = self.row_principal_coordinates
-        return pd.DataFrame(
-            data=(
-                [
-                    col.corr(pc) if col.dtype in ('int64', 'float64')
-                                 else util.intraclass_correlation(col, pc)
-                    for _, pc in row_pc.iteritems()
-                ]
-                for _, col in self.supplementary_columns.iteritems()
-            ),
-            columns=row_pc.columns,
-            index=self.supplementary_columns.columns
-        )
-
-    @property
-    def total_inertia(self):
-        """The total inertia.
-
-        Obtained by summing up the variance of each column.
-
-        Returns:
-            float: The total inertia.
-        """
-        return np.sum(np.square(self.X.values))
-
-    def plot_rows(self, axes=(0, 1), show_points=True, show_labels=False, color_by=None,
-                  ellipse_outline=False, ellipse_fill=False):
-        """Plot the row principal coordinates.
-
-        Args:
-            axes (List(int)): A list of length two indicating which row principal coordinates to
-                display.
-            show_points (bool): Whether or not to show a point for each row principal coordinate.
-            show_labels (bool): Whether or not to show the name of each row principal coordinate.
-            color_by (str): Indicates according to which categorical variable the information should
-                be colored by.
-            ellipse_outline (bool): Whether or not to display an ellipse outline around each class
-                if `color_by` has been set.
-            ellipse_fill (bool): Whether or not to display a filled ellipse around each class if
-                `color_by` has been set.
-        """
-
-        # Get color labels
-        if color_by is None:
-            color_labels = None
-        elif color_by not in self.categorical_columns.columns:
-            raise ValueError("'{}' is not a categorial column".format(color_by))
+        # Convert pandas DataFrame to numpy array
+        if isinstance(X, pd.DataFrame):
+            columns = X.columns
+            X = X.values
         else:
-            color_labels = self.categorical_columns[color_by]
+            columns = list(range(X.shape[1]))
 
-        return self.plotter.row_principal_coordinates(
-            axes=axes,
-            principal_coordinates=self.row_principal_coordinates,
-            supplementary_principal_coordinates=self.supplementary_row_principal_coordinates,
-            explained_inertia=self.explained_inertia,
-            show_points=show_points,
-            show_labels=show_labels,
-            color_labels=color_labels,
-            ellipse_outline=ellipse_outline,
-            ellipse_fill=ellipse_fill
+        row_pc = self.row_principal_coordinates(X)
+
+        return pd.DataFrame(
+            data=([np.corrcoef(col, pc)[0, 1] for _, pc in row_pc.iteritems()] for col in X.T),
+            columns=row_pc.columns,
+            index=columns
         )
 
-    def plot_correlation_circle(self, axes=(0, 1), show_labels=True):
-        """Plot the Pearson correlations between the components and the original columns.
+    @property
+    def eigenvalues_(self):
+        """The eigenvalues associated with each principal component."""
+        utils.validation.check_is_fitted(self, 's_')
+        return np.square(self.s_).tolist()
 
-        Args:
-            axes (List(int)): A list of length two indicating which row principal coordinates to
-                display.
-            show_labels (bool): Whether or not to show the name of each column.
-        """
-        return self.plotter.correlation_circle(
-            axes=axes,
-            column_correlations=self.column_correlations,
-            supplementary_column_correlations=self.supplementary_column_correlations,
-            explained_inertia=self.explained_inertia,
-            show_labels=show_labels
-        )
+    @property
+    def explained_inertia_(self):
+        """The percentage of explained inertia per principal component."""
+        utils.validation.check_is_fitted(self, 's_')
+        return [eig / self.total_inertia_ for eig in self.eigenvalues_]
+
+    def plot_row_principal_coordinates(self, X, ax=None, figsize=(7, 7), x_component=0,
+                                       y_component=1, labels=None, group_labels=None,
+                                       ellipse_outline=False, ellipse_fill=True, show_points=True,
+                                       **kwargs):
+        """Plot the row principal coordinates."""
+        utils.validation.check_is_fitted(self, 's_')
+
+        if ax is None:
+            fig, ax = plt.subplots(figsize=figsize)
+
+        # Add style
+        ax = plot.stylize_axis(ax)
+
+        # Retrieve principal coordinates
+        principal_coordinates = self.row_principal_coordinates(X)
+        x = principal_coordinates[x_component]
+        y = principal_coordinates[y_component]
+
+        # Plot
+        if group_labels is None:
+            ax.scatter(x, y, **kwargs)
+        else:
+            for group_label in np.unique(group_labels):
+                mask = group_labels == group_label
+                color = ax._get_lines.get_next_color()
+                # Plot points
+                if show_points:
+                    ax.scatter(x[mask], y[mask], color=color, **kwargs, label=group_label)
+                # Plot ellipse
+                if (ellipse_outline or ellipse_fill):
+                    x_mean, y_mean, width, height, angle = plot.build_ellipse(x[mask], y[mask])
+                    ax.add_patch(mpl.patches.Ellipse(
+                        (x_mean, y_mean),
+                        width,
+                        height,
+                        angle=angle,
+                        linewidth=2 if ellipse_outline else 0,
+                        color=color,
+                        fill=ellipse_fill,
+                        alpha=0.2 + (0.3 if not show_points else 0) if ellipse_fill else 1
+                    ))
+
+        # Add labels
+        if labels is not None:
+            for i, label in enumerate(labels):
+                ax.annotate(label, (x[i], y[i]))
+
+        # Legend
+        ax.legend()
+
+        # Text
+        ax.set_title('Row principal coordinates')
+        ei = self.explained_inertia_
+        ax.set_xlabel('Component {} ({:.2f}%)'.format(x_component, 100 * ei[x_component]))
+        ax.set_ylabel('Component {} ({:.2f}%)'.format(y_component, 100 * ei[y_component]))
+
+        return ax

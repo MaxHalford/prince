@@ -1,198 +1,112 @@
 """Multiple Correspondence Analysis"""
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn import utils
 
-from . import util
-from .ca import CA
-from .plot.mpl.mca import MplMCAPlotter
+from . import ca
+from . import plot
 
 
-class MCA(CA):
+class MCA(ca.CA):
 
-    """
-    Args:
-        dataframe (pandas.DataFrame): A dataframe where each column is a variable.
-        n_components (int): The number of principal components that have to be computed. The lower
-            `n_components` is, the lesser time the CA will take to compute.
-        use_benzecri_rates (bool): Whether to use Benzecri rates to inflate the eigenvalues.
-        plotter (str): The plotting backend used to build the charts. Can be any of: 'mpl'.
-    """
+    def fit(self, X, y=None):
 
-    def __init__(self, dataframe, n_components=2, use_benzecri_rates=False, plotter='mpl'):
+        # Determine the number of columns in the initial matrix
+        n_initial_columns = X.shape[1]
 
-        if not isinstance(dataframe, pd.DataFrame):
-            raise ValueError('dataframe muse be a pandas.DataFrame')
-
-        self.categorical_columns = pd.DataFrame()
-        self.supplementary_columns = pd.DataFrame()
-        self.supplementary_rows = pd.DataFrame()
-
-        self.initial_dataframe = dataframe.copy(deep=True)
-        self.use_benzecri_rates = use_benzecri_rates
-
-        supplementary_rows = None # Todo
-        supplementary_columns = None  # Todo
-
-        self._filter(
-            dataframe=dataframe,
-            supplementary_row_names=supplementary_rows if supplementary_rows else [],
-            supplementary_column_names=supplementary_columns if supplementary_columns else []
-        )
-
-        super(MCA, self).__init__(
-            dataframe=pd.get_dummies(dataframe),
-            n_components=n_components,
-            plotter=plotter
-        )
-
-    def _set_plotter(self, plotter_name):
-        self.plotter = {
-            'mpl': MplMCAPlotter()
-        }[plotter_name]
-
-    def _filter(self, dataframe, supplementary_row_names, supplementary_column_names):
-
-        # Extract the categorical columns
-        self.categorical_columns = dataframe.select_dtypes(exclude=[np.number])
-
-        # Extract the supplementary rows
-        self.supplementary_rows = dataframe.loc[supplementary_row_names].copy()
-        self.supplementary_rows.drop(supplementary_column_names, axis=1, inplace=True)
-
-        # Extract the supplementary columns
-        self.supplementary_columns = dataframe[supplementary_column_names].copy()
-        self.supplementary_columns.drop(supplementary_row_names, axis=0, inplace=True)
-
-        # Remove the the supplementary columns and rows from the dataframe
-        dataframe.drop(supplementary_row_names, axis=0, inplace=True)
-        dataframe.drop(supplementary_column_names, axis=1, inplace=True)
-
-    @property
-    def q(self):
-        """The number of columns in the initial dataframe
-
-        As opposed to `p` which is the number of columns in the indicator matrix of the initial
-        dataframe.
-        """
-        return self.initial_dataframe.shape[1]
-
-    @property
-    def eigenvalues(self):
-        """The eigenvalues associated to each principal component.
-
-        The eigenvalues are obtained by squaring the singular values obtained from a SVD. If
-        `use_benzecri_rates` is `True` then Benzécri correction is applied to each eigenvalue.
-
-        Returns:
-            List[float]: The eigenvalues ordered increasingly.
-        """
-        eigenvalues = super(CA, self).eigenvalues
-        if self.use_benzecri_rates:
-            return util.calculate_benzecri_correction(eigenvalues)
-        return eigenvalues
-
-    @property
-    def column_correlations(self):
-        """The column correlation ratios with each principal component.
-
-        The correlations ratios are the inter-group variances divided by the sum of the inter-group
-        and intra-group variance of the numerical values associated to each categorical column.
-
-        Returns:
-            pandas.DataFrame: A dataframe of shape (`q`, `k`) containing the Pearson
-            correlations between the columns and the principal components.
-        """
-        return pd.DataFrame({
-            column.name: [
-                util.intraclass_correlation(column.tolist(), principal_component)
-                for _, principal_component in self.row_principal_coordinates.iteritems()
-            ]
-            for _, column in self.initial_dataframe.iteritems()
-        }).T
-
-    @property
-    def total_inertia(self):
-        """The total inertia."""
-        return (self.n_columns - self.q) / self.q
-
-    def plot_rows(self, axes=(0, 1), show_points=True, show_labels=False, color_by=None,
-                  ellipse_outline=False, ellipse_fill=False):
-        """Plot the row principal coordinates.
-
-        Args:
-            axes (List(int)): A list of length two indicating which row principal coordinates to
-                display.
-            show_points (bool): Whether or not to show a point for each row principal coordinate.
-            show_labels (bool): Whether or not to show the name of each row principal coordinate.
-            color_by (str): Indicates according to which categorical variable the information should
-                be colored by.
-            ellipse_outline (bool): Whether or not to display an ellipse outline around each class
-                if `color_by` has been set.
-            ellipse_fill (bool): Whether or not to display a filled ellipse around each class if
-                `color_by` has been set.
-        """
-
-        # Get color labels
-        if color_by is None:
-            color_labels = None
-        elif color_by not in self.initial_dataframe.columns:
-            raise ValueError("Categorical column '{}' can not be found".format(color_by))
+        # One-hot encode the dataset to retrieve an indicator matrix
+        if isinstance(X, pd.DataFrame):
+            X = pd.get_dummies(X).astype(np.int8)
         else:
-            color_labels = self.initial_dataframe[color_by]
+            X = pd.get_dummies(pd.DataFrame(X)).astype(np.int8)
 
-        return self.plotter.row_principal_coordinates(
-            axes=axes,
-            principal_coordinates=self.row_principal_coordinates,
-            supplementary_principal_coordinates=pd.DataFrame(
-                columns=self.row_principal_coordinates.columns
-            ), # To do
-            explained_inertia=self.explained_inertia,
-            show_points=show_points,
-            show_labels=show_labels,
-            color_labels=color_labels,
-            ellipse_outline=ellipse_outline,
-            ellipse_fill=ellipse_fill
-        )
+        # Determine the number of columns in the indicator matrix
+        n_new_columns = X.shape[1]
 
-    def plot_rows_columns(self, axes=(0, 1), show_row_points=True, show_row_labels=False,
-                          show_column_points=True, show_column_labels=False):
-        """Plot the row and column principal coordinates.
+        # Apply correspondance analysis to the indicator matrix
+        super().fit(X)
 
-        Args:
-            axes (List(int)): A list of length two indicating which row principal coordinates to
-                display.
-            show_row_points (bool): Whether or not to show a point for each row principal
-                coordinate.
-            show_row_labels (bool): Whether or not to show the name of each row principal
-                coordinate.
-            show_column_points (bool): Whether or not to show a point for each column principal
-                coordinate.
-            show_column_labels (bool): Whether or not to show the name of each column principal
-                coordinate.
-        """
-        return self.plotter.row_column_principal_coordinates(
-            axes=axes,
-            row_principal_coordinates=self.row_principal_coordinates,
-            column_principal_coordinates=self.column_principal_coordinates,
-            explained_inertia=self.explained_inertia,
-            show_row_points=show_row_points,
-            show_row_labels=show_row_labels,
-            show_column_points=show_column_points,
-            show_column_labels=show_column_labels
-        )
+        # Compute the total inertia
+        self.total_inertia_ = (n_new_columns - n_initial_columns) / n_initial_columns
 
-    def plot_relationship_square(self, axes=(0, 1), show_labels=True):
-        """Plot the relationship square between the initial columns and the row principal
-        components.
+        return self
+
+    def plot_principal_coordinates(self, ax=None, figsize=(7, 7), x_component=0, y_component=1,
+                                   show_row_points=True, row_points_size=10, show_row_labels=False,
+                                   show_column_points=True, column_points_size=30,
+                                   show_column_labels=False, legend_n_cols=1):
+        """Plot row and column principal coordinates.
 
         Args:
-            axes (List(int)): A list of length two indicating which row principal components to
-                display.
-            show_labels (bool): Whether or not to show the name of each column.
+            ax (matplotlib.Axis): A fresh one will be created and returned if not provided.
+            figsize ((float, float)): The desired figure size if `ax` is not provided.
+            x_component (int): Number of the component used for the x-axis.
+            y_component (int): Number of the component used for the y-axis.
+            show_row_points (bool): Whether to show row principal components or not.
+            row_points_size (float): Row principal components point size.
+            show_row_labels (bool): Whether to show row labels or not.
+            show_column_points (bool): Whether to show column principal components or not.
+            column_points_size (float): Column principal components point size.
+            show_column_labels (bool): Whether to show column labels or not.
+            legend_n_cols (int): Number of columns used for the legend.
+
+        Returns:
+            matplotlib.Axis
         """
-        return self.plotter.relationship_square(
-            axes=axes,
-            column_correlations=self.column_correlations,
-            explained_inertia=self.explained_inertia,
-            show_labels=show_labels
-        )
+
+        utils.validation.check_is_fitted(self, 'total_inertia_')
+
+        if ax is None:
+            fig, ax = plt.subplots(figsize=figsize)
+
+        # Add style
+        ax = plot.stylize_axis(ax)
+
+        # Plot row principal coordinates
+        if show_row_points or show_row_labels:
+
+            row_coords = self.row_principal_coordinates()
+
+            if show_row_points:
+                ax.scatter(
+                    row_coords.iloc[:, x_component],
+                    row_coords.iloc[:, y_component],
+                    s=row_points_size,
+                    label=None,
+                    color=plot.GRAY['dark'],
+                    alpha=0.6
+                )
+
+            if show_row_labels:
+                for _, row in row_coords.iterrows():
+                    ax.annotate(row.name, (row[x_component], row[y_component]))
+
+        # Plot column principal coordinates
+        if show_column_points or show_column_labels:
+
+            col_coords = self.column_principal_coordinates()
+            x = col_coords[x_component]
+            y = col_coords[y_component]
+
+            prefixes = col_coords.index.str.split('_').map(lambda x: x[0])
+
+            for prefix in prefixes.unique():
+                mask = prefixes == prefix
+
+                if show_column_points:
+                    ax.scatter(x[mask], y[mask], s=column_points_size, label=prefix)
+
+                if show_column_labels:
+                    for i, label in enumerate(col_coords[mask].index):
+                        ax.annotate(label, (x[mask][i], y[mask][i]))
+
+            ax.legend(bbox_to_anchor=(1.04, 1), ncol=legend_n_cols)
+
+        # Text
+        ax.set_title('Row and column principal coordinates')
+        ei = self.explained_inertia_
+        ax.set_xlabel('Component {} ({:.2f}%)'.format(x_component, 100 * ei[x_component]))
+        ax.set_ylabel('Component {} ({:.2f}%)'.format(y_component, 100 * ei[y_component]))
+
+        return ax
