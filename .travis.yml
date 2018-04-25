@@ -21,7 +21,7 @@ before_install:
   - conda update --yes conda
 
 install:
-  - pip install -r requirements.test.txt
+  - pip install -r requirements.dev.txt
 
 before_script:
   - "export DISPLAY=:99.0"
