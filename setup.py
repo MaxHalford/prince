@@ -14,7 +14,6 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = 'prince'
 DESCRIPTION = 'Statistical factor analysis in Python'
-LONG_DESCRIPTION = open('README.md').read(),
 LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown',
 URL = 'https://github.com/MaxHalford/prince'
 EMAIL = 'maxhalford25@gmail.com'
@@ -29,6 +28,7 @@ REQUIRED = [
     'numpy==1.14.0',
     'pandas==0.22.0',
     'scipy==1.0.1'
+    'scikit-learn==0.19.1'
 ]
 
 # The rest you shouldn't have to touch too much :)
@@ -40,7 +40,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 # Import the README and use it as the long-description.
 # Note: this will only work if 'README.rst' is present in your MANIFEST.in file!
-with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
 # Load the package's __version__.py module as a dictionary.
@@ -95,6 +95,7 @@ setup(
     version=about['__version__'],
     description=DESCRIPTION,
     long_description=long_description,
+    long_description_content_type=LONG_DESCRIPTION_CONTENT_TYPE,
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,

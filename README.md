@@ -15,11 +15,11 @@
   </a>
   <!-- Build status -->
   <a href="https://travis-ci.org/MaxHalford/Prince?branch=master">
-    <img src="https://img.shields.io/travis/MaxHalford/Prince/master.svg?style=flat-square" alt="Build Status"/>
+    <img src="https://img.shields.io/travis/MaxHalford/prince/master.svg?style=flat-square" alt="Build Status"/>
   </a>
   <!-- Test coverage -->
-  <a href="https://coveralls.io/github/MaxHalford/Prince?branch=master">
-    <img src="https://coveralls.io/repos/github/MaxHalford/Prince/badge.svg?branch=master&style=flat-square" alt="Coverage Status"/>
+  <a href="https://coveralls.io/github/MaxHalford/prince?branch=master">
+    <img src="https://coveralls.io/repos/github/MaxHalford/prince/badge.svg?branch=master&style=flat-square" alt="Coverage Status"/>
   </a>
   <!-- License -->
   <a href="https://opensource.org/licenses/MIT">
