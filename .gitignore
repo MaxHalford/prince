@@ -1,9 +1,5 @@
-DEV.md
+.ipynb_checkpoints
+.pytest_cache
+*.csv
 *.pyc
-
-.cache/
-.ipynb_checkpoints/
-build/
-dist/
-docs/build/
-prince.egg-info/
+*.ipynb
