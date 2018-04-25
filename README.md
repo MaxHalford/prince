@@ -35,7 +35,7 @@ Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Fact
 
 ## Installation
 
-:warning: Prince is only compatible with Python 3
+:warning: Prince is only compatible with Python 3.
 
 :snake: Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is highly recommended.
 
@@ -59,7 +59,7 @@ Prince doesn't have any extra dependencies apart from the usual suspects (`sklea
 
 Under the hood Prince uses a [randomised version of SVD](https://research.fb.com/fast-randomized-svd/). This is extremely faster than using the classical approach. However the results may have a small inherent randomness. For most applications this doesn't matter and you shouldn't have to worry about it. However if you want reproducible results then you should set your random number generator's seed:
 
-```sh
+```python
 >>> import numpy as np
 >>> np.random.seed(42)
 
@@ -79,7 +79,7 @@ The following papers give a good overview of the field of factor analysis if you
 
 If you're using PCA it is assumed you have a dataframe consisting of numerical variables. In this example we're going to be using the [Iris flower dataset](https://www.wikiwand.com/en/Iris_flower_data_set).
 
-```sh
+```python
 >>> import pandas as pd
 >>> import prince
 >>> from sklearn import datasets
@@ -99,7 +99,7 @@ If you're using PCA it is assumed you have a dataframe consisting of numerical v
 
 The `prince.PCA` supports scikit-learn's `fit`/`transform` API. It's parameters have to passed at initialisation before calling the `fit` method.
 
-```sh
+```python
 >>> pca = prince.PCA(
 ...     n_components=2,
 ...     n_iter=3,
@@ -123,7 +123,7 @@ The available parameters are:
 
 Once the `PCA` has been fitted, it can be used to extract the row principal coordinates as so:
 
-```sh
+```python
 >>> pca.transform(X).head()  # Same as pca.row_principal_coordinates(X).head()
           0         1
 0 -2.264542  0.505704
@@ -136,7 +136,7 @@ Once the `PCA` has been fitted, it can be used to extract the row principal coor
 
 Each column stands for a principal component whilst each row stands a row in the original dataset. You can display these projections with the `plot_row_principal_coordinates` method:
 
-```sh
+```python
 >>> ax = pca.plot_row_principal_coordinates(
 ...     X,
 ...     ax=None,
@@ -165,7 +165,7 @@ Each column stands for a principal component whilst each row stands a row in the
 
 By default `prince` uses `sklearn`'s SVD implementation (the one used under the hood for [`TruncatedSVD`](http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html)). One of the goals of Prince is to make it possible to use a different SVD backend. For the while the only other supported backend is [Facebook's randomized SVD implementation](https://research.facebook.com/blog/fast-randomized-svd/) called [fbpca](http://fbpca.readthedocs.org/en/latest/). You can use it by setting the `engine` parameter to `'fbpca'`:
 
-```sh
+```python
 >>> import prince
 >>> pca = prince.PCA(engine='fbpca')
 
