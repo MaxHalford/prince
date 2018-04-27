@@ -1,4 +1,4 @@
-"""Multiple Correspondence Analysis"""
+"""Multiple Correspondence Analysis (MCA)"""
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

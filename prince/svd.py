@@ -1,3 +1,4 @@
+"""Singular Value Decomposition (SVD)"""
 try:
     import fbpca
     FBPCA_INSTALLED = True
