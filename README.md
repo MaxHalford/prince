@@ -160,8 +160,8 @@ Each column stands for a principal component whilst each row stands a row in the
 Each principal component explains part of the underlying of the distribution. You can see by how much by using the accessing the `explained_inertia_` property:
 
 ```python
->>> pca.explained_inertia_
-[0.7277045209380136, 0.23030523267680655]
+>>> pca.explained_inertia_ # doctest: +ELLIPSIS
+[0.7277..., 0.2303...]
 
 ```
 
