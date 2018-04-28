@@ -168,8 +168,8 @@ Each principal component explains part of the underlying of the distribution. Yo
 The explained inertia represents the percentage of the inertia each principal component contributes. It sums up to 1 if the `n_components` property is equal to the number of columns in the original dataset. you The explained inertia is obtained by dividing the eigenvalues obtained with the SVD by the total inertia, both of which are also accessible.
 
 ```python
->>> pca.eigenvalues_
-[436.6227125628082, 138.18313960608393]
+>>> pca.eigenvalues_ # doctest: +ELLIPSIS
+[436.6227..., 138.1831...]
 
 >>> pca.total_inertia_
 600.0
