@@ -1,4 +1,4 @@
-"""Correspondance Analysis (CA)"""
+"""Correspondence Analysis (CA)"""
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ class CA():
         if self.copy:
             X = np.copy(X)
 
-        # Compute the correspondance matrix which contains the relative frequencies
+        # Compute the correspondence matrix which contains the relative frequencies
         X = X / np.sum(X)
 
         # Compute row and column masses

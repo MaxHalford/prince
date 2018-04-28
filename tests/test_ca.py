@@ -1,15 +1,14 @@
-"""Tests for correspondance analysis. The hair/eye data comes from section
+"""Tests for correspondence analysis. The hair/eye data comes from section
 17.2.3 of http://ce.aut.ac.ir/~shiry/lecture/Advanced%20Machine%20Learning/Manifold_Modern_Multivariate%20Statistical%20Techniques%20-%20Regres.pdf
 """
 import unittest
 
-import numpy as np
 import pandas as pd
 
 import prince
 
 
-class TestPCA(unittest.TestCase):
+class TestCA(unittest.TestCase):
 
     def setUp(self):
         self.X = pd.DataFrame(
@@ -21,7 +20,7 @@ class TestPCA(unittest.TestCase):
             ],
             columns=pd.Series(['Fair', 'Red', 'Medium', 'Dark', 'Black']).rename('Hair color'),
             index=pd.Series(['Blue', 'Light', 'Medium', 'Dark']).rename('Eye color')
-        ).T
+        )
 
     def test_fit_numpy_array(self):
         ca = prince.CA(n_components=2)

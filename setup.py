@@ -23,12 +23,12 @@ VERSION = None
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'fbpca==1.0',
-    'matplotlib==2.2.2',
-    'numpy==1.14.0',
-    'pandas==0.22.0',
-    'scipy==1.0.1',
-    'scikit-learn==0.19.1'
+    'fbpca>=1.0',
+    'matplotlib>=2.2.2',
+    'numpy>=1.14.0',
+    'pandas>=0.22.0',
+    'scipy>=1.0.1',
+    'scikit-learn>=0.19.1'
 ]
 
 # The rest you shouldn't have to touch too much :)

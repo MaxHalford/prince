@@ -31,7 +31,7 @@
 
 ## Introduction
 
-Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Factor_analysis). This includes a variety of methods including [principal component analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) and [correspondance analysis (CA)](https://www.wikiwand.com/en/Correspondence_analysis). The goal is to provide an efficient implementation for each algorithm along with a nice API.
+Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Factor_analysis). This includes a variety of methods including [principal component analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) and [correspondence analysis (CA)](https://www.wikiwand.com/en/Correspondence_analysis). The goal is to provide an efficient implementation for each algorithm along with a nice API.
 
 ## Installation
 
@@ -77,7 +77,7 @@ The following papers give a good overview of the field of factor analysis if you
 
 ### Principal component analysis (PCA)
 
-If you're using PCA it is assumed you have a dataframe consisting of numerical variables. In this example we're going to be using the [Iris flower dataset](https://www.wikiwand.com/en/Iris_flower_data_set).
+If you're using PCA it is assumed you have a dataframe consisting of numerical continuous variables. In this example we're going to be using the [Iris flower dataset](https://www.wikiwand.com/en/Iris_flower_data_set).
 
 ```python
 >>> import pandas as pd
@@ -97,7 +97,7 @@ If you're using PCA it is assumed you have a dataframe consisting of numerical v
 
 ```
 
-The `prince.PCA` supports scikit-learn's `fit`/`transform` API. It's parameters have to passed at initialisation before calling the `fit` method.
+The `PCA` class implements scikit-learn's `fit`/`transform` API. It's parameters have to passed at initialisation before calling the `fit` method.
 
 ```python
 >>> pca = prince.PCA(
@@ -149,17 +149,154 @@ Each column stands for a principal component whilst each row stands a row in the
 ...     ellipse_fill=True,
 ...     show_points=True
 ... )
->>> ax.get_figure().savefig('images/row_principal_coordinates.png')
+>>> ax.get_figure().savefig('images/pca_row_principal_coordinates.png')
 
 ```
 
 <div align="center">
-  <img src="images/row_principal_coordinates.png" />
+  <img src="images/pca_row_principal_coordinates.png" />
 </div>
 
-### Correspondance analysis (CA)
+Each principal component explains part of the underlying of the distribution. You can see by how much by using the accessing the `explained_inertia_` property:
 
-### Multiple correspondance analysis (CA)
+```python
+>>> pca.explained_inertia_
+[0.7277045209380136, 0.23030523267680655]
+
+```
+
+The explained inertia represents the percentage of the inertia each principal component contributes. It sums up to 1 if the `n_components` property is equal to the number of columns in the original dataset. you The explained inertia is obtained by dividing the eigenvalues obtained with the SVD by the total inertia, both of which are also accessible.
+
+```python
+>>> pca.eigenvalues_
+[436.6227125628082, 138.18313960608393]
+
+>>> pca.total_inertia_
+600.0
+
+```
+
+You can also obtain the correlations between the original variables and the principal components.
+
+```python
+>>> pca.column_correlations(X)
+                     0         1
+Sepal length  0.891224  0.357352
+Sepal width  -0.449313  0.888351
+Petal length  0.991684  0.020247
+Sepal length  0.964996  0.062786
+
+```
+
+You may also want to know how much each observation contributes to each principal component. This can be done with the `row_component_contributions` method.
+
+```python
+>>> pca.row_component_contributions(X).head()
+          0         1
+0  0.011745  0.001851
+1  0.009970  0.003109
+2  0.012842  0.000734
+3  0.012160  0.002396
+4  0.013069  0.003295
+
+```
+
+### Correspondence analysis (CA)
+
+You should be using correspondence analysis when you want to analyse a contingency table. In other words you want to analyse the dependencies between two categorical variables. The following example comes from section 17.2.3 of [this textbook](http://ce.aut.ac.ir/~shiry/lecture/Advanced%20Machine%20Learning/Manifold_Modern_Multivariate%20Statistical%20Techniques%20-%20Regres.pdf). It shows the number of occurrences between different hair and eye colors.
+
+```python
+import pandas as pd
+
+>>> X = pd.DataFrame(
+...    data=[
+...        [326, 38, 241, 110, 3],
+...        [688, 116, 584, 188, 4],
+...        [343, 84, 909, 412, 26],
+...        [98, 48, 403, 681, 85]
+...    ],
+...    columns=pd.Series(['Fair', 'Red', 'Medium', 'Dark', 'Black']),
+...    index=pd.Series(['Blue', 'Light', 'Medium', 'Dark'])
+... )
+>>> X
+        Fair  Red  Medium  Dark  Black
+Blue     326   38     241   110      3
+Light    688  116     584   188      4
+Medium   343   84     909   412     26
+Dark      98   48     403   681     85
+
+```
+
+Unlike the `PCA` class, the `CA` only exposes scikit-learn's `fit` method.
+
+```python
+>>> import prince
+>>> ca = prince.CA(
+...     n_components=2,
+...     n_iter=3,
+...     copy=True,
+...     engine='auto'
+... )
+>>> X.columns.rename('Hair color', inplace=True)
+>>> X.index.rename('Eye color', inplace=True)
+>>> ca = ca.fit(X)
+
+```
+
+The parameters overlap with those proposed by the `PCA` class. There is no `transform` method because we are interested in obtaining the row projections as well as the column projections; in other words order there is some ambiguity as to what the `transform` method should return. Instead you can extract each set of projections separatly.
+
+```python
+>>> ca.row_principal_coordinates()
+               0         1
+Blue   -0.387612 -0.142450
+Light  -0.432188 -0.073301
+Medium  0.041359  0.259797
+Dark    0.712116 -0.116143
+
+>>> ca.column_principal_coordinates()
+               0         1
+Fair   -0.543439 -0.173050
+Red    -0.233399 -0.049606
+Medium -0.042498  0.207334
+Dark    0.588855 -0.103119
+Black   1.094715 -0.285257
+
+```
+
+You can plot both of these with the `plot_principal_coordinates` method.
+
+```python
+>>> ax = ca.plot_principal_coordinates(
+...     ax=None,
+...     figsize=(7, 7),
+...     x_component=0,
+...     y_component=1,
+...     show_row_labels=True,
+...     show_col_labels=True
+... )
+>>> ax.get_figure().savefig('images/ca_principal_coordinates.png')
+
+```
+
+<div align="center">
+  <img src="images/ca_principal_coordinates.png" />
+</div>
+
+Like for the `PCA` you can access the inertia contribution of each principal component as well as the eigenvalues and the total inertia.
+
+```python
+>>> ca.explained_inertia_
+[0.8651987148719994, 0.12945798649306883]
+
+>>> ca.eigenvalues_
+[0.1991609638525532, 0.029800064338034563]
+
+>>> ca.total_inertia_
+0.23019100748666482
+
+```
+
+### Multiple correspondence analysis (MCA)
 
 ## Going faster
 
