@@ -160,16 +160,16 @@ Each column stands for a principal component whilst each row stands a row in the
 Each principal component explains part of the underlying of the distribution. You can see by how much by using the accessing the `explained_inertia_` property:
 
 ```python
->>> pca.explained_inertia_ # doctest: +ELLIPSIS
-[0.7277..., 0.2303...]
+>>> pca.explained_inertia_  # doctest: +ELLIPSIS
+[0.727704..., 0.230305...]
 
 ```
 
 The explained inertia represents the percentage of the inertia each principal component contributes. It sums up to 1 if the `n_components` property is equal to the number of columns in the original dataset. you The explained inertia is obtained by dividing the eigenvalues obtained with the SVD by the total inertia, both of which are also accessible.
 
 ```python
->>> pca.eigenvalues_ # doctest: +ELLIPSIS
-[436.6227..., 138.1831...]
+>>> pca.eigenvalues_  # doctest: +ELLIPSIS
+[436.622712..., 138.183139...]
 
 >>> pca.total_inertia_
 600.0
@@ -285,14 +285,14 @@ You can plot both of these with the `plot_principal_coordinates` method.
 Like for the `PCA` you can access the inertia contribution of each principal component as well as the eigenvalues and the total inertia.
 
 ```python
->>> ca.explained_inertia_
-[0.8651987148719994, 0.12945798649306883]
+>>> ca.explained_inertia_  # doctest: +ELLIPSIS
+[0.865198..., 0.129457...]
 
->>> ca.eigenvalues_
-[0.1991609638525532, 0.029800064338034563]
+>>> ca.eigenvalues_  # doctest: +ELLIPSIS
+[0.199160..., 0.029800...]
 
->>> ca.total_inertia_
-0.23019100748666482
+>>> ca.total_inertia_  # doctest: +ELLIPSIS
+0.230191...
 
 ```
 
