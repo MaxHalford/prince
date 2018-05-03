@@ -25,7 +25,6 @@ def compute_svd(X, n_components, n_iter, engine):
             raise ValueError('fbpca is not installed; please install it if you want to use it')
     elif engine == 'sklearn':
         U, s, V = extmath.randomized_svd(X, n_components=n_components, n_iter=n_iter)
-        V = V.T
     else:
         raise ValueError("engine has to be one of ('auto', 'fbpca', 'sklearn')")
 
