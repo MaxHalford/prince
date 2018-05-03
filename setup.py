@@ -14,7 +14,7 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = 'prince'
 DESCRIPTION = 'Statistical factor analysis in Python'
-LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown',
+LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown'
 URL = 'https://github.com/MaxHalford/prince'
 EMAIL = 'maxhalford25@gmail.com'
 AUTHOR = 'Max Halford'
@@ -23,7 +23,6 @@ VERSION = None
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'fbpca>=1.0',
     'matplotlib>=2.2.2',
     'numpy>=1.14.0',
     'pandas>=0.22.0',

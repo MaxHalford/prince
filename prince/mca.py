@@ -18,9 +18,9 @@ class MCA(ca.CA):
         # One-hot encode the dataset to retrieve an indicator matrix
         if isinstance(X, pd.DataFrame):
             X = pd.get_dummies(X.astype({col: 'category' for col in X.columns}))\
-                  .astype(np.int8)
+                  .astype(np.uint8)
         else:
-            X = pd.get_dummies(pd.DataFrame(X)).astype(np.int8)
+            X = pd.get_dummies(pd.DataFrame(X)).astype(np.uint8)
 
         # Determine the number of columns in the indicator matrix
         n_new_columns = X.shape[1]

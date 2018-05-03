@@ -28,20 +28,13 @@ Create `$HOME/.pypirc` with the following content:
 [distutils]
 index-servers=
   pypi
-  pypitest
 
 [pypi]
 repository=https://pypi.org
 username=your_username
 password=your_password
-
-[pypitest]
-repository=https://test.pypi.org
-username=your_username
-password=your_password
 ```
 
 ```sh
-python setup.py sdist upload -r pypitest
-python setup.py sdist upload -r pypi
+python setup.py upload
 ```
