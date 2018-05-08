@@ -158,22 +158,22 @@ Each column stands for a principal component whilst each row stands a row in the
 Each principal component explains part of the underlying of the distribution. You can see by how much by using the accessing the `explained_inertia_` property:
 
 ```python
->>> pca.explained_inertia_
-[0.727704520938013, 0.23030523267680655]
+>>> pca.explained_inertia_  # doctest: +ELLIPSIS
+[0.727704..., 0.230305...]
 
 ```
 
 The explained inertia represents the percentage of the inertia each principal component contributes. It sums up to 1 if the `n_components` property is equal to the number of columns in the original dataset. you The explained inertia is obtained by dividing the eigenvalues obtained with the SVD by the total inertia, both of which are also accessible.
 
 ```python
->>> pca.eigenvalues_
-[436.62271256280775, 138.18313960608393]
+>>> pca.eigenvalues_  # doctest: +ELLIPSIS
+[436.622712..., 138.183139...]
 
 >>> pca.total_inertia_
 600.0
 
 >>> pca.explained_inertia_
-[0.727704520938013, 0.23030523267680655]
+[0.727704..., 0.230305...]
 
 ```
 
@@ -288,14 +288,14 @@ You can plot both sets of principal coordinates with the `plot_principal_coordin
 Like for the `PCA` you can access the inertia contribution of each principal component as well as the eigenvalues and the total inertia.
 
 ```python
->>> ca.eigenvalues_
-[0.19924475202819097, 0.030086774100411818]
+>>> ca.eigenvalues_  # doctest: +ELLIPSIS
+[0.199244..., 0.030086...]
 
->>> ca.total_inertia_
-0.23019100748666482
+>>> ca.total_inertia_  # doctest: +ELLIPSIS
+0.230191...
 
->>> ca.explained_inertia_
-[0.8655627090025808, 0.13070351630549587]
+>>> ca.explained_inertia_  # doctest: +ELLIPSIS
+[0.865562..., 0.130703...]
 
 ```
 
@@ -380,14 +380,14 @@ Like the `CA` class, the `MCA` class also has `plot_principal_coordinates` metho
 The eigenvalues and inertia values are also accessible.
 
 ```python
->>> mca.eigenvalues_
-[0.40165656560133867, 0.21111111111111144]
+>>> mca.eigenvalues_  # doctest: +ELLIPSIS
+[0.401656..., 0.211111...]
 
 >>> mca.total_inertia_
 1.0
 
 >>> mca.explained_inertia_
-[0.40165656560133867, 0.21111111111111144]
+[0.401656..., 0.211111...]
 
 ```
 
