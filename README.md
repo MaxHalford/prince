@@ -209,6 +209,7 @@ You should be using correspondence analysis when you want to analyse a contingen
 ```python
 import pandas as pd
 
+>>> pd.set_option('display.float_format', lambda x: '{:.6f}'.format(x))
 >>> X = pd.DataFrame(
 ...    data=[
 ...        [326, 38, 241, 110, 3],
@@ -337,20 +338,19 @@ As usual you can retrieve the row and column principal components via their resp
 
 ```python
 >>> mca.row_principal_coordinates(X).head()
-          0             1
-0  0.705387  1.388625e-14
-1 -0.386586  1.162956e-14
-2 -0.386586  1.056599e-14
-3 -0.852014  9.732516e-15
-4  0.783539 -6.333333e-01
-
+          0         1
+0  0.705387  0.000000
+1 -0.386586  0.000000
+2 -0.386586  0.000000
+3 -0.852014  0.000000
+4  0.783539 -0.633333
 >>> mca.column_principal_coordinates(X).head()
-                     0             1
-Color_PURPLE  0.117308  6.892024e-01
-Color_YELLOW -0.130342 -7.657805e-01
-Size_LARGE    0.117308 -6.892024e-01
-Size_SMALL   -0.130342  7.657805e-01
-Action_DIP   -0.853864 -2.069664e-15
+                     0         1
+Color_PURPLE  0.117308  0.689202
+Color_YELLOW -0.130342 -0.765780
+Size_LARGE    0.117308 -0.689202
+Size_SMALL   -0.130342  0.765780
+Action_DIP   -0.853864 -0.000000
 
 ```
 
