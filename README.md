@@ -386,7 +386,7 @@ The eigenvalues and inertia values are also accessible.
 >>> mca.total_inertia_
 1.0
 
->>> mca.explained_inertia_
+>>> mca.explained_inertia_  # doctest: +ELLIPSIS
 [0.401656..., 0.211111...]
 
 ```
@@ -394,7 +394,7 @@ The eigenvalues and inertia values are also accessible.
 
 ## Going faster
 
-By default `prince` uses `sklearn`'s SVD implementation (the one used under the hood for [`TruncatedSVD`](http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html)). One of the goals of Prince is to make it possible to use a different SVD backend. For the while the only other supported backend is [Facebook's randomized SVD implementation](https://research.facebook.com/blog/fast-randomized-svd/) called [fbpca](http://fbpca.readthedocs.org/en/latest/). You can use it by setting the `engine` parameter to `'fbpca'`:
+By default `prince` uses `sklearn`'s randomized SVD implementation (the one used under the hood for [`TruncatedSVD`](http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html)). One of the goals of Prince is to make it possible to use a different SVD backend. For the while the only other supported backend is [Facebook's randomized SVD implementation](https://research.facebook.com/blog/fast-randomized-svd/) called [fbpca](http://fbpca.readthedocs.org/en/latest/). You can use it by setting the `engine` parameter to `'fbpca'`:
 
 ```python
 >>> import prince
