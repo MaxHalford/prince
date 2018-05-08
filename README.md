@@ -57,13 +57,9 @@ Prince doesn't have any extra dependencies apart from the usual suspects (`sklea
 
 ### Guidelines
 
-Under the hood Prince uses a [randomised version of SVD](https://research.fb.com/fast-randomized-svd/). This is extremely faster than using the classical approach. However the results may have a small inherent randomness. For most applications this doesn't matter and you shouldn't have to worry about it. However if you want reproducible results then you should set your random number generator's seed:
+Each estimator provided by `prince` extends scikit-learn's `TransformerMixin`. This means that each estimator implements a `fit` and a `transform` method which makes them usable in a transformation pipeline. The `fit` method is actually an alias for the `row_principal_components` method which returns the row principal components. However you also can also access the column principal components with the `column_principal_components`.
 
-```python
->>> import numpy as np
->>> np.random.seed(42)
-
-```
+Under the hood Prince uses a [randomised version of SVD](https://research.fb.com/fast-randomized-svd/). This is much faster than using the more commonly full approach. However the results may have a small inherent randomness. For most applications this doesn't matter and you shouldn't have to worry about it. However if you want reproducible results then you should set the `random_state` parameter.
 
 The randomised version of SVD is an iterative method. Because each of Prince's algorithms use SVD, they all possess a `n_iter` parameter which controls the number of iterations used for computing the SVD. On the one hand the higher `n_iter` is the more precise the results will be. On the other hand increasing `n_iter` increases the computation time. In general the algorithm converges very quickly so using a low `n_iter` (which is the default behaviour) is recommended.
 
@@ -106,7 +102,8 @@ The `PCA` class implements scikit-learn's `fit`/`transform` API. It's parameters
 ...     rescale_with_mean=True,
 ...     rescale_with_std=True,
 ...     copy=True,
-...     engine='auto'
+...     engine='auto',
+...     random_state=42
 ... )
 >>> pca = pca.fit(X)
 
@@ -117,9 +114,10 @@ The available parameters are:
 - `n_components`: the number of components that are computed. You only need two if your intention is to make a chart.
 - `n_iter`: the number of iterations used for computing the SVD
 - `rescale_with_mean`: whether to substract each column's mean
-- `rescale_with_stds`: whether to divide each column by it's standard deviation
+- `rescale_with_std`: whether to divide each column by it's standard deviation
 - `copy`: if `False` then the computations will be done inplace which can have possible side-effects on the input data
 - `engine`: what SVD engine to use (should be one of `['auto', 'fbpca', 'sklearn']`)
+- `random_state`: controls the randomness of the SVD results.
 
 Once the `PCA` has been fitted, it can be used to extract the row principal coordinates as so:
 
@@ -140,7 +138,7 @@ Each column stands for a principal component whilst each row stands a row in the
 >>> ax = pca.plot_row_principal_coordinates(
 ...     X,
 ...     ax=None,
-...     figsize=(7, 7),
+...     figsize=(6, 6),
 ...     x_component=0,
 ...     y_component=1,
 ...     labels=None,
@@ -160,19 +158,22 @@ Each column stands for a principal component whilst each row stands a row in the
 Each principal component explains part of the underlying of the distribution. You can see by how much by using the accessing the `explained_inertia_` property:
 
 ```python
->>> pca.explained_inertia_  # doctest: +ELLIPSIS
-[0.727704..., 0.230305...]
+>>> pca.explained_inertia_
+[0.727704520938013, 0.23030523267680655]
 
 ```
 
 The explained inertia represents the percentage of the inertia each principal component contributes. It sums up to 1 if the `n_components` property is equal to the number of columns in the original dataset. you The explained inertia is obtained by dividing the eigenvalues obtained with the SVD by the total inertia, both of which are also accessible.
 
 ```python
->>> pca.eigenvalues_  # doctest: +ELLIPSIS
-[436.622712..., 138.183139...]
+>>> pca.eigenvalues_
+[436.62271256280775, 138.18313960608393]
 
 >>> pca.total_inertia_
 600.0
+
+>>> pca.explained_inertia_
+[0.727704520938013, 0.23030523267680655]
 
 ```
 
@@ -235,7 +236,8 @@ Unlike the `PCA` class, the `CA` only exposes scikit-learn's `fit` method.
 ...     n_components=2,
 ...     n_iter=3,
 ...     copy=True,
-...     engine='auto'
+...     engine='auto',
+...     random_state=42
 ... )
 >>> X.columns.rename('Hair color', inplace=True)
 >>> X.index.rename('Eye color', inplace=True)
@@ -243,32 +245,33 @@ Unlike the `PCA` class, the `CA` only exposes scikit-learn's `fit` method.
 
 ```
 
-The parameters overlap with those proposed by the `PCA` class. There is no `transform` method because we are interested in obtaining the row projections as well as the column projections; in other words order there is some ambiguity as to what the `transform` method should return. Instead you can extract each set of projections separatly.
+The parameters and methods overlap with those proposed by the `PCA` class.
 
 ```python
->>> ca.row_principal_coordinates()
+>>> ca.row_principal_coordinates(X)
                0         1
-Blue   -0.387612 -0.142450
-Light  -0.432188 -0.073301
-Medium  0.041359  0.259797
-Dark    0.712116 -0.116143
+Blue   -0.400300 -0.165411
+Light  -0.440708 -0.088463
+Medium  0.033614  0.245002
+Dark    0.702739 -0.133914
 
->>> ca.column_principal_coordinates()
+>>> ca.column_principal_coordinates(X)
                0         1
-Fair   -0.543439 -0.173050
-Red    -0.233399 -0.049606
-Medium -0.042498  0.207334
-Dark    0.588855 -0.103119
-Black   1.094715 -0.285257
+Fair   -0.543995 -0.173844
+Red    -0.233261 -0.048279
+Medium -0.042024  0.208304
+Dark    0.588709 -0.103950
+Black   1.094388 -0.286437
 
 ```
 
-You can plot both of these with the `plot_principal_coordinates` method.
+You can plot both sets of principal coordinates with the `plot_principal_coordinates` method.
 
 ```python
 >>> ax = ca.plot_principal_coordinates(
+...     X=X,
 ...     ax=None,
-...     figsize=(7, 7),
+...     figsize=(6, 6),
 ...     x_component=0,
 ...     y_component=1,
 ...     show_row_labels=True,
@@ -285,18 +288,109 @@ You can plot both of these with the `plot_principal_coordinates` method.
 Like for the `PCA` you can access the inertia contribution of each principal component as well as the eigenvalues and the total inertia.
 
 ```python
->>> ca.explained_inertia_  # doctest: +ELLIPSIS
-[0.865198..., 0.129457...]
+>>> ca.eigenvalues_
+[0.19924475202819097, 0.030086774100411818]
 
->>> ca.eigenvalues_  # doctest: +ELLIPSIS
-[0.199160..., 0.029800...]
+>>> ca.total_inertia_
+0.23019100748666482
 
->>> ca.total_inertia_  # doctest: +ELLIPSIS
-0.230191...
+>>> ca.explained_inertia_
+[0.8655627090025808, 0.13070351630549587]
 
 ```
 
 ### Multiple correspondence analysis (MCA)
+
+Multiple correspondence analysis (MCA) is an extension of correspondence analysis (CA). It should be used when you have more than two categorical variables. The idea is simply to compute the one-hot encoded version of a dataset and apply CA on it. As an example we're going to use the [ballons dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/balloons/) taken from the [UCI datasets website](https://archive.ics.uci.edu/ml/datasets.html).
+
+```python
+import pandas as pd
+
+>>> X = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/balloons/adult+stretch.data')
+>>> X.columns = ['Color', 'Size', 'Action', 'Age', 'Inflated']
+>>> X.head()
+    Color   Size   Action    Age Inflated
+0  YELLOW  SMALL  STRETCH  ADULT        T
+1  YELLOW  SMALL  STRETCH  CHILD        F
+2  YELLOW  SMALL      DIP  ADULT        F
+3  YELLOW  SMALL      DIP  CHILD        F
+4  YELLOW  LARGE  STRETCH  ADULT        T
+
+```
+
+The `MCA` also implements the `fit` and `transform` methods.
+
+```python
+>>> import prince
+>>> mca = prince.MCA(
+...     n_components=2,
+...     n_iter=3,
+...     copy=True,
+...     engine='auto',
+...     random_state=42
+... )
+>>> mca = mca.fit(X)
+
+```
+
+As usual you can retrieve the row and column principal components via their respective methods.
+
+```python
+>>> mca.row_principal_coordinates(X).head()
+          0             1
+0  0.705387  1.388625e-14
+1 -0.386586  1.162956e-14
+2 -0.386586  1.056599e-14
+3 -0.852014  9.732516e-15
+4  0.783539 -6.333333e-01
+
+>>> mca.column_principal_coordinates(X).head()
+                     0             1
+Color_PURPLE  0.117308  6.892024e-01
+Color_YELLOW -0.130342 -7.657805e-01
+Size_LARGE    0.117308 -6.892024e-01
+Size_SMALL   -0.130342  7.657805e-01
+Action_DIP   -0.853864 -2.069664e-15
+
+```
+
+Like the `CA` class, the `MCA` class also has `plot_principal_coordinates` method.
+
+```python
+>>> ax = mca.plot_principal_coordinates(
+...     X=X,
+...     ax=None,
+...     figsize=(6, 6),
+...     show_row_points=True,
+...     row_points_size=10,
+...     show_row_labels=False,
+...     show_column_points=True,
+...     column_points_size=30,
+...     show_column_labels=False,
+...     legend_n_cols=1
+... )
+>>> ax.get_figure().savefig('images/mca_principal_coordinates.png')
+
+```
+
+<div align="center">
+  <img src="images/mca_principal_coordinates.png" />
+</div>
+
+The eigenvalues and inertia values are also accessible.
+
+```python
+>>> mca.eigenvalues_
+[0.40165656560133867, 0.21111111111111144]
+
+>>> mca.total_inertia_
+1.0
+
+>>> mca.explained_inertia_
+[0.40165656560133867, 0.21111111111111144]
+
+```
+
 
 ## Going faster
 

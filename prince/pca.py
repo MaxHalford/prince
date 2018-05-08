@@ -23,7 +23,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     """
 
     def __init__(self, n_components=2, n_iter=3, rescale_with_mean=True, rescale_with_std=True,
-                 copy=True, engine='auto'):
+                 copy=True, random_state=None, engine='auto'):
 
         self.n_components = n_components
         self.n_iter = n_iter
@@ -31,6 +31,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.rescale_with_std = rescale_with_std
         self.copy = copy
         self.engine = engine
+        self.random_state = random_state
 
     def fit(self, X, y=None):
 
@@ -55,7 +56,13 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             X = self.scaler_.transform(X)
 
         # Compute SVD
-        self.U_, self.s_, self.V_ = svd.compute_svd(X, self.n_components, self.n_iter, self.engine)
+        self.U_, self.s_, self.V_ = svd.compute_svd(
+            X=X,
+            n_components=self.n_components,
+            n_iter=self.n_iter,
+            random_state=self.random_state,
+            engine=self.engine
+        )
 
         # Compute total inertia
         self.total_inertia_ = np.sum(np.square(X))
@@ -65,8 +72,9 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     def transform(self, X):
         """Computes the row principal coordinates of a dataset.
 
-        In most cases you should be using the same dataset as you did when calling the `fit`
-        method.
+        Same as calling `row_principal_coordinates`. In most cases you should be using the same
+        dataset as you did when calling the `fit` method. You might however also want to included
+        supplementary data.
         """
         utils.validation.check_is_fitted(self, 's_')
         utils.check_array(X)
@@ -209,7 +217,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         # Text
         ax.set_title('Row principal coordinates')
         ei = self.explained_inertia_
-        ax.set_xlabel('Component {} ({:.2f}%)'.format(x_component, 100 * ei[x_component]))
-        ax.set_ylabel('Component {} ({:.2f}%)'.format(y_component, 100 * ei[y_component]))
+        ax.set_xlabel('Component {} ({:.2f}% inertia)'.format(x_component, 100 * ei[x_component]))
+        ax.set_ylabel('Component {} ({:.2f}% inertia)'.format(y_component, 100 * ei[y_component]))
 
         return ax

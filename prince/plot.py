@@ -1,22 +1,12 @@
 from collections import OrderedDict
 
 import numpy as np
-
-from . import svd
+from scipy import linalg
 
 
 GRAY = OrderedDict([
     ('light', '#bababa'),
     ('dark', '#404040')
-])
-
-SEABORN = OrderedDict([
-    ('blue', '#4c72b0'),
-    ('green', '#55a868'),
-    ('red', '#c44e52'),
-    ('yellow', '#ccb974'),
-    ('purple', '#8172b2'),
-    ('cyan', '#64b5cd')
 ])
 
 
@@ -53,7 +43,7 @@ def build_ellipse(X, Y):
     y_mean = np.mean(Y)
 
     cov_matrix = np.cov(X, Y)
-    U, s, V = svd.compute_svd(cov_matrix, n_components=2, n_iter=20, engine='auto')
+    U, s, V = linalg.svd(cov_matrix, full_matrices=False)
 
     chi_95 = np.sqrt(4.61)  # 90% quantile of the chi-square distribution
     width = np.sqrt(cov_matrix[0][0]) * chi_95 * 2

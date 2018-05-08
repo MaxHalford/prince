@@ -1,39 +1,38 @@
 """Multiple Correspondence Analysis (MCA)"""
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 from sklearn import utils
 
 from . import ca
 from . import plot
+from . import one_hot
 
 
 class MCA(ca.CA):
 
     def fit(self, X, y=None):
 
-        # Determine the number of columns in the initial matrix
+        # One-hot encode the dataset to retrieve an indicator matrix
         n_initial_columns = X.shape[1]
 
-        # One-hot encode the dataset to retrieve an indicator matrix
-        if isinstance(X, pd.DataFrame):
-            X = pd.get_dummies(X.astype({col: 'category' for col in X.columns}))\
-                  .astype(np.uint8)
-        else:
-            X = pd.get_dummies(pd.DataFrame(X)).astype(np.uint8)
-
-        # Determine the number of columns in the indicator matrix
-        n_new_columns = X.shape[1]
+        # One-hot encode the data
+        self.one_hot_ = one_hot.OneHotEncoder().fit(X)
 
         # Apply correspondence analysis to the indicator matrix
-        super().fit(X)
+        super().fit(self.one_hot_.transform(X))
 
         # Compute the total inertia
+        n_new_columns = len(self.one_hot_.column_names_)
         self.total_inertia_ = (n_new_columns - n_initial_columns) / n_initial_columns
 
         return self
 
-    def plot_principal_coordinates(self, ax=None, figsize=(7, 7), x_component=0, y_component=1,
+    def row_principal_coordinates(self, X):
+        return super().row_principal_coordinates(self.one_hot_.transform(X))
+
+    def column_principal_coordinates(self, X):
+        return super().column_principal_coordinates(self.one_hot_.transform(X))
+
+    def plot_principal_coordinates(self, X, ax=None, figsize=(7, 7), x_component=0, y_component=1,
                                    show_row_points=True, row_points_size=10, show_row_labels=False,
                                    show_column_points=True, column_points_size=30,
                                    show_column_labels=False, legend_n_cols=1):
@@ -67,7 +66,7 @@ class MCA(ca.CA):
         # Plot row principal coordinates
         if show_row_points or show_row_labels:
 
-            row_coords = self.row_principal_coordinates()
+            row_coords = self.row_principal_coordinates(X)
 
             if show_row_points:
                 ax.scatter(
@@ -86,7 +85,7 @@ class MCA(ca.CA):
         # Plot column principal coordinates
         if show_column_points or show_column_labels:
 
-            col_coords = self.column_principal_coordinates()
+            col_coords = self.column_principal_coordinates(X)
             x = col_coords[x_component]
             y = col_coords[y_component]
 
@@ -102,12 +101,12 @@ class MCA(ca.CA):
                     for i, label in enumerate(col_coords[mask].index):
                         ax.annotate(label, (x[mask][i], y[mask][i]))
 
-            ax.legend(bbox_to_anchor=(1.04, 1), ncol=legend_n_cols)
+            ax.legend(ncol=legend_n_cols)
 
         # Text
         ax.set_title('Row and column principal coordinates')
         ei = self.explained_inertia_
-        ax.set_xlabel('Component {} ({:.2f}%)'.format(x_component, 100 * ei[x_component]))
-        ax.set_ylabel('Component {} ({:.2f}%)'.format(y_component, 100 * ei[y_component]))
+        ax.set_xlabel('Component {} ({:.2f}% inertia)'.format(x_component, 100 * ei[x_component]))
+        ax.set_ylabel('Component {} ({:.2f}% inertia)'.format(y_component, 100 * ei[y_component]))
 
         return ax

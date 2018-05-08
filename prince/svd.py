@@ -7,15 +7,12 @@ except ImportError:
 from sklearn.utils import extmath
 
 
-def compute_svd(X, n_components, n_iter, engine):
+def compute_svd(X, n_components, n_iter, random_state, engine):
     """Computes an SVD with k components."""
 
     # Determine what SVD engine to use
     if engine == 'auto':
-        if FBPCA_INSTALLED:
-            engine = 'fbpca'
-        else:
-            engine = 'sklearn'
+        engine = 'sklearn'
 
     # Compute the SVD
     if engine == 'fbpca':
@@ -24,7 +21,12 @@ def compute_svd(X, n_components, n_iter, engine):
         else:
             raise ValueError('fbpca is not installed; please install it if you want to use it')
     elif engine == 'sklearn':
-        U, s, V = extmath.randomized_svd(X, n_components=n_components, n_iter=n_iter)
+        U, s, V = extmath.randomized_svd(
+            X,
+            n_components=n_components,
+            n_iter=n_iter,
+            random_state=random_state
+        )
     else:
         raise ValueError("engine has to be one of ('auto', 'fbpca', 'sklearn')")
 
