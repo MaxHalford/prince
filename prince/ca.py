@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy import sparse
 from sklearn import base
 from sklearn import utils
 
@@ -46,7 +47,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         # Compute standardised residuals
         r = self.row_masses_
         c = self.col_masses_
-        S = np.diag(r ** -0.5) @ (X - np.outer(r, c)) @ np.diag(c ** -0.5)
+        S = sparse.diags(r ** -0.5) @ (X - np.outer(r, c)) @ sparse.diags(c ** -0.5)
 
         # Compute SVD on the standardised residuals
         self.U_, self.s_, self.V_ = svd.compute_svd(
@@ -101,7 +102,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         X = X / X.sum(axis=1)[:, None]
 
         return pd.DataFrame(
-            data=X @ np.diag(self.col_masses_ ** -0.5) @ self.V_.T,
+            data=X @ sparse.diags(self.col_masses_ ** -0.5) @ self.V_.T,
             index=row_names
         )
 
@@ -121,11 +122,11 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         X = X.T / X.T.sum(axis=1)[:, None]
 
         return pd.DataFrame(
-            data=X @ np.diag(self.row_masses_ ** -0.5) @ self.U_,
+            data=X @ sparse.diags(self.row_masses_ ** -0.5) @ self.U_,
             index=col_names
         )
 
-    def plot_principal_coordinates(self, X, ax=None, figsize=(7, 7), x_component=0, y_component=1,
+    def plot_principal_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                    show_row_labels=True, show_col_labels=True, **kwargs):
         """Plot the principal coordinates."""
 

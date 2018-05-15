@@ -164,7 +164,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         utils.validation.check_is_fitted(self, 's_')
         return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
-    def plot_row_principal_coordinates(self, X, ax=None, figsize=(7, 7), x_component=0,
+    def plot_row_principal_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0,
                                        y_component=1, labels=None, group_labels=None,
                                        ellipse_outline=False, ellipse_fill=True, show_points=True,
                                        **kwargs):

@@ -32,7 +32,7 @@ class MCA(ca.CA):
     def column_principal_coordinates(self, X):
         return super().column_principal_coordinates(self.one_hot_.transform(X))
 
-    def plot_principal_coordinates(self, X, ax=None, figsize=(7, 7), x_component=0, y_component=1,
+    def plot_principal_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                    show_row_points=True, row_points_size=10, show_row_labels=False,
                                    show_column_points=True, column_points_size=30,
                                    show_column_labels=False, legend_n_cols=1):
