@@ -26,6 +26,14 @@ class TestCA(unittest.TestCase):
         ca = prince.CA(n_components=2)
         self.assertTrue(isinstance(ca.fit(self.X.values), prince.CA))
 
+    def test_transform_numpy_array(self):
+        ca = prince.CA(n_components=2)
+        self.assertTrue(isinstance(ca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
+
     def test_fit_pandas_dataframe(self):
         ca = prince.CA(n_components=2)
         self.assertTrue(isinstance(ca.fit(self.X), prince.CA))
+
+    def test_transform_pandas_dataframe(self):
+        ca = prince.CA(n_components=2)
+        self.assertTrue(isinstance(ca.fit(self.X).transform(self.X), pd.DataFrame))

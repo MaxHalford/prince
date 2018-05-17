@@ -1,23 +1,29 @@
 """Multiple Correspondence Analysis (MCA)"""
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from sklearn import utils
 
 from . import ca
-from . import plot
 from . import one_hot
+from . import plot
 
 
 class MCA(ca.CA):
 
     def fit(self, X, y=None):
 
-        # One-hot encode the dataset to retrieve an indicator matrix
+        utils.check_array(X, dtype=[str, np.number])
+
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+
         n_initial_columns = X.shape[1]
 
         # One-hot encode the data
         self.one_hot_ = one_hot.OneHotEncoder().fit(X)
 
-        # Apply correspondence analysis to the indicator matrix
+        # Apply CA to the indicator matrix
         super().fit(self.one_hot_.transform(X))
 
         # Compute the total inertia
@@ -31,6 +37,12 @@ class MCA(ca.CA):
 
     def column_principal_coordinates(self, X):
         return super().column_principal_coordinates(self.one_hot_.transform(X))
+
+    def transform(self, X):
+        """Computes the row principal coordinates of a dataset."""
+        utils.validation.check_is_fitted(self, 's_')
+        utils.check_array(X, dtype=[str, np.number])
+        return self.row_principal_coordinates(X)
 
     def plot_principal_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                    show_row_points=True, row_points_size=10, show_row_labels=False,

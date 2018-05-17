@@ -45,8 +45,8 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         self.col_masses_ = pd.Series(X.sum(axis=0), index=col_names)
 
         # Compute standardised residuals
-        r = self.row_masses_
-        c = self.col_masses_
+        r = self.row_masses_.values
+        c = self.col_masses_.values
         S = sparse.diags(r ** -0.5) @ (X - np.outer(r, c)) @ sparse.diags(c ** -0.5)
 
         # Compute SVD on the standardised residuals

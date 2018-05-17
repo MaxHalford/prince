@@ -13,15 +13,25 @@ import prince
 class TestPCA(unittest.TestCase):
 
     def setUp(self):
-        self.X, _ = datasets.load_iris(return_X_y=True)
+        X, _ = datasets.load_iris(return_X_y=True)
+        columns = ['Sepal length', 'Sepal width', 'Petal length', 'Sepal length']
+        self.X = pd.DataFrame(X, columns=columns)
 
     def test_fit_numpy_array(self):
         pca = prince.PCA(n_components=2)
-        self.assertTrue(isinstance(pca.fit(self.X), prince.PCA))
+        self.assertTrue(isinstance(pca.fit(self.X.values), prince.PCA))
+
+    def test_transform_numpy_array(self):
+        pca = prince.PCA(n_components=2)
+        self.assertTrue(isinstance(pca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
 
     def test_fit_pandas_dataframe(self):
         pca = prince.PCA(n_components=2)
-        self.assertTrue(isinstance(pca.fit(pd.DataFrame(self.X)), prince.PCA))
+        self.assertTrue(isinstance(pca.fit(self.X), prince.PCA))
+
+    def test_transform_pandas_dataframe(self):
+        pca = prince.PCA(n_components=2)
+        self.assertTrue(isinstance(pca.fit(self.X).transform(self.X), pd.DataFrame))
 
     def test_copy(self):
         XX = np.copy(self.X)

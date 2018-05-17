@@ -147,8 +147,11 @@ class OneHotEncoder(CategoricalEncoder):
         super().__init__(encoding='onehot-dense')
 
     def fit(self, X, y=None):
+
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError('X must be a pandas.DataFrame')
+
         self = super().fit(X)
-        self.row_names_ = X.index.tolist()
         self.column_names_ = list(itertools.chain(*[
             [
                 '{}_{}'.format(col, cat)
@@ -162,5 +165,5 @@ class OneHotEncoder(CategoricalEncoder):
         return pd.DataFrame(
             data=super().transform(X),
             columns=self.column_names_,
-            index=self.row_names_
+            index=X.index if isinstance(X, pd.DataFrame) else None
         )
