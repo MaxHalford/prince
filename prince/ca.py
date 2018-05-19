@@ -66,13 +66,13 @@ class CA(base.BaseEstimator, base.TransformerMixin):
     def transform(self, X):
         """Computes the row principal coordinates of a dataset.
 
-        Same as calling `row_principal_coordinates`. In most cases you should be using the same
+        Same as calling `row_coordinates`. In most cases you should be using the same
         dataset as you did when calling the `fit` method. You might however also want to included
         supplementary data.
         """
         utils.validation.check_is_fitted(self, 's_')
         utils.check_array(X)
-        return self.row_principal_coordinates(X)
+        return self.row_coordinates(X)
 
     @property
     def eigenvalues_(self):
@@ -86,7 +86,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         utils.validation.check_is_fitted(self, 'total_inertia_')
         return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
-    def row_principal_coordinates(self, X):
+    def row_coordinates(self, X):
         """The row principal coordinates."""
         utils.validation.check_is_fitted(self, 'V_')
 
@@ -106,7 +106,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             index=row_names
         )
 
-    def column_principal_coordinates(self, X):
+    def column_coordinates(self, X):
         """The column principal coordinates."""
         utils.validation.check_is_fitted(self, 'V_')
 
@@ -126,7 +126,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             index=col_names
         )
 
-    def plot_principal_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
+    def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                    show_row_labels=True, show_col_labels=True, **kwargs):
         """Plot the principal coordinates."""
 
@@ -142,7 +142,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         row_label, row_names, col_label, col_names = util.make_labels_and_names(X)
 
         # Plot row principal coordinates
-        row_coords = self.row_principal_coordinates(X)
+        row_coords = self.row_coordinates(X)
         ax.scatter(
             row_coords[x_component],
             row_coords[y_component],
@@ -151,7 +151,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         )
 
         # Plot column principal coordinates
-        col_coords = self.column_principal_coordinates(X)
+        col_coords = self.column_coordinates(X)
         ax.scatter(
             col_coords[x_component],
             col_coords[y_component],

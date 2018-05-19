@@ -8,6 +8,7 @@ from sklearn import preprocessing
 from sklearn import utils
 
 from . import plot
+from . import util
 from . import svd
 
 
@@ -15,14 +16,14 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
     """
     Args:
-        n_components (int): The number of principal components to compute.
-        n_iter (int): The number of iterations used for computing the SVD.
         rescale_with_mean (bool): Whether to substract each column's mean or not.
         rescale_with_std (bool): Whether to divide each column by it's standard deviation or not.
+        n_components (int): The number of principal components to compute.
+        n_iter (int): The number of iterations used for computing the SVD.
         copy (bool): Whether to perform the computations inplace or not.
     """
 
-    def __init__(self, n_components=2, n_iter=3, rescale_with_mean=True, rescale_with_std=True,
+    def __init__(self, rescale_with_mean=True, rescale_with_std=True, n_components=2, n_iter=3,
                  copy=True, random_state=None, engine='auto'):
 
         self.n_components = n_components
@@ -30,8 +31,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.rescale_with_mean = rescale_with_mean
         self.rescale_with_std = rescale_with_std
         self.copy = copy
-        self.engine = engine
         self.random_state = random_state
+        self.engine = engine
 
     def fit(self, X, y=None):
 
@@ -72,16 +73,16 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     def transform(self, X):
         """Computes the row principal coordinates of a dataset.
 
-        Same as calling `row_principal_coordinates`. In most cases you should be using the same
+        Same as calling `row_coordinates`. In most cases you should be using the same
         dataset as you did when calling the `fit` method. You might however also want to included
         supplementary data.
         """
         utils.validation.check_is_fitted(self, 's_')
         utils.check_array(X)
-        return self.row_principal_coordinates(X)
+        return self.row_coordinates(X)
 
-    def row_principal_coordinates(self, X):
-        """The row principal coordinates.
+    def row_coordinates(self, X):
+        """Returns the row principal coordinates.
 
         The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
         """
@@ -101,26 +102,26 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         )
 
     def row_standard_coordinates(self, X):
-        """The row standard coordinates.
+        """Returns the row standard coordinates.
 
         The row standard coordinates are obtained by dividing each row principal coordinate by it's
         associated eigenvalue.
         """
         utils.validation.check_is_fitted(self, 's_')
-        return self.row_principal_coordinates(X).div(self.eigenvalues_, axis='columns')
+        return self.row_coordinates(X).div(self.eigenvalues_, axis='columns')
 
-    def row_component_contributions(self, X):
-        """The row component contributions.
+    def row_contributions(self, X):
+        """Returns the row contributions towards each principal component.
 
         Each row contribution towards each principal component is equivalent to the amount of
         inertia it contributes. This is calculated by dividing the squared row coordinates by the
         eigenvalue associated to each principal component.
         """
         utils.validation.check_is_fitted(self, 's_')
-        return np.square(self.row_principal_coordinates(X)).div(self.eigenvalues_, axis='columns')
+        return np.square(self.row_coordinates(X)).div(self.eigenvalues_, axis='columns')
 
     def row_cosine_similarities(self, X):
-        """The squared row cosine similarities.
+        """Returns the cosine similarities between the rows and their principal components.
 
         The row cosine similarities are obtained by calculating the cosine of the angle shaped by
         the row principal coordinates and the row principal components. This is calculated by
@@ -129,45 +130,49 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         squared cosine.
         """
         utils.validation.check_is_fitted(self, 's_')
-        squared_coordinates = np.square(self.row_principal_coordinates(X))
+        squared_coordinates = np.square(self.row_coordinates(X))
         total_squares = squared_coordinates.sum(axis='columns')
         return squared_coordinates.div(total_squares, axis='rows')
 
     def column_correlations(self, X):
-        """The column correlations with each principal component."""
+        """Returns the column correlations with each principal component."""
         utils.validation.check_is_fitted(self, 's_')
+
+        _, _, _, columns = util.make_labels_and_names(X)
 
         # Convert pandas DataFrame to numpy array
         if isinstance(X, pd.DataFrame):
-            columns = X.columns
             X = X.values
-        else:
-            columns = list(range(X.shape[1]))
 
-        row_pc = self.row_principal_coordinates(X)
+        row_pc = self.row_coordinates(X)
 
         return pd.DataFrame(
-            data=([np.corrcoef(col, pc)[0, 1] for _, pc in row_pc.iteritems()] for col in X.T),
+            data=(
+                [
+                    np.corrcoef(col, pc)[0, 1]
+                    for _, pc in row_pc.iteritems()
+                ]
+                for col in X.T
+            ),
             columns=row_pc.columns,
             index=columns
         )
 
     @property
     def eigenvalues_(self):
-        """The eigenvalues associated with each principal component."""
+        """Returns the eigenvalues associated with each principal component."""
         utils.validation.check_is_fitted(self, 's_')
         return np.square(self.s_).tolist()
 
     @property
     def explained_inertia_(self):
-        """The percentage of explained inertia per principal component."""
+        """Returns the percentage of explained inertia per principal component."""
         utils.validation.check_is_fitted(self, 's_')
         return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
-    def plot_row_principal_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0,
-                                       y_component=1, labels=None, group_labels=None,
-                                       ellipse_outline=False, ellipse_fill=True, show_points=True,
-                                       **kwargs):
+    def plot_row_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
+                             labels=None, color_labels=None, ellipse_outline=False,
+                             ellipse_fill=True, show_points=True, **kwargs):
         """Plot the row principal coordinates."""
         utils.validation.check_is_fitted(self, 's_')
 
@@ -177,21 +182,25 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         # Add style
         ax = plot.stylize_axis(ax)
 
+        # Make sure X is a DataFrame
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+
         # Retrieve principal coordinates
-        principal_coordinates = self.row_principal_coordinates(X)
-        x = principal_coordinates[x_component]
-        y = principal_coordinates[y_component]
+        coordinates = self.row_coordinates(X)
+        x = coordinates[x_component]
+        y = coordinates[y_component]
 
         # Plot
-        if group_labels is None:
+        if color_labels is None:
             ax.scatter(x, y, **kwargs)
         else:
-            for group_label in np.unique(group_labels):
-                mask = group_labels == group_label
+            for color_label in sorted(list(set(color_labels))):
+                mask = np.array(color_labels) == color_label
                 color = ax._get_lines.get_next_color()
                 # Plot points
                 if show_points:
-                    ax.scatter(x[mask], y[mask], color=color, **kwargs, label=group_label)
+                    ax.scatter(x[mask], y[mask], color=color, **kwargs, label=color_label)
                 # Plot ellipse
                 if (ellipse_outline or ellipse_fill):
                     x_mean, y_mean, width, height, angle = plot.build_ellipse(x[mask], y[mask])

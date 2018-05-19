@@ -32,19 +32,19 @@ class MCA(ca.CA):
 
         return self
 
-    def row_principal_coordinates(self, X):
-        return super().row_principal_coordinates(self.one_hot_.transform(X))
+    def row_coordinates(self, X):
+        return super().row_coordinates(self.one_hot_.transform(X))
 
-    def column_principal_coordinates(self, X):
-        return super().column_principal_coordinates(self.one_hot_.transform(X))
+    def column_coordinates(self, X):
+        return super().column_coordinates(self.one_hot_.transform(X))
 
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
         utils.validation.check_is_fitted(self, 's_')
         utils.check_array(X, dtype=[str, np.number])
-        return self.row_principal_coordinates(X)
+        return self.row_coordinates(X)
 
-    def plot_principal_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
+    def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                    show_row_points=True, row_points_size=10, show_row_labels=False,
                                    show_column_points=True, column_points_size=30,
                                    show_column_labels=False, legend_n_cols=1):
@@ -78,7 +78,7 @@ class MCA(ca.CA):
         # Plot row principal coordinates
         if show_row_points or show_row_labels:
 
-            row_coords = self.row_principal_coordinates(X)
+            row_coords = self.row_coordinates(X)
 
             if show_row_points:
                 ax.scatter(
@@ -97,7 +97,7 @@ class MCA(ca.CA):
         # Plot column principal coordinates
         if show_column_points or show_column_labels:
 
-            col_coords = self.column_principal_coordinates(X)
+            col_coords = self.column_coordinates(X)
             x = col_coords[x_component]
             y = col_coords[y_component]
 

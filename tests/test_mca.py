@@ -26,14 +26,6 @@ class TestMCA(unittest.TestCase):
             index=[1, 2, 3, 4, 5, 6]
         )
 
-    def test_fit_numpy_array(self):
-        mca = prince.MCA(n_components=2)
-        self.assertTrue(isinstance(mca.fit(self.X.values), prince.MCA))
-
-    def test_transform_numpy_array(self):
-        mca = prince.MCA(n_components=2)
-        self.assertTrue(isinstance(mca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
-
     def test_fit_pandas_dataframe(self):
         mca = prince.MCA(n_components=2)
         self.assertTrue(isinstance(mca.fit(self.X), prince.MCA))
@@ -41,3 +33,11 @@ class TestMCA(unittest.TestCase):
     def test_transform_pandas_dataframe(self):
         mca = prince.MCA(n_components=2)
         self.assertTrue(isinstance(mca.fit(self.X).transform(self.X), pd.DataFrame))
+
+    def test_fit_numpy_array(self):
+        mca = prince.MCA(n_components=2)
+        self.assertTrue(isinstance(mca.fit(self.X.values), prince.MCA))
+
+    def test_transform_numpy_array(self):
+        mca = prince.MCA(n_components=2)
+        self.assertTrue(isinstance(mca.fit(self.X.values).transform(self.X.values), pd.DataFrame))

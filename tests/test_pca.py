@@ -17,14 +17,6 @@ class TestPCA(unittest.TestCase):
         columns = ['Sepal length', 'Sepal width', 'Petal length', 'Sepal length']
         self.X = pd.DataFrame(X, columns=columns)
 
-    def test_fit_numpy_array(self):
-        pca = prince.PCA(n_components=2)
-        self.assertTrue(isinstance(pca.fit(self.X.values), prince.PCA))
-
-    def test_transform_numpy_array(self):
-        pca = prince.PCA(n_components=2)
-        self.assertTrue(isinstance(pca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
-
     def test_fit_pandas_dataframe(self):
         pca = prince.PCA(n_components=2)
         self.assertTrue(isinstance(pca.fit(self.X), prince.PCA))
@@ -32,6 +24,14 @@ class TestPCA(unittest.TestCase):
     def test_transform_pandas_dataframe(self):
         pca = prince.PCA(n_components=2)
         self.assertTrue(isinstance(pca.fit(self.X).transform(self.X), pd.DataFrame))
+
+    def test_fit_numpy_array(self):
+        pca = prince.PCA(n_components=2)
+        self.assertTrue(isinstance(pca.fit(self.X.values), prince.PCA))
+
+    def test_transform_numpy_array(self):
+        pca = prince.PCA(n_components=2)
+        self.assertTrue(isinstance(pca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
 
     def test_copy(self):
         XX = np.copy(self.X)
@@ -92,10 +92,10 @@ class TestPCA(unittest.TestCase):
         pca.fit(self.X)
         self.assertTrue(np.isclose(sum(pca.explained_inertia_), 1))
 
-    def test_plot_row_principal_coordinates(self):
+    def test_plot_row_coordinates(self):
         pca = prince.PCA(n_components=4)
         pca.fit(self.X)
-        ax = pca.plot_row_principal_coordinates(self.X)
+        ax = pca.plot_row_coordinates(self.X)
         self.assertTrue(isinstance(ax, mpl.axes.Axes))
 
     def test_check_estimator(self):

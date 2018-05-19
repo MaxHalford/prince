@@ -39,11 +39,11 @@ class FAMD(pca.PCA):
         # Apply PCA to the indicator matrix
         return super().fit(pd.concat((num, self.one_hot_.transform(cat)), axis='columns'))
 
-    def row_principal_coordinates(self, X):
+    def row_coordinates(self, X):
         """The row principal coordinates."""
         utils.validation.check_is_fitted(self, 's_')
 
-        return super().row_principal_coordinates(
+        return super().row_coordinates(
             X=pd.concat(
                 (
                     X.select_dtypes(exclude=self.categorical_dtypes),
