@@ -35,7 +35,7 @@ Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Fact
 
 ## Installation
 
-:warning: Prince is only compatible with Python 3.
+:warning: Prince is only compatible with **Python 3**.
 
 :snake: Although it isn't a requirement, using [Anaconda](https://www.continuum.io/downloads) is highly recommended.
 
@@ -583,13 +583,6 @@ By default `prince` uses `sklearn`'s randomized SVD implementation (the one used
 
 If you are using Anaconda then you should be able to install `fbpca` without any pain by running `pip install fbpca`.
 
-## Incoming features
-
-I've got a lot on my hands aside from `prince`, so feel free to give me a hand!
-
-- [Factor Analysis of Mixed Data (FAMD)](https://www.wikiwand.com/en/Factor_analysis_of_mixed_data)
-- [Generalized Procustean Analysis (GPA)](https://www.wikiwand.com/en/Generalized_Procrustes_analysis)
-- [Multiple Factorial Analysis (MFA)](https://www.wikiwand.com/en/Multiple_factor_analysis)
 
 ## License
 

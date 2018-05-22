@@ -41,18 +41,18 @@ class MFA(pca.PCA):
             X = pd.DataFrame(X)
 
         # Check group types are consistent
-        all_nums = {}
+        self.all_nums_ = {}
         for name, cols in sorted(self.groups.items()):
             all_num = all(pd.api.types.is_numeric_dtype(X[c]) for c in cols)
             all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
             if not (all_num or all_cat):
                 raise ValueError('Not all columns in "{}" group are of the same type'.format(name))
-            all_nums[name] = all_num
+            self.all_nums_[name] = all_num
 
         # Run a factor analysis in each group
         self.partial_factor_analysis_ = {}
         for name, cols in sorted(self.groups.items()):
-            if all_num:
+            if self.all_nums_[name]:
                 fa = pca.PCA(
                     rescale_with_mean=self.rescale_with_mean,
                     rescale_with_std=self.rescale_with_std,
@@ -86,6 +86,8 @@ class MFA(pca.PCA):
         return pd.concat(
             (
                 X[cols] / self.partial_factor_analysis_[name].s_[0]
+                if self.all_nums_[name]
+                else X[cols]
                 for name, cols in sorted(self.groups.items())
             ),
             axis='columns'
