@@ -57,7 +57,7 @@ Prince doesn't have any extra dependencies apart from the usual suspects (`sklea
 
 ### Guidelines
 
-Each estimator provided by `prince` extends scikit-learn's `TransformerMixin`. This means that each estimator implements a `fit` and a `transform` method which makes them usable in a transformation pipeline. The `fit` method is actually an alias for the `row_principal_components` method which returns the row principal components. However you also can also access the column principal components with the `column_principal_components`.
+Each estimator provided by `prince` extends scikit-learn's `TransformerMixin`. This means that each estimator implements a `fit` and a `transform` method which makes them usable in a transformation pipeline. The `fit` method is actually an alias for the `row_principal_components` method which returns the row principal components. However you can also access the column principal components with the `column_principal_components`.
 
 Under the hood Prince uses a [randomised version of SVD](https://research.fb.com/fast-randomized-svd/). This is much faster than using the more commonly full approach. However the results may have a small inherent randomness. For most applications this doesn't matter and you shouldn't have to worry about it. However if you want reproducible results then you should set the `random_state` parameter.
 
