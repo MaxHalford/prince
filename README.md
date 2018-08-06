@@ -55,6 +55,10 @@ Prince doesn't have any extra dependencies apart from the usual suspects (`sklea
 
 ## Usage
 
+```python
+import numpy as np; np.random.set_state(42)
+```
+
 ### Guidelines
 
 Each estimator provided by `prince` extends scikit-learn's `TransformerMixin`. This means that each estimator implements a `fit` and a `transform` method which makes them usable in a transformation pipeline. The `fit` method is actually an alias for the `row_principal_components` method which returns the row principal components. However you can also access the column principal components with the `column_principal_components`.
