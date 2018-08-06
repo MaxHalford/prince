@@ -19,7 +19,7 @@ Then install the necessary dependencies.
 ## Upload to PyPI
 
 ```sh
-pip install --update setuptools twine
+pip install --upgrade setuptools twine
 ```
 
 Create `$HOME/.pypirc` with the following content:

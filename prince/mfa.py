@@ -8,17 +8,18 @@ import pandas as pd
 from sklearn import utils
 
 from . import mca
+from . import one_hot
 from . import pca
 from . import plot
 
 
 class MFA(pca.PCA):
 
-    def __init__(self, groups=None, rescale_with_mean=True, rescale_with_std=True, n_components=2,
-                 n_iter=10, copy=True, random_state=None, engine='auto'):
+    def __init__(self, groups=None, normalize=True, n_components=2, n_iter=10,
+                 copy=True, random_state=None, engine='auto'):
         super().__init__(
-            rescale_with_mean=rescale_with_mean,
-            rescale_with_std=rescale_with_std,
+            rescale_with_mean=False,
+            rescale_with_std=False,
             n_components=n_components,
             n_iter=n_iter,
             copy=copy,
@@ -26,6 +27,7 @@ class MFA(pca.PCA):
             engine=engine
         )
         self.groups = groups
+        self.normalize = normalize
 
     def fit(self, X, y=None):
 
@@ -49,13 +51,22 @@ class MFA(pca.PCA):
                 raise ValueError('Not all columns in "{}" group are of the same type'.format(name))
             self.all_nums_[name] = all_num
 
+        # Scale continuous variables to unit variance
+        if self.normalize:
+            num = list(itertools.chain(*[
+                cols for name, cols in self.groups.items()
+                if self.all_nums_[name]
+            ]))
+            normalize = lambda x: x / np.sqrt((x ** 2).sum())
+            X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(normalize, axis='rows')
+
         # Run a factor analysis in each group
         self.partial_factor_analysis_ = {}
         for name, cols in sorted(self.groups.items()):
             if self.all_nums_[name]:
                 fa = pca.PCA(
-                    rescale_with_mean=self.rescale_with_mean,
-                    rescale_with_std=self.rescale_with_std,
+                    rescale_with_mean=False,
+                    rescale_with_std=False,
                     n_components=self.n_components,
                     n_iter=self.n_iter,
                     copy=self.copy,
@@ -70,7 +81,7 @@ class MFA(pca.PCA):
                     random_state=self.random_state,
                     engine=self.engine
                 )
-            self.partial_factor_analysis_[name] = fa.fit(X[cols])
+            self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
         super().fit(self._build_X_global(X))
@@ -83,15 +94,21 @@ class MFA(pca.PCA):
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
 
-        return pd.concat(
-            (
-                X[cols] / self.partial_factor_analysis_[name].s_[0]
-                if self.all_nums_[name]
-                else X[cols]
-                for name, cols in sorted(self.groups.items())
-            ),
-            axis='columns'
-        )
+        X_partials = []
+        self.cat_one_hots_ = {}
+
+        for name, cols in sorted(self.groups.items()):
+            X_partial = X.loc[:, cols]
+
+            if not self.all_nums_[name]:
+                oh = one_hot.OneHotEncoder().fit(X)
+                X_partial = oh.fit_transform(X_partial)
+                self.cat_one_hots_[name] = oh
+
+            if not self.all_nums_[name]:
+                X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
+
+        return pd.concat(X_partials, axis='columns')
 
     def transform(self, X):
         """Returns the row principal coordinates of a dataset."""
@@ -125,13 +142,17 @@ class MFA(pca.PCA):
         # Get the projections for each group
         coords = {}
         for name, cols in sorted(self.groups.items()):
-            X_partial = X[cols].values
+            X_partial = X.loc[:, cols]
+
+            if not self.all_nums_[name]:
+                X_partial = self.cat_one_hots_[name].transform(X_partial)
+
             Z_partial = X_partial / self.partial_factor_analysis_[name].s_[0]
             coords[name] = len(self.groups) * (Z_partial @ Z_partial.T) @ P
 
         # Convert coords to a MultiIndex DataFrame
         coords = pd.DataFrame({
-            (name, i): group_coords[:, i]
+            (name, i): group_coords.loc[:, i]
             for name, group_coords in coords.items()
             for i in range(group_coords.shape[1])
         })
@@ -162,7 +183,7 @@ class MFA(pca.PCA):
 
         # Get the list of all possible markers
         marks = itertools.cycle(list(markers.MarkerStyle.markers.keys()))
-        next(marks)  # The first marker is pretty shit so we skip it
+        next(marks)  # The first marker looks pretty shit so we skip it
 
         # Plot points
         for name in self.groups:

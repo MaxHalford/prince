@@ -26,7 +26,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         utils.check_array(X)
 
         # Check all values are positive
-        if np.any(X < 0):
+        if any(np.any(X < 0)):
             raise ValueError("All values in X should be positive")
 
         _, row_names, _, col_names = util.make_labels_and_names(X)
