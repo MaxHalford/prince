@@ -35,11 +35,11 @@ class TestMFA(unittest.TestCase):
         }
 
     def test_fit_pandas_dataframe(self):
-        mfa = prince.MFA(groups=self.groups, rescale_with_mean=False, rescale_with_std=False)
+        mfa = prince.MFA(groups=self.groups)
         self.assertTrue(isinstance(mfa.fit(self.X), prince.MFA))
 
     def test_transform_pandas_dataframe(self):
-        mfa = prince.MFA(groups=self.groups, rescale_with_mean=False, rescale_with_std=False)
+        mfa = prince.MFA(groups=self.groups)
         self.assertTrue(isinstance(mfa.fit(self.X).transform(self.X), pd.DataFrame))
 
     def test_fit_numpy_array(self):
@@ -47,7 +47,7 @@ class TestMFA(unittest.TestCase):
             name: [self.X.columns.get_loc(col) for col in cols]
             for name, cols in self.groups.items()
         }
-        mfa = prince.MFA(groups=groups, rescale_with_mean=False, rescale_with_std=False)
+        mfa = prince.MFA(groups=groups)
         self.assertTrue(isinstance(mfa.fit(self.X.values), prince.MFA))
 
     def test_transform_numpy_array(self):
@@ -55,5 +55,5 @@ class TestMFA(unittest.TestCase):
             name: [self.X.columns.get_loc(col) for col in cols]
             for name, cols in self.groups.items()
         }
-        mfa = prince.MFA(groups=groups, rescale_with_mean=False, rescale_with_std=False)
+        mfa = prince.MFA(groups=groups)
         self.assertTrue(isinstance(mfa.fit(self.X.values).transform(self.X.values), pd.DataFrame))

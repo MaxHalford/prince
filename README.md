@@ -348,11 +348,11 @@ As usual you can retrieve the row and column principal components via their resp
 ```python
 >>> mca.row_coordinates(X).head()
           0         1
-0  0.705387  0.000000
-1 -0.386586  0.000000
-2 -0.386586  0.000000
-3 -0.852014  0.000000
-4  0.783539 -0.633333
+0  0.705387 -0.000000
+1 -0.386586 -0.000000
+2 -0.386586 -0.000000
+3 -0.852014 -0.000000
+4  0.783539  0.633333
 
 >>> mca.column_coordinates(X).head()
                      0         1
