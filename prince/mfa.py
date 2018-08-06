@@ -105,8 +105,7 @@ class MFA(pca.PCA):
                 X_partial = oh.fit_transform(X_partial)
                 self.cat_one_hots_[name] = oh
 
-            if not self.all_nums_[name]:
-                X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
+            X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
 
         return pd.concat(X_partials, axis='columns')
 
