@@ -88,6 +88,9 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         """
         utils.validation.check_is_fitted(self, 's_')
 
+        # Extract index
+        index = X.index if isinstance(X, pd.DataFrame) else None
+
         # Copy data
         if self.copy:
             X = np.copy(X)
@@ -96,10 +99,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         if hasattr(self, 'scaler_'):
             X = self.scaler_.transform(X)
 
-        return pd.DataFrame(
-            data=X.dot(self.V_.T),
-            index=X.index if isinstance(X, pd.DataFrame) else None
-        )
+        return pd.DataFrame(data=X.dot(self.V_.T), index=index)
 
     def row_standard_coordinates(self, X):
         """Returns the row standard coordinates.

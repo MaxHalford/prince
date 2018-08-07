@@ -107,7 +107,9 @@ class MFA(pca.PCA):
 
             X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
 
-        return pd.concat(X_partials, axis='columns')
+        X_global = pd.concat(X_partials, axis='columns')
+        X_global.index = X.index
+        return X_global
 
     def transform(self, X):
         """Returns the row principal coordinates of a dataset."""

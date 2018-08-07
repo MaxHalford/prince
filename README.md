@@ -56,7 +56,7 @@ Prince doesn't have any extra dependencies apart from the usual suspects (`sklea
 ## Usage
 
 ```python
-import numpy as np; np.random.set_state(42)
+import numpy as np; np.random.set_state(42)  # This is for doctests reproducibility
 ```
 
 ### Guidelines
@@ -429,20 +429,6 @@ First of all let's copy the data used in the paper.
 ...              'E3 fruity', 'E3 butter', 'E3 woody'],
 ...     index=['Wine {}'.format(i+1) for i in range(6)]
 ... )
-
-```
-
-Next the authors decided to normalize the data so that the sum of squares of each column equals 1. This isn't always necessary but we'll still do it so as to exactly reproduce the paper's results.
-
-```python
->>> import numpy as np
->>> X = (X - X.mean()).apply(lambda x: x / np.sqrt((x ** 2).sum()), axis='rows')
-
-```
-
-Finally let's specify the type of oak used to store each wine.
-
-```python
 >>> X['Oak type'] = [1, 2, 2, 2, 1, 1]
 
 ```
@@ -450,8 +436,6 @@ Finally let's specify the type of oak used to store each wine.
 The groups are passed as a dictionary to the `MFA` class.
 
 ```python
->>> import prince
-
 >>> groups = {
 ...    'Expert #{}'.format(no+1): [c for c in X.columns if c.startswith('E{}'.format(no+1))]
 ...    for no in range(3)
@@ -462,8 +446,12 @@ The groups are passed as a dictionary to the `MFA` class.
  'Expert #2': ['E2 red fruit', 'E2 roasted', 'E2 vanillin', 'E2 woody'],
  'Expert #3': ['E3 fruity', 'E3 butter', 'E3 woody']}
 
+```
+
 Now we can fit an `MFA`.
 
+```python
+>>> import prince
 >>> mfa = prince.MFA(
 ...     groups=groups,
 ...     n_components=2,
@@ -480,13 +468,13 @@ The `MFA` inherits from the `PCA` class, which entails that you have access to a
 
 ```python
 >>> mfa.row_coordinates(X)
-          0         1
-0 -2.172155 -0.508596
-1  0.557017 -0.197408
-2  2.317663 -0.830259
-3  1.832557  0.905046
-4 -1.403787  0.054977
-5 -1.131296  0.576241
+               0         1
+Wine 1 -2.172155 -0.508596
+Wine 2  0.557017 -0.197408
+Wine 3  2.317663 -0.830259
+Wine 4  1.832557  0.905046
+Wine 5 -1.403787  0.054977
+Wine 6 -1.131296  0.576241
 
 ```
 
@@ -571,6 +559,84 @@ Expert #2 eigenvalues: [3.651083..., 0.194159...]
 Expert #3 eigenvalues: [2.480488..., 0.441195...]
 
 ```
+
+
+### Factor analysis of mixed data (FAMD)
+
+A description is on it's way. This section is empty because I have to refactor the documentation a bit.
+
+```python
+>>> import pandas as pd
+
+>>> X = pd.DataFrame(
+...     data=[
+...         ['A', 'A', 'A', 2, 5, 7, 6, 3, 6, 7],
+...         ['A', 'A', 'A', 4, 4, 4, 2, 4, 4, 3],
+...         ['B', 'A', 'B', 5, 2, 1, 1, 7, 1, 1],
+...         ['B', 'A', 'B', 7, 2, 1, 2, 2, 2, 2],
+...         ['B', 'B', 'B', 3, 5, 6, 5, 2, 6, 6],
+...         ['B', 'B', 'A', 3, 5, 4, 5, 1, 7, 5]
+...     ],
+...     columns=['E1 fruity', 'E1 woody', 'E1 coffee',
+...              'E2 red fruit', 'E2 roasted', 'E2 vanillin', 'E2 woody',
+...              'E3 fruity', 'E3 butter', 'E3 woody'],
+...     index=['Wine {}'.format(i+1) for i in range(6)]
+... )
+>>> X['Oak type'] = [1, 2, 2, 2, 1, 1]
+
+```
+
+Now we can fit an `FAMD`.
+
+```python
+>>> import prince
+>>> famd = prince.FAMD(
+...     n_components=2,
+...     n_iter=3,
+...     copy=True,
+...     engine='auto',
+...     random_state=42
+... )
+>>> famd = mfa.fit(X)
+
+```
+
+The `FAMD` inherits from the `MFA` class, which entails that you have access to all it's methods and properties. The `row_coordinates` method will return the global coordinates of each wine.
+
+```python
+>>> famd.row_coordinates(X)
+              0         1
+Wine 1 3.298378  4.406210
+Wine 2 3.390446  4.094591
+Wine 3 4.841360 -1.840070
+Wine 4 4.816948 -1.852892
+Wine 5 3.748474 -2.810270
+Wine 6 3.416604 -0.014014
+
+```
+
+Just like for the `PCA` you can plot the row coordinates with the `plot_row_coordinates` method.
+
+```python
+>>> ax = famd.plot_row_coordinates(
+...     X,
+...     ax=None,
+...     figsize=(6, 6),
+...     x_component=0,
+...     y_component=1,
+...     labels=X.index,
+...     color_labels=['Oak type {}'.format(t) for t in X['Oak type']],
+...     ellipse_outline=False,
+...     ellipse_fill=True,
+...     show_points=True
+... )
+>>> ax.get_figure().savefig('images/famd_row_coordinates.png')
+
+```
+
+<div align="center">
+  <img src="images/famd_row_coordinates.png" />
+</div>
 
 
 ## Going faster
