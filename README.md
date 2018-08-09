@@ -352,11 +352,11 @@ As usual you can retrieve the row and column principal components via their resp
 ```python
 >>> mca.column_coordinates(X).head()
                      0         1
-Color_PURPLE  0.117308  0.689202
-Color_YELLOW -0.130342 -0.765780
-Size_LARGE    0.117308 -0.689202
-Size_SMALL   -0.130342  0.765780
-Action_DIP   -0.853864 -0.000000
+Color_PURPLE  0.117308 -0.689202
+Color_YELLOW -0.130342  0.765780
+Size_LARGE    0.117308  0.689202
+Size_SMALL   -0.130342 -0.765780
+Action_DIP   -0.853864  0.000000
 
 ```
 
