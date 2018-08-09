@@ -23,7 +23,8 @@ class FAMD(mfa.MFA):
         if isinstance(X, np.ndarray):
             X = pd.DataFrame(X)
 
-        num_cols = X.select_dtypes('number').columns.tolist()
+        # Separate numerical columns from categorical columns
+        num_cols = X.select_dtypes(np.number).columns.tolist()
         cat_cols = set(X.columns) - set(num_cols)
 
         # Make one per variable type

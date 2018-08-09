@@ -352,11 +352,11 @@ As usual you can retrieve the row and column principal components via their resp
 ```python
 >>> mca.column_coordinates(X).head()
                      0         1
-Color_PURPLE  0.117308 -0.689202
-Color_YELLOW -0.130342  0.765780
-Size_LARGE    0.117308  0.689202
-Size_SMALL   -0.130342 -0.765780
-Action_DIP   -0.853864  0.000000
+Color_PURPLE  0.117308  0.689202
+Color_YELLOW -0.130342 -0.765780
+Size_LARGE    0.117308 -0.689202
+Size_SMALL   -0.130342  0.765780
+Action_DIP   -0.853864 -0.000000
 
 ```
 
@@ -598,12 +598,12 @@ The `FAMD` inherits from the `MFA` class, which entails that you have access to 
 ```python
 >>> famd.row_coordinates(X)
               0         1
-Wine 1 2.614081  6.928125
-Wine 2 3.061583  5.414429
-Wine 3 4.826052 -1.454769
-Wine 4 4.693283 -1.452513
-Wine 5 3.129545 -0.605032
-Wine 6 2.819369  1.992571
+Wine 1 3.298378  4.406210
+Wine 2 3.390446  4.094591
+Wine 3 4.841360 -1.840070
+Wine 4 4.816948 -1.852892
+Wine 5 3.748474 -2.810270
+Wine 6 3.416604 -0.014014
 
 ```
 

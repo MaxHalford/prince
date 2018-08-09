@@ -35,12 +35,7 @@ class MFA(pca.PCA):
         if self.groups is None:
             raise ValueError('Groups have to be specified')
 
-        # Check input
-        utils.check_array(X, dtype=[str, np.number])
-
-        # Make sure X is a DataFrame for convenience
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
+        X = self._check_and_prepare_input(X)
 
         # Check group types are consistent
         self.all_nums_ = {}
@@ -51,15 +46,6 @@ class MFA(pca.PCA):
                 raise ValueError('Not all columns in "{}" group are of the same type'.format(name))
             self.all_nums_[name] = all_num
 
-        # Scale continuous variables to unit variance
-        if self.normalize:
-            num = list(itertools.chain(*[
-                cols for name, cols in self.groups.items()
-                if self.all_nums_[name]
-            ]))
-            normalize = lambda x: x / np.sqrt((x ** 2).sum())
-            X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(normalize, axis='rows')
-
         # Run a factor analysis in each group
         self.partial_factor_analysis_ = {}
         for name, cols in sorted(self.groups.items()):
@@ -69,7 +55,7 @@ class MFA(pca.PCA):
                     rescale_with_std=False,
                     n_components=self.n_components,
                     n_iter=self.n_iter,
-                    copy=self.copy,
+                    copy=False,
                     random_state=self.random_state,
                     engine=self.engine
                 )
@@ -88,12 +74,28 @@ class MFA(pca.PCA):
 
         return self
 
-    def _build_X_global(self, X):
+    def _check_and_prepare_input(self, X):
+
+        # Check dtypes
+        utils.check_array(X, dtype=[str, np.number])
 
         # Make sure X is a DataFrame for convenience
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
 
+        # Copy data
+        if self.copy:
+            X = X.copy()
+
+        if self.normalize:
+            # Scale continuous variables to unit variance
+            num = X.select_dtypes(np.number).columns
+            normalize = lambda x: x / np.sqrt((x ** 2).sum())
+            X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(normalize, axis='rows')
+
+        return X
+
+    def _build_X_global(self, X):
         X_partials = []
         self.cat_one_hots_ = {}
 
@@ -113,28 +115,24 @@ class MFA(pca.PCA):
 
     def transform(self, X):
         """Returns the row principal coordinates of a dataset."""
-        utils.validation.check_is_fitted(self, 's_')
-        utils.check_array(X)
         return self.row_coordinates(X)
 
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
         utils.validation.check_is_fitted(self, 's_')
-        n = X.shape[0]
-        return n ** 0.5 * super().row_coordinates(self._build_X_global(X))
+        X = self._check_and_prepare_input(X)
+        return X.shape[0] ** 0.5 * super().row_coordinates(self._build_X_global(X))
 
     def row_contributions(self, X):
         """Returns the row contributions towards each principal component."""
         utils.validation.check_is_fitted(self, 's_')
+        X = self._check_and_prepare_input(X)
         return super().row_contributions(self._build_X_global(X))
 
     def partial_row_coordinates(self, X):
         """Returns the row coordinates for each group."""
         utils.validation.check_is_fitted(self, 's_')
-
-        # Make sure X is a DataFrame for convenience
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
+        X = self._check_and_prepare_input(X)
 
         # Define the projection matrix P
         n = X.shape[0]
@@ -168,12 +166,10 @@ class MFA(pca.PCA):
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)
 
-        # Add style
+        # Add plotting style
         ax = plot.stylize_axis(ax)
 
-        # Make sure X is a DataFrame
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
+        X = self._check_and_prepare_input(X)
 
         # Retrieve partial coordinates
         coords = self.partial_row_coordinates(X)
