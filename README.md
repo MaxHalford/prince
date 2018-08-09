@@ -597,7 +597,7 @@ Now we can fit an `FAMD`.
 ...     engine='auto',
 ...     random_state=42
 ... )
->>> famd = mfa.fit(X)
+>>> famd = mfa.fit(X.drop('Oak type', axis='columns'))  # No need for 'Oak type'
 
 ```
 
@@ -606,16 +606,16 @@ The `FAMD` inherits from the `MFA` class, which entails that you have access to 
 ```python
 >>> famd.row_coordinates(X)
               0         1
-Wine 1 3.298378  4.406210
-Wine 2 3.390446  4.094591
-Wine 3 4.841360 -1.840070
-Wine 4 4.816948 -1.852892
-Wine 5 3.748474 -2.810270
-Wine 6 3.416604 -0.014014
+Wine 1 2.614081  6.928125
+Wine 2 3.061583  5.414429
+Wine 3 4.826052 -1.454769
+Wine 4 4.693283 -1.452513
+Wine 5 3.129545 -0.605032
+Wine 6 2.819369  1.992571
 
 ```
 
-Just like for the `PCA` you can plot the row coordinates with the `plot_row_coordinates` method.
+Just like for the `MFA` you can plot the row coordinates with the `plot_row_coordinates` method.
 
 ```python
 >>> ax = famd.plot_row_coordinates(

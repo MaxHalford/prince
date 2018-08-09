@@ -23,7 +23,13 @@ class FAMD(mfa.MFA):
         if isinstance(X, np.ndarray):
             X = pd.DataFrame(X)
 
-        # Make one per group per column
-        self.groups = {col: [col] for col in X.columns}
+        num_cols = X.select_dtypes('number').columns.tolist()
+        cat_cols = set(X.columns) - set(num_cols)
+
+        # Make one per variable type
+        self.groups = {
+            'Numerical': num_cols,
+            'Categorical': cat_cols
+        }
 
         return super().fit(X)
