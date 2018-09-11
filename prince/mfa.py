@@ -90,7 +90,9 @@ class MFA(pca.PCA):
         if self.normalize:
             # Scale continuous variables to unit variance
             num = X.select_dtypes(np.number).columns
-            normalize = lambda x: x / np.sqrt((x ** 2).sum())
+            # If a column's cardinality is 1 then it's variance is 0 which can
+            # can cause a division by 0
+            normalize = lambda x: x / (np.sqrt((x ** 2).sum()) or 1)
             X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(normalize, axis='rows')
 
         return X
