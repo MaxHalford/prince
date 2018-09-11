@@ -347,8 +347,6 @@ The `MCA` also implements the `fit` and `transform` methods.
 
 ```
 
-```
-
 Like the `CA` class, the `MCA` class also has `plot_coordinates` method.
 
 ```python
