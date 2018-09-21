@@ -11,6 +11,7 @@ from . import mca
 from . import one_hot
 from . import pca
 from . import plot
+from . import util
 
 
 class MFA(pca.PCA):
@@ -124,6 +125,32 @@ class MFA(pca.PCA):
         utils.validation.check_is_fitted(self, 's_')
         X = self._check_and_prepare_input(X)
         return X.shape[0] ** 0.5 * super().row_coordinates(self._build_X_global(X))
+
+    def column_correlations(self, X):
+        """Returns the column correlations."""
+
+        utils.validation.check_is_fitted(self, 's_')
+        X = self._check_and_prepare_input(X)
+
+        X = self._build_X_global(X)
+        _, _, _, columns = util.make_labels_and_names(X)
+
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+
+        row_pc = X.shape[0] ** 0.5 * super().row_coordinates(X)
+
+        return pd.DataFrame(
+            data=(
+                [
+                    np.corrcoef(col, pc)[0, 1]
+                    for _, pc in row_pc.iteritems()
+                ]
+                for col in X.T
+            ),
+            columns=row_pc.columns,
+            index=columns
+        )
 
     def row_contributions(self, X):
         """Returns the row contributions towards each principal component."""

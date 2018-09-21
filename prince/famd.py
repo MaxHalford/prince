@@ -34,3 +34,16 @@ class FAMD(mfa.MFA):
         }
 
         return super().fit(X)
+
+    def col_correlation(self, X):
+
+        # Separate numerical columns from categorical columns
+        num_cols = X.select_dtypes(np.number).columns.tolist()
+        cat_cols = set(X.columns) - set(num_cols)
+
+        # Make one per variable type
+        self.groups = {
+            'Numerical': num_cols,
+            'Categorical': cat_cols
+        }
+        return super().column_correlations(X)
