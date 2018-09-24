@@ -119,11 +119,15 @@ class MFA(pca.PCA):
         """Returns the row principal coordinates of a dataset."""
         return self.row_coordinates(X)
 
+    def _row_coordinates_from_global(self, X_global):
+        """Returns the row principal coordinates."""
+        return len(X_global) ** 0.5 * super().row_coordinates(X_global)
+
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
         utils.validation.check_is_fitted(self, 's_')
         X = self._check_and_prepare_input(X)
-        return X.shape[0] ** 0.5 * super().row_coordinates(self._build_X_global(X))
+        return self._row_coordinates_from_global(self._build_X_global(X))
 
     def row_contributions(self, X):
         """Returns the row contributions towards each principal component."""
@@ -137,8 +141,7 @@ class MFA(pca.PCA):
         X = self._check_and_prepare_input(X)
 
         # Define the projection matrix P
-        n = X.shape[0]
-        P = n ** 0.5 * self.U_ / self.s_
+        P = len(X) ** 0.5 * self.U_ / self.s_
 
         # Get the projections for each group
         coords = {}
@@ -159,6 +162,21 @@ class MFA(pca.PCA):
         })
 
         return coords
+
+    def column_correlations(self, X):
+        """Returns the column correlations."""
+        utils.validation.check_is_fitted(self, 's_')
+
+        X_global = self._build_X_global(X)
+        row_pc = self._row_coordinates_from_global(X_global)
+
+        return pd.DataFrame({
+            component: {
+                feature: row_pc[component].corr(X_global[feature])
+                for feature in X_global.columns
+            }
+            for component in row_pc.columns
+        })
 
     def plot_partial_row_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                      color_labels=None, **kwargs):

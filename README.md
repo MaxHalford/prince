@@ -94,15 +94,15 @@ If you're using PCA it is assumed you have a dataframe consisting of numerical c
 >>> from sklearn import datasets
 
 >>> X, y = datasets.load_iris(return_X_y=True)
->>> X = pd.DataFrame(data=X, columns=['Sepal length', 'Sepal width', 'Petal length', 'Sepal length'])
+>>> X = pd.DataFrame(data=X, columns=['Sepal length', 'Sepal width', 'Petal length', 'Petal width'])
 >>> y = pd.Series(y).map({0: 'Setosa', 1: 'Versicolor', 2: 'Virginica'})
 >>> X.head()
-   Sepal length  Sepal width  Petal length  Sepal length
-0           5.1          3.5           1.4           0.2
-1           4.9          3.0           1.4           0.2
-2           4.7          3.2           1.3           0.2
-3           4.6          3.1           1.5           0.2
-4           5.0          3.6           1.4           0.2
+   Sepal length  Sepal width  Petal length  Petal width
+0           5.1          3.5           1.4          0.2
+1           4.9          3.0           1.4          0.2
+2           4.7          3.2           1.3          0.2
+3           4.6          3.1           1.5          0.2
+4           5.0          3.6           1.4          0.2
 
 ```
 
@@ -195,10 +195,10 @@ You can also obtain the correlations between the original variables and the prin
 ```python
 >>> pca.column_correlations(X)
                      0         1
+Petal length  0.991684  0.020247
+Petal width   0.964996  0.062786
 Sepal length  0.891224  0.357352
 Sepal width  -0.449313  0.888351
-Petal length  0.991684  0.020247
-Sepal length  0.964996  0.062786
 
 ```
 

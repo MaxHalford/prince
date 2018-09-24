@@ -138,25 +138,19 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         """Returns the column correlations with each principal component."""
         utils.validation.check_is_fitted(self, 's_')
 
-        _, _, _, columns = util.make_labels_and_names(X)
-
         # Convert pandas DataFrame to numpy array
-        if isinstance(X, pd.DataFrame):
-            X = X.values
+        if isinstance(X, np.ndarray):
+            X = pd.DataFrame(X)
 
         row_pc = self.row_coordinates(X)
 
-        return pd.DataFrame(
-            data=(
-                [
-                    np.corrcoef(col, pc)[0, 1]
-                    for _, pc in row_pc.iteritems()
-                ]
-                for col in X.T
-            ),
-            columns=row_pc.columns,
-            index=columns
-        )
+        return pd.DataFrame({
+            component: {
+                feature: row_pc[component].corr(X[feature])
+                for feature in X.columns
+            }
+            for component in row_pc.columns
+        })
 
     @property
     def eigenvalues_(self):
