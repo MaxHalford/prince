@@ -102,7 +102,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         X = X / X.sum(axis=1)[:, None]
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.col_masses_ ** -0.5) @ self.V_.T,
+            data=X @ sparse.diags(self.col_masses_.values ** -0.5) @ self.V_.T,
             index=row_names
         )
 
@@ -122,7 +122,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         X = X.T / X.T.sum(axis=1)[:, None]
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.row_masses_ ** -0.5) @ self.U_,
+            data=X @ sparse.diags(self.row_masses_.values ** -0.5) @ self.U_,
             index=col_names
         )
 
