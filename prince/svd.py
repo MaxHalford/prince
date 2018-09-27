@@ -1,4 +1,7 @@
 """Singular Value Decomposition (SVD)"""
+
+import numba
+
 try:
     import fbpca
     FBPCA_INSTALLED = True
@@ -29,6 +32,22 @@ def compute_svd(X, n_components, n_iter, random_state, engine):
         )
     else:
         raise ValueError("engine has to be one of ('auto', 'fbpca', 'sklearn')")
+
+    U, V = extmath.svd_flip(U, V)
+
+    return U, s, V
+
+
+@numba.jit(nogil=True, parallel=True)
+def compute_svd_parallel(X, n_components, n_iter, random_state, engine):
+    """Computes an SVD with k components."""
+
+    U, s, V = extmath.randomized_svd(
+        X,
+        n_components=n_components,
+        n_iter=n_iter,
+        random_state=random_state
+    )
 
     U, V = extmath.svd_flip(U, V)
 
