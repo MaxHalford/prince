@@ -13,12 +13,15 @@ from . import svd
 
 class CA(base.BaseEstimator, base.TransformerMixin):
 
-    def __init__(self, n_components=2, n_iter=10, copy=True, random_state=None, engine='auto'):
+    def __init__(self, n_components=2, n_iter=10, copy=True, random_state=None, engine='auto', **kwargs):
         self.n_components = n_components
         self.n_iter = n_iter
         self.copy = copy
         self.random_state = random_state
         self.engine = engine
+        self.parallel = kwargs.pop('parallel', False)
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
     def fit(self, X, y=None):
 
@@ -55,7 +58,8 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             n_components=self.n_components,
             n_iter=self.n_iter,
             random_state=self.random_state,
-            engine=self.engine
+            engine=self.engine,
+            parallel=self.parallel
         )
 
         # Compute total inertia
