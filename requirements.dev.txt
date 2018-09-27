@@ -4,6 +4,7 @@ pytest>=3.5.0
 pytest-cov>=2.5.1
 fbpca>=1.0
 matplotlib>=2.2.2
+numba==0.39.0
 numpy>=1.14.0
 pandas>=0.22.0
 scipy>=1.0.1
