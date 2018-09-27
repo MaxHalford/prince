@@ -24,7 +24,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     """
 
     def __init__(self, rescale_with_mean=True, rescale_with_std=True, n_components=2, n_iter=3,
-                 copy=True, random_state=None, engine='auto'):
+                 copy=True, random_state=None, engine='auto', **kwargs):
 
         self.n_components = n_components
         self.n_iter = n_iter
@@ -33,6 +33,9 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.copy = copy
         self.random_state = random_state
         self.engine = engine
+        self.parallel = kwargs.pop('parallel', False)
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' %kwargs)
 
     def fit(self, X, y=None):
 
@@ -48,13 +51,15 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             X = np.copy(X)
 
         # Scale data
-        if self.rescale_with_mean or self.rescale_with_std:
-            self.scaler_ = preprocessing.StandardScaler(
-                copy=False,
-                with_mean=self.rescale_with_mean,
-                with_std=self.rescale_with_std
-            ).fit(X)
-            X = self.scaler_.transform(X)
+        X = util.scale_transform(X=X, copy=False, with_mean=self.rescale_with_mean, with_std=self.rescale_with_std)
+
+        # if self.rescale_with_mean or self.rescale_with_std:
+        #     self.scaler_ = preprocessing.StandardScaler(
+        #         copy=False,
+        #         with_mean=self.rescale_with_mean,
+        #         with_std=self.rescale_with_std
+        #     ).fit(X)
+        #     X = self.scaler_.transform(X)
 
         # Compute SVD
         self.U_, self.s_, self.V_ = svd.compute_svd(
@@ -62,7 +67,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             n_components=self.n_components,
             n_iter=self.n_iter,
             random_state=self.random_state,
-            engine=self.engine
+            engine=self.engine,
+            parallel=self.parallel
         )
 
         # Compute total inertia
