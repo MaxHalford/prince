@@ -95,3 +95,7 @@ ENV/
 .ropeproject
 *.npy
 *.pkl
+
+*.xml
+*.iml
+.idea/*
