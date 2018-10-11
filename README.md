@@ -29,9 +29,20 @@
 
 <br/>
 
-## Introduction
+Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Factor_analysis). This includes a variety of methods including [principal component analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) and [correspondence analysis (CA)](https://www.wikiwand.com/en/Correspondence_analysis). The goal is to provide an efficient implementation for each algorithm along with a scikit-learn API.
 
-Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Factor_analysis). This includes a variety of methods including [principal component analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) and [correspondence analysis (CA)](https://www.wikiwand.com/en/Correspondence_analysis). The goal is to provide an efficient implementation for each algorithm along with a nice API.
+## Table of contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Guidelines](#guidelines)
+  - [Principal component analysis (PCA)](#principal-component-analysis-(pca))
+  - [Correspondence analysis (CA)](#correspondence-analysis-(ca))
+  - [Multiple correspondence analysis (MCA)](#multiple-correspondence-analysis-(mca))
+  - [Multiple factor analysis (MFA)](#multiple-factor-analysis-(mfa))
+  - [Factor analysis of mixed data (FAMD)](#factor-analysis-of-mixed-data-(famd))
+- [Going faster](#going-faster)
+- [License](#license)
 
 ## Installation
 
@@ -137,11 +148,11 @@ Once the `PCA` has been fitted, it can be used to extract the row principal coor
 ```python
 >>> pca.transform(X).head()  # Same as pca.row_coordinates(X).head()
           0         1
-0 -2.264542  0.505704
-1 -2.086426 -0.655405
-2 -2.367950 -0.318477
-3 -2.304197 -0.575368
-4 -2.388777  0.674767
+0 -2.264703  0.480027
+1 -2.080961 -0.674134
+2 -2.364229 -0.341908
+3 -2.299384 -0.597395
+4 -2.389842  0.646835
 
 ```
 
@@ -172,7 +183,7 @@ Each principal component explains part of the underlying of the distribution. Yo
 
 ```python
 >>> pca.explained_inertia_  # doctest: +ELLIPSIS
-[0.727704..., 0.230305...]
+[0.729624..., 0.228507...]
 
 ```
 
@@ -180,13 +191,13 @@ The explained inertia represents the percentage of the inertia each principal co
 
 ```python
 >>> pca.eigenvalues_  # doctest: +ELLIPSIS
-[436.622712..., 138.183139...]
+[437.774672..., 137.104570...]
 
->>> pca.total_inertia_
-600.0
+>>> pca.total_inertia_  # doctest: +ELLIPSIS
+600.0...
 
 >>> pca.explained_inertia_
-[0.727704..., 0.230305...]
+[0.729624..., 0.228507...]
 
 ```
 
@@ -195,10 +206,10 @@ You can also obtain the correlations between the original variables and the prin
 ```python
 >>> pca.column_correlations(X)
                      0         1
-Petal length  0.991684  0.020247
-Petal width   0.964996  0.062786
-Sepal length  0.891224  0.357352
-Sepal width  -0.449313  0.888351
+Petal length  0.991555  0.023415
+Petal width   0.964979  0.064000
+Sepal length  0.890169  0.360830
+Sepal width  -0.460143  0.882716
 
 ```
 
@@ -207,11 +218,11 @@ You may also want to know how much each observation contributes to each principa
 ```python
 >>> pca.row_contributions(X).head()
           0         1
-0  0.011745  0.001851
-1  0.009970  0.003109
-2  0.012842  0.000734
-3  0.012160  0.002396
-4  0.013069  0.003295
+0  0.011716  0.001681
+1  0.009892  0.003315
+2  0.012768  0.000853
+3  0.012077  0.002603
+4  0.013046  0.003052
 
 ```
 
