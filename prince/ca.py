@@ -92,14 +92,19 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         _, row_names, _, _ = util.make_labels_and_names(X)
 
-        if isinstance(X, pd.DataFrame):
+        if isinstance(X, pd.SparseDataFrame):
+            X = X.to_coo()
+        elif isinstance(X, pd.DataFrame):
             X = X.values
 
         if self.copy:
-            X = np.copy(X)
+            X = X.copy()
 
-        # Make sure the rows sum up to 1
-        X = X / X.sum(axis=1)[:, None]
+        # Normalise the rows so that they sum up to 1
+        if isinstance(X, np.ndarray):
+            X = X / X.sum(axis=1)[:, None]
+        else:
+            X = X / X.sum(axis=1)
 
         return pd.DataFrame(
             data=X @ sparse.diags(self.col_masses_.values ** -0.5) @ self.V_.T,
@@ -112,14 +117,19 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         _, _, _, col_names = util.make_labels_and_names(X)
 
-        if isinstance(X, pd.DataFrame):
+        if isinstance(X, pd.SparseDataFrame):
+            X = X.to_coo()
+        elif isinstance(X, pd.DataFrame):
             X = X.values
 
         if self.copy:
-            X = np.copy(X)
+            X = X.copy()
 
         # Transpose and make sure the rows sum up to 1
-        X = X.T / X.T.sum(axis=1)[:, None]
+        if isinstance(X, np.ndarray):
+            X = X.T / X.T.sum(axis=1)[:, None]
+        else:
+            X = X.T / X.T.sum(axis=1)
 
         return pd.DataFrame(
             data=X @ sparse.diags(self.row_masses_.values ** -0.5) @ self.U_,
