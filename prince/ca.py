@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy import sparse
+from scipy.spatial.distance import pdist,squareform
 from sklearn import base
 from sklearn import utils
 
@@ -39,11 +40,11 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         # Compute the correspondence matrix which contains the relative frequencies
         X = X / np.sum(X)
-
+        
         # Compute row and column masses
         self.row_masses_ = pd.Series(X.sum(axis=1), index=row_names)
         self.col_masses_ = pd.Series(X.sum(axis=0), index=col_names)
-
+        
         # Compute standardised residuals
         r = self.row_masses_.values
         c = self.col_masses_.values
@@ -193,3 +194,22 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         ax.set_ylabel('Component {} ({:.2f}% inertia)'.format(y_component, 100 * ei[y_component]))
 
         return ax
+
+    def row_distances(self,X,to_squareform=True):
+        utils.validation.check_is_fitted(self, 's_')
+        
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        
+        X = X / np.sum(X)
+        DI_r = np.linalg.inv(np.diag(self.row_masses_))
+        DI_c = np.linalg.inv(np.diag(self.col_masses_))
+        # compute row profiles matrix 
+        self.P_r = DI_r @ X
+        
+        row_distances = pdist(self.P_r, metric = util.chi2_dist, DI = DI_c)
+        if to_squareform:
+            row_distances = squareform(row_distances)
+            
+        return row_distances
+        
