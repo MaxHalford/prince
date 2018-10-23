@@ -75,11 +75,20 @@ class TestPCA(unittest.TestCase):
             np.square(pca_sklearn.singular_values_),
         )
 
+        print(pca_prince.eigenvalues_)
+        print(np.square(pca_sklearn.singular_values_))
+        print(pca_prince.explained_inertia_)
+        print(pca_sklearn.explained_variance_ratio_)
+
+        # print(pca_prince.transform(self.X))
+        # print(pca_sklearn.transform(self.X))
+
         # Compare row projections
         np.testing.assert_array_almost_equal(
             pca_prince.transform(self.X),
             pca_sklearn.transform(self.X)
         )
+
 
         # Compare explained inertia
         np.testing.assert_array_almost_equal(

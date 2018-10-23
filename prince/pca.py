@@ -24,7 +24,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     """
 
     def __init__(self, rescale_with_mean=True, rescale_with_std=True, n_components=2, n_iter=3,
-                 copy=True, random_state=None, engine='auto', **kwargs):
+                 copy=True, random_state=None, engine='auto', parallel=True):
 
         self.n_components = n_components
         self.n_iter = n_iter
@@ -33,9 +33,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.copy = copy
         self.random_state = random_state
         self.engine = engine
-        self.parallel = kwargs.pop('parallel', False)
-        if kwargs:
-            raise TypeError('Unexpected **kwargs: %r' %kwargs)
+        self.parallel = parallel
 
     def fit(self, X, y=None):
 
