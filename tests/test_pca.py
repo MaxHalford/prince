@@ -63,7 +63,7 @@ class TestPCA(unittest.TestCase):
     def test_compare_sklearn(self):
 
         n_components = 4
-        pca_prince = prince.PCA(n_components=n_components, rescale_with_std=False)
+        pca_prince = prince.PCA(n_components=n_components, rescale_with_std=True)
         pca_sklearn = decomposition.PCA(n_components=n_components)
 
         pca_prince.fit(self.X)
@@ -88,7 +88,6 @@ class TestPCA(unittest.TestCase):
             pca_prince.transform(self.X),
             pca_sklearn.transform(self.X)
         )
-
 
         # Compare explained inertia
         np.testing.assert_array_almost_equal(
