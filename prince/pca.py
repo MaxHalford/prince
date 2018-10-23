@@ -142,7 +142,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         """Returns the column correlations with each principal component."""
         utils.validation.check_is_fitted(self, 's_')
 
-        # Convert pandas DataFrame to numpy array
+        # Convert numpy array to pandas DataFrame
         if isinstance(X, np.ndarray):
             X = pd.DataFrame(X)
 

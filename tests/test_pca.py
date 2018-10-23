@@ -18,7 +18,7 @@ class TestPCA(unittest.TestCase):
         self.X = pd.DataFrame(X, columns=columns)
 
     def test_fit_pandas_dataframe(self):
-        pca = prince.PCA(n_components=2)
+        pca = prince.PCA(n_components=2, engine='fbpca')
         self.assertTrue(isinstance(pca.fit(self.X), prince.PCA))
 
     def test_transform_pandas_dataframe(self):
@@ -26,7 +26,7 @@ class TestPCA(unittest.TestCase):
         self.assertTrue(isinstance(pca.fit(self.X).transform(self.X), pd.DataFrame))
 
     def test_fit_numpy_array(self):
-        pca = prince.PCA(n_components=2)
+        pca = prince.PCA(n_components=2, engine='fbpca')
         self.assertTrue(isinstance(pca.fit(self.X.values), prince.PCA))
 
     def test_transform_numpy_array(self):

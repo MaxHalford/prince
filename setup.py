@@ -25,9 +25,9 @@ VERSION = None
 REQUIRED = [
     'matplotlib>=2.2.2',
     'numpy>=1.14.0',
-    'pandas>=0.22.0',
+    'pandas>=0.23.0',
     'scipy>=1.0.1',
-    'scikit-learn>=0.19.1'
+    'scikit-learn>=0.20.0'
 ]
 
 # The rest you shouldn't have to touch too much :)
