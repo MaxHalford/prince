@@ -25,12 +25,19 @@ class FAMD(mfa.MFA):
 
         # Separate numerical columns from categorical columns
         num_cols = X.select_dtypes(np.number).columns.tolist()
-        cat_cols = set(X.columns) - set(num_cols)
+        cat_cols = list(set(X.columns) - set(num_cols))
 
-        # Make one per variable type
-        self.groups = {
-            'Numerical': num_cols,
-            'Categorical': cat_cols
-        }
+        # Make one group per variable type
+        self.groups = {}
+        if num_cols:
+            self.groups['Numerical'] = num_cols
+        else:
+            raise ValueError("FAMD works with categorical and numerical data but " +
+                             "you only have categorical data; you should consider using MCA")
+        if cat_cols:
+            self.groups['Categorical'] = cat_cols
+        else:
+            raise ValueError("FAMD works with categorical and numerical data but " +
+                             "you only have numerical data; you should consider using PCA")
 
         return super().fit(X)

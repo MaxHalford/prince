@@ -55,7 +55,7 @@ class MFA(pca.PCA):
                     rescale_with_std=False,
                     n_components=self.n_components,
                     n_iter=self.n_iter,
-                    copy=False,
+                    copy=True,
                     random_state=self.random_state,
                     engine=self.engine
                 )
@@ -172,7 +172,7 @@ class MFA(pca.PCA):
 
         return pd.DataFrame({
             component: {
-                feature: row_pc[component].corr(X_global[feature])
+                feature: row_pc[component].corr(X_global[feature].to_dense())
                 for feature in X_global.columns
             }
             for component in row_pc.columns
