@@ -46,6 +46,8 @@ def compute_svd(X, n_components, n_iter, random_state, engine, parallel):
 def compute_svd_parallel(X, n_components, n_iter, random_state):
     """Computes an SVD with k components."""
 
+    # print('Using numba backend')
+
     U, s, V = extmath.randomized_svd(
         X,
         n_components=n_components,
