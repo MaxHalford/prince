@@ -59,7 +59,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         )
 
         # Compute total inertia
-        self.total_inertia_ = (S @ S.T).trace()
+        self.total_inertia_ = np.einsum('ij,ji->', S, S.T)
 
         return self
 
