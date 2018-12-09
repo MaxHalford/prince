@@ -204,7 +204,12 @@ class MFA(pca.PCA):
         # Add plotting style
         ax = plot.stylize_axis(ax)
 
-        X = self._check_and_prepare_input(X)
+        # Check input
+        if self.check_input:
+            utils.check_array(X, dtype=[str, np.number])
+
+        # Prepare input
+        X = self._prepare_input(X)
 
         # Retrieve partial coordinates
         coords = self.partial_row_coordinates(X)
