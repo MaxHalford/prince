@@ -151,7 +151,7 @@ class MFA(pca.PCA):
         utils.validation.check_is_fitted(self, 's_')
         # Check input
         if self.check_input:
-            X = utils.check_array(X, dtype=[str, np.number])
+            utils.check_array(X, dtype=[str, np.number])
         # Prepare input
         X = self._prepare_input(X)
 
