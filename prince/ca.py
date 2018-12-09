@@ -13,17 +13,20 @@ from . import svd
 
 class CA(base.BaseEstimator, base.TransformerMixin):
 
-    def __init__(self, n_components=2, n_iter=10, copy=True, random_state=None, engine='auto'):
+    def __init__(self, n_components=2, n_iter=10, copy=True, check_input=True, random_state=None,
+                 engine='auto'):
         self.n_components = n_components
         self.n_iter = n_iter
         self.copy = copy
+        self.check_input = check_input
         self.random_state = random_state
         self.engine = engine
 
     def fit(self, X, y=None):
 
         # Check input
-        utils.check_array(X)
+        if self.check_input:
+            utils.check_array(X)
 
         # Check all values are positive
         if (X < 0).any().any():
@@ -71,7 +74,8 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         supplementary data.
         """
         utils.validation.check_is_fitted(self, 's_')
-        utils.check_array(X)
+        if self.check_input:
+            utils.check_array(X)
         return self.row_coordinates(X)
 
     @property

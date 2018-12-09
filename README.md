@@ -126,6 +126,7 @@ The `PCA` class implements scikit-learn's `fit`/`transform` API. It's parameters
 ...     rescale_with_mean=True,
 ...     rescale_with_std=True,
 ...     copy=True,
+...     check_input=True,
 ...     engine='auto',
 ...     random_state=42
 ... )
@@ -261,6 +262,7 @@ Unlike the `PCA` class, the `CA` only exposes scikit-learn's `fit` method.
 ...     n_components=2,
 ...     n_iter=3,
 ...     copy=True,
+...     check_input=True,
 ...     engine='auto',
 ...     random_state=42
 ... )
@@ -351,6 +353,7 @@ The `MCA` also implements the `fit` and `transform` methods.
 ...     n_components=2,
 ...     n_iter=3,
 ...     copy=True,
+...     check_input=True,
 ...     engine='auto',
 ...     random_state=42
 ... )
@@ -447,6 +450,7 @@ Now we can fit an `MFA`.
 ...     n_components=2,
 ...     n_iter=3,
 ...     copy=True,
+...     check_input=True,
 ...     engine='auto',
 ...     random_state=42
 ... )
@@ -584,6 +588,7 @@ Now we can fit an `FAMD`.
 ...     n_components=2,
 ...     n_iter=3,
 ...     copy=True,
+...     check_input=True,
 ...     engine='auto',
 ...     random_state=42
 ... )

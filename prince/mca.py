@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 from sklearn import utils
 
 from . import ca
@@ -14,7 +13,8 @@ class MCA(ca.CA):
 
     def fit(self, X, y=None):
 
-        utils.check_array(X, dtype=[str, np.number])
+        if self.check_input:
+            utils.check_array(X, dtype=[str, np.number])
 
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
@@ -42,7 +42,8 @@ class MCA(ca.CA):
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
         utils.validation.check_is_fitted(self, 's_')
-        utils.check_array(X, dtype=[str, np.number])
+        if self.check_input:
+            utils.check_array(X, dtype=[str, np.number])
         return self.row_coordinates(X)
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,

@@ -16,13 +16,14 @@ from . import plot
 class MFA(pca.PCA):
 
     def __init__(self, groups=None, normalize=True, n_components=2, n_iter=10,
-                 copy=True, random_state=None, engine='auto'):
+                 copy=True, check_input=True, random_state=None, engine='auto'):
         super().__init__(
             rescale_with_mean=False,
             rescale_with_std=False,
             n_components=n_components,
             n_iter=n_iter,
             copy=copy,
+            check_input=check_input,
             random_state=random_state,
             engine=engine
         )
@@ -35,7 +36,12 @@ class MFA(pca.PCA):
         if self.groups is None:
             raise ValueError('Groups have to be specified')
 
-        X = self._check_and_prepare_input(X)
+        # Check input
+        if self.check_input:
+            utils.check_array(X, dtype=[str, np.number])
+
+        # Prepare input
+        X = self._prepare_input(X)
 
         # Check group types are consistent
         self.all_nums_ = {}
@@ -74,10 +80,7 @@ class MFA(pca.PCA):
 
         return self
 
-    def _check_and_prepare_input(self, X):
-
-        # Check dtypes
-        utils.check_array(X, dtype=[str, np.number])
+    def _prepare_input(self, X):
 
         # Make sure X is a DataFrame for convenience
         if not isinstance(X, pd.DataFrame):
@@ -105,7 +108,7 @@ class MFA(pca.PCA):
             X_partial = X.loc[:, cols]
 
             if not self.all_nums_[name]:
-                oh = one_hot.OneHotEncoder().fit(X)
+                oh = one_hot.OneHotEncoder().fit(X_partial)
                 X_partial = oh.fit_transform(X_partial)
                 self.cat_one_hots_[name] = oh
 
@@ -126,19 +129,31 @@ class MFA(pca.PCA):
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
         utils.validation.check_is_fitted(self, 's_')
-        X = self._check_and_prepare_input(X)
+        # Check input
+        if self.check_input:
+            utils.check_array(X, dtype=[str, np.number])
+        # Prepare input
+        X = self._prepare_input(X)
         return self._row_coordinates_from_global(self._build_X_global(X))
 
     def row_contributions(self, X):
         """Returns the row contributions towards each principal component."""
         utils.validation.check_is_fitted(self, 's_')
-        X = self._check_and_prepare_input(X)
+        # Check input
+        if self.check_input:
+            utils.check_array(X, dtype=[str, np.number])
+        # Prepare input
+        X = self._prepare_input(X)
         return super().row_contributions(self._build_X_global(X))
 
     def partial_row_coordinates(self, X):
         """Returns the row coordinates for each group."""
         utils.validation.check_is_fitted(self, 's_')
-        X = self._check_and_prepare_input(X)
+        # Check input
+        if self.check_input:
+            X = utils.check_array(X, dtype=[str, np.number])
+        # Prepare input
+        X = self._prepare_input(X)
 
         # Define the projection matrix P
         P = len(X) ** 0.5 * self.U_ / self.s_

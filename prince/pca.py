@@ -21,23 +21,25 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         n_components (int): The number of principal components to compute.
         n_iter (int): The number of iterations used for computing the SVD.
         copy (bool): Whether to perform the computations inplace or not.
+        check_input (bool): Whether to check the consistency of the inputs or not.
     """
 
     def __init__(self, rescale_with_mean=True, rescale_with_std=True, n_components=2, n_iter=3,
-                 copy=True, random_state=None, engine='auto'):
-
+                 copy=True, check_input=True, random_state=None, engine='auto'):
         self.n_components = n_components
         self.n_iter = n_iter
         self.rescale_with_mean = rescale_with_mean
         self.rescale_with_std = rescale_with_std
         self.copy = copy
+        self.check_input = check_input
         self.random_state = random_state
         self.engine = engine
 
     def fit(self, X, y=None):
 
         # Check input
-        utils.check_array(X)
+        if self.check_input:
+            utils.check_array(X)
 
         # Convert pandas DataFrame to numpy array
         if isinstance(X, pd.DataFrame):
@@ -78,7 +80,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         supplementary data.
         """
         utils.validation.check_is_fitted(self, 's_')
-        utils.check_array(X)
+        if self.check_input:
+            utils.check_array(X)
         return self.row_coordinates(X)
 
     def row_coordinates(self, X):

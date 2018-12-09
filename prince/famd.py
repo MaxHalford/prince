@@ -7,13 +7,15 @@ from . import mfa
 
 class FAMD(mfa.MFA):
 
-    def __init__(self, n_components=2, n_iter=3, copy=True, random_state=None, engine='auto'):
+    def __init__(self, n_components=2, n_iter=3, copy=True, check_input=True, random_state=None,
+                 engine='auto'):
         super().__init__(
             groups=None,
             normalize=True,
             n_components=n_components,
             n_iter=n_iter,
             copy=copy,
+            check_input=check_input,
             random_state=random_state,
             engine=engine
         )
