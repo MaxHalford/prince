@@ -29,7 +29,7 @@ before_script:
   - sleep 3
 
 script:
-  - pytest --doctest-glob=README.md --cov=prince --verbose
+  - pytest
 
 after_success:
   - coveralls

@@ -42,7 +42,7 @@ def build_ellipse(X, Y):
     x_mean = np.mean(X)
     y_mean = np.mean(Y)
 
-    cov_matrix = np.cov(X, Y)
+    cov_matrix = np.cov(np.vstack((X, Y)))
     U, s, V = linalg.svd(cov_matrix, full_matrices=False)
 
     chi_95 = np.sqrt(4.61)  # 90% quantile of the chi-square distribution
