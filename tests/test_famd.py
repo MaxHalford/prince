@@ -22,7 +22,7 @@ class TestFAMD(unittest.TestCase):
             columns=['E1 fruity', 'E1 woody', 'E1 coffee',
                      'E2 red fruit', 'E2 roasted', 'E2 vanillin', 'E2 woody',
                      'E3 fruity', 'E3 butter', 'E3 woody'],
-            index=['Wine {}'.format(i+1) for i in range(6)]
+            index=['Wine {}'.format(i + 1) for i in range(6)]
         )
 
     def test_fit_pandas_dataframe(self):

@@ -8,7 +8,6 @@ from sklearn import preprocessing
 from sklearn import utils
 
 from . import plot
-from . import util
 from . import svd
 
 
@@ -43,7 +42,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         # Convert pandas DataFrame to numpy array
         if isinstance(X, pd.DataFrame):
-            X = X.values
+            X = X.to_numpy(dtype=np.float64)
 
         # Copy data
         if self.copy:

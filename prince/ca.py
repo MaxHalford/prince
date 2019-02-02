@@ -35,7 +35,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         _, row_names, _, col_names = util.make_labels_and_names(X)
 
         if isinstance(X, pd.DataFrame):
-            X = X.values
+            X = X.to_numpy()
 
         if self.copy:
             X = np.copy(X)
@@ -48,8 +48,8 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         self.col_masses_ = pd.Series(X.sum(axis=0), index=col_names)
 
         # Compute standardised residuals
-        r = self.row_masses_.values
-        c = self.col_masses_.values
+        r = self.row_masses_.to_numpy()
+        c = self.col_masses_.to_numpy()
         S = sparse.diags(r ** -0.5) @ (X - np.outer(r, c)) @ sparse.diags(c ** -0.5)
 
         # Compute SVD on the standardised residuals
@@ -99,7 +99,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         if isinstance(X, pd.SparseDataFrame):
             X = X.to_coo()
         elif isinstance(X, pd.DataFrame):
-            X = X.values
+            X = X.to_numpy()
 
         if self.copy:
             X = X.copy()
@@ -111,7 +111,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = X / X.sum(axis=1)
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.col_masses_.values ** -0.5) @ self.V_.T,
+            data=X @ sparse.diags(self.col_masses_.to_numpy() ** -0.5) @ self.V_.T,
             index=row_names
         )
 
@@ -124,7 +124,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         if isinstance(X, pd.SparseDataFrame):
             X = X.to_coo()
         elif isinstance(X, pd.DataFrame):
-            X = X.values
+            X = X.to_numpy()
 
         if self.copy:
             X = X.copy()
@@ -136,7 +136,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = X.T / X.T.sum(axis=1)
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.row_masses_.values ** -0.5) @ self.U_,
+            data=X @ sparse.diags(self.row_masses_.to_numpy() ** -0.5) @ self.U_,
             index=col_names
         )
 

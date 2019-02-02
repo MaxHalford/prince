@@ -24,10 +24,10 @@ VERSION = None
 # What packages are required for this module to be executed?
 REQUIRED = [
     'matplotlib>=2.2.2',
-    'numpy>=1.14.0',
-    'pandas>=0.23.0',
-    'scipy>=1.0.1',
-    'scikit-learn>=0.20.0'
+    'numpy>=1.15.4',
+    'pandas>=0.24.0',
+    'scipy>=1.1.0',
+    'scikit-learn>=0.20.1'
 ]
 
 # The rest you shouldn't have to touch too much :)
