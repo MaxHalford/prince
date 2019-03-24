@@ -75,11 +75,8 @@ class MFA(pca.PCA):
                 )
             self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
 
-        self.cat_one_hots_ = {}
-
-        print(self._build_X_global(X).shape)
-
         # Fit the global PCA
+        self.cat_one_hots_ = {}
         super().fit(self._build_X_global(X))
 
         return self
