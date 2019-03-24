@@ -75,6 +75,10 @@ class MFA(pca.PCA):
                 )
             self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
 
+        self.cat_one_hots_ = {}
+
+        print(self._build_X_global(X).shape)
+
         # Fit the global PCA
         super().fit(self._build_X_global(X))
 
@@ -102,14 +106,16 @@ class MFA(pca.PCA):
 
     def _build_X_global(self, X):
         X_partials = []
-        self.cat_one_hots_ = {}
 
         for name, cols in sorted(self.groups.items()):
             X_partial = X.loc[:, cols]
 
             if not self.all_nums_[name]:
-                oh = one_hot.OneHotEncoder().fit(X_partial)
-                X_partial = oh.fit_transform(X_partial)
+                if name in self.cat_one_hots_:
+                    oh = self.cat_one_hots_[name]
+                else:
+                    oh = one_hot.OneHotEncoder().fit(X_partial)
+                X_partial = oh.transform(X_partial)
                 self.cat_one_hots_[name] = oh
 
             X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
@@ -129,29 +135,37 @@ class MFA(pca.PCA):
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
         utils.validation.check_is_fitted(self, 's_')
+
         # Check input
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
+
         # Prepare input
         X = self._prepare_input(X)
+
         return self._row_coordinates_from_global(self._build_X_global(X))
 
     def row_contributions(self, X):
         """Returns the row contributions towards each principal component."""
         utils.validation.check_is_fitted(self, 's_')
+
         # Check input
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
+
         # Prepare input
         X = self._prepare_input(X)
+
         return super().row_contributions(self._build_X_global(X))
 
     def partial_row_coordinates(self, X):
         """Returns the row coordinates for each group."""
         utils.validation.check_is_fitted(self, 's_')
+
         # Check input
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
+
         # Prepare input
         X = self._prepare_input(X)
 
