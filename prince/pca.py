@@ -12,15 +12,16 @@ from . import svd
 
 
 class PCA(base.BaseEstimator, base.TransformerMixin):
+    """Principal Component Analysis (PCA).
 
-    """
-    Args:
+    Parameters:
         rescale_with_mean (bool): Whether to substract each column's mean or not.
         rescale_with_std (bool): Whether to divide each column by it's standard deviation or not.
         n_components (int): The number of principal components to compute.
         n_iter (int): The number of iterations used for computing the SVD.
         copy (bool): Whether to perform the computations inplace or not.
         check_input (bool): Whether to check the consistency of the inputs or not.
+
     """
 
     def __init__(self, rescale_with_mean=True, rescale_with_std=True, n_components=2, n_iter=3,
@@ -77,16 +78,35 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         Same as calling `row_coordinates`. In most cases you should be using the same
         dataset as you did when calling the `fit` method. You might however also want to included
         supplementary data.
+
         """
         utils.validation.check_is_fitted(self, 's_')
         if self.check_input:
             utils.check_array(X)
         return self.row_coordinates(X)
 
+    def inverse_transform(self, X):
+        """Transforms row projections back to their original space.
+
+        In other words, return a dataset whose transform would be X.
+
+        """
+        utils.validation.check_is_fitted(self, 's_')
+        X_inv = np.dot(X, self.V_)
+
+        if hasattr(self, 'scaler_'):
+            X_inv = self.scaler_.inverse_transform(X_inv)
+
+        # Extract index
+        index = X.index if isinstance(X, pd.DataFrame) else None
+
+        return pd.DataFrame(data=X_inv, index=index)
+
     def row_coordinates(self, X):
         """Returns the row principal coordinates.
 
         The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
+
         """
         utils.validation.check_is_fitted(self, 's_')
 
@@ -108,6 +128,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         The row standard coordinates are obtained by dividing each row principal coordinate by it's
         associated eigenvalue.
+
         """
         utils.validation.check_is_fitted(self, 's_')
         return self.row_coordinates(X).div(self.eigenvalues_, axis='columns')
@@ -118,6 +139,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         Each row contribution towards each principal component is equivalent to the amount of
         inertia it contributes. This is calculated by dividing the squared row coordinates by the
         eigenvalue associated to each principal component.
+
         """
         utils.validation.check_is_fitted(self, 's_')
         return np.square(self.row_coordinates(X)).div(self.eigenvalues_, axis='columns')
@@ -130,6 +152,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         squaring each row projection coordinate and dividing each squared coordinate by the sum of
         the squared coordinates, which results in a ratio comprised between 0 and 1 representing the
         squared cosine.
+
         """
         utils.validation.check_is_fitted(self, 's_')
         squared_coordinates = np.square(self.row_coordinates(X))

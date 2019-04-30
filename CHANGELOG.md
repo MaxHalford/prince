@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+### Added
+
+- `PCA` now has a `inverse_transform` function
+
 ### Changed
 
 - `MFA` and `FAMD` should now be able to `fit` and `transform` on categorical variables with different number of distinct values

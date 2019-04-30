@@ -87,6 +87,12 @@ class TestPCA(unittest.TestCase):
             pca_sklearn.explained_variance_ratio_
         )
 
+        # Compare inverse transforms
+        np.testing.assert_array_almost_equal(
+            pca_prince.inverse_transform(pca_prince.transform(self.X)),
+            pca_sklearn.inverse_transform(pca_sklearn.transform(self.X)),
+        )
+
     def test_explained_inertia_(self):
         pca = prince.PCA(n_components=4)
         pca.fit(self.X)

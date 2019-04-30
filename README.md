@@ -172,12 +172,12 @@ Each column stands for a principal component whilst each row stands a row in the
 ...     ellipse_fill=True,
 ...     show_points=True
 ... )
->>> ax.get_figure().savefig('images/pca_row_coordinates.png')
+>>> ax.get_figure().savefig('images/pca_row_coordinates.svg')
 
 ```
 
 <div align="center">
-  <img src="images/pca_row_coordinates.png" />
+  <img src="images/pca_row_coordinates.svg" />
 </div>
 
 Each principal component explains part of the underlying of the distribution. You can see by how much by using the accessing the `explained_inertia_` property:
@@ -224,6 +224,19 @@ You may also want to know how much each observation contributes to each principa
 2  0.012768  0.000853
 3  0.012077  0.002603
 4  0.013046  0.003052
+
+```
+
+You can also transform row projections back into their original space by using the `inverse_transform` method.
+
+```python
+>>> pca.inverse_transform(pca.transform(X)).head()
+          0         1         2         3
+0  5.018949  3.514854  1.466013  0.251922
+1  4.738463  3.030433  1.603913  0.272074
+2  4.720130  3.196830  1.328961  0.167414
+3  4.668436  3.086770  1.384170  0.182247
+4  5.017093  3.596402  1.345411  0.206706
 
 ```
 
@@ -304,12 +317,12 @@ You can plot both sets of principal coordinates with the `plot_coordinates` meth
 ...     show_row_labels=True,
 ...     show_col_labels=True
 ... )
->>> ax.get_figure().savefig('images/ca_coordinates.png')
+>>> ax.get_figure().savefig('images/ca_coordinates.svg')
 
 ```
 
 <div align="center">
-  <img src="images/ca_coordinates.png" />
+  <img src="images/ca_coordinates.svg" />
 </div>
 
 Like for the `PCA` you can access the inertia contribution of each principal component as well as the eigenvalues and the total inertia.
@@ -376,12 +389,12 @@ Like the `CA` class, the `MCA` class also has `plot_coordinates` method.
 ...     show_column_labels=False,
 ...     legend_n_cols=1
 ... )
->>> ax.get_figure().savefig('images/mca_coordinates.png')
+>>> ax.get_figure().savefig('images/mca_coordinates.svg')
 
 ```
 
 <div align="center">
-  <img src="images/mca_coordinates.png" />
+  <img src="images/mca_coordinates.svg" />
 </div>
 
 The eigenvalues and inertia values are also accessible.
@@ -487,12 +500,12 @@ Just like for the `PCA` you can plot the row coordinates with the `plot_row_coor
 ...     ellipse_fill=True,
 ...     show_points=True
 ... )
->>> ax.get_figure().savefig('images/mfa_row_coordinates.png')
+>>> ax.get_figure().savefig('images/mfa_row_coordinates.svg')
 
 ```
 
 <div align="center">
-  <img src="images/mfa_row_coordinates.png" />
+  <img src="images/mfa_row_coordinates.svg" />
 </div>
 
 You can also obtain the row coordinates inside each group. The `partial_row_coordinates` method returns a `pandas.DataFrame` where the set of columns is a `pandas.MultiIndex`. The first level of indexing corresponds to each specified group whilst the nested level indicates the coordinates inside each group.
@@ -521,12 +534,12 @@ Likewhise you can visualize the partial row coordinates with the `plot_partial_r
 ...     y_component=1,
 ...     color_labels=['Oak type {}'.format(t) for t in X['Oak type']]
 ... )
->>> ax.get_figure().savefig('images/mfa_partial_row_coordinates.png')
+>>> ax.get_figure().savefig('images/mfa_partial_row_coordinates.svg')
 
 ```
 
 <div align="center">
-  <img src="images/mfa_partial_row_coordinates.png" />
+  <img src="images/mfa_partial_row_coordinates.svg" />
 </div>
 
 As usual you have access to inertia information.
@@ -625,12 +638,12 @@ Just like for the `MFA` you can plot the row coordinates with the `plot_row_coor
 ...     ellipse_fill=True,
 ...     show_points=True
 ... )
->>> ax.get_figure().savefig('images/famd_row_coordinates.png')
+>>> ax.get_figure().savefig('images/famd_row_coordinates.svg')
 
 ```
 
 <div align="center">
-  <img src="images/famd_row_coordinates.png" />
+  <img src="images/famd_row_coordinates.svg" />
 </div>
 
 
