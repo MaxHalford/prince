@@ -236,8 +236,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         # Add labels
         if labels is not None:
-            for i, label in enumerate(labels):
-                ax.annotate(label, (x[i], y[i]))
+            for xi, yi, label in zip(x, y, labels):
+                ax.annotate(label, (xi, yi))
 
         # Legend
         ax.legend()

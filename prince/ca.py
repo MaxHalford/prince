@@ -177,15 +177,15 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         if show_row_labels:
             x = row_coords[x_component]
             y = row_coords[y_component]
-            for i, label in enumerate(row_names):
-                ax.annotate(label, (x[i], y[i]))
+            for xi, yi, label in zip(x, y, row_names):
+                ax.annotate(label, (xi, yi))
 
         # Add column labels
         if show_col_labels:
             x = col_coords[x_component]
             y = col_coords[y_component]
-            for i, label in enumerate(col_names):
-                ax.annotate(label, (x[i], y[i]))
+            for xi, yi, label in zip(x, y, col_names):
+                ax.annotate(label, (xi, yi))
 
         # Legend
         ax.legend()
