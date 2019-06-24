@@ -57,3 +57,14 @@ class TestMFA(unittest.TestCase):
         }
         mfa = prince.MFA(groups=groups)
         self.assertTrue(isinstance(mfa.fit(self.X.values).transform(self.X.values), pd.DataFrame))
+
+    def test_no_groups(self):
+        mfa = prince.MFA()
+        with self.assertRaises(ValueError):
+            mfa.fit(self.X)
+
+    def test_mixed_groups(self):
+        mfa = prince.MFA(groups=self.groups)
+        self.X['E1 fruity'] = self.X['E1 fruity'].astype('category')
+        with self.assertRaises(ValueError):
+            mfa.fit(self.X)

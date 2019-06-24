@@ -37,3 +37,9 @@ class TestCA(unittest.TestCase):
     def test_transform_pandas_dataframe(self):
         ca = prince.CA(n_components=2)
         self.assertTrue(isinstance(ca.fit(self.X).transform(self.X), pd.DataFrame))
+
+    def test_negative_input(self):
+        ca = prince.CA()
+        self.X.iloc[0, 0] = -1
+        with self.assertRaises(ValueError):
+            ca.fit(self.X)

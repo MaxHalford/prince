@@ -104,5 +104,26 @@ class TestPCA(unittest.TestCase):
         ax = pca.plot_row_coordinates(self.X)
         self.assertTrue(isinstance(ax, mpl.axes.Axes))
 
+    def test_plot_row_coordinates_numpy(self):
+        pca = prince.PCA(n_components=4)
+        pca.fit(self.X.to_numpy())
+        ax = pca.plot_row_coordinates(self.X)
+        self.assertTrue(isinstance(ax, mpl.axes.Axes))
+
     def test_check_estimator(self):
         estimator_checks.check_estimator(prince.PCA)
+
+    def test_column_correlations(self):
+        pca = prince.PCA()
+        pca.fit(self.X.to_numpy())
+        self.assertTrue(isinstance(pca.row_standard_coordinates(self.X), pd.DataFrame))
+
+    def test_row_standard_coordinates(self):
+        pca = prince.PCA()
+        pca.fit(self.X)
+        self.assertTrue(isinstance(pca.row_standard_coordinates(self.X), pd.DataFrame))
+
+    def test_row_cosine_similarities(self):
+        pca = prince.PCA()
+        pca.fit(self.X)
+        self.assertTrue(isinstance(pca.row_cosine_similarities(self.X), pd.DataFrame))

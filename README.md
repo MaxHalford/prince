@@ -567,6 +567,38 @@ Expert #3 eigenvalues: [2.480488..., 0.441195...]
 
 ```
 
+The `row_contributions` method will provide you with the inertia contribution of each row with respect to each component.
+
+```python
+>>> mfa.row_contributions(X)
+              0        1
+Wine 1 1.664406 0.724851
+Wine 2 0.109450 0.109203
+Wine 3 1.894865 1.931661
+Wine 4 1.184657 2.295325
+Wine 5 0.695152 0.008470
+Wine 6 0.451471 0.930490
+
+```
+
+The `column_correlations` method will return the correlation between the original variables and the components.
+
+```python
+>>> mfa.column_correlations(X)
+                     0         1
+E1 coffee    -0.918449 -0.043444
+E1 fruity     0.968449  0.192294
+E1 woody     -0.984442 -0.120198
+E2 red fruit  0.887263  0.357632
+E2 roasted   -0.955795  0.026039
+E2 vanillin  -0.950629 -0.177883
+E2 woody     -0.974649  0.127239
+E3 butter    -0.945767  0.221441
+E3 fruity     0.594649 -0.820777
+E3 woody     -0.992337  0.029747
+
+```
+
 
 ### Factor analysis of mixed data (FAMD)
 
