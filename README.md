@@ -19,7 +19,7 @@
   </a>
   <!-- Test coverage -->
   <a href="https://coveralls.io/github/MaxHalford/prince?branch=master">
-    <img src="https://img.shields.io/coveralls/github/MaxHalford/prince.svg?branch=master&style=for-the-badge" alt="Coverage Status"/>
+    <img src="https://img.shields.io/codecov/c/gh/MaxHalford/prince.svg?style=for-the-badge" alt="Coverage Status"/>
   </a>
   <!-- License -->
   <a href="https://opensource.org/licenses/MIT">

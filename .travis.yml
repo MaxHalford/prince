@@ -22,6 +22,7 @@ before_install:
 
 install:
   - pip install -r requirements.dev.txt
+  - pip install codecov
 
 before_script:
   - "export DISPLAY=:99.0"
@@ -29,7 +30,7 @@ before_script:
   - sleep 3
 
 script:
-  - pytest
+  - pytest --cov prince
 
 after_success:
-  - coveralls
+  - codecov
