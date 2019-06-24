@@ -16,9 +16,6 @@ class OneHotEncoder(preprocessing.OneHotEncoder):
 
     def fit(self, X, y=None):
 
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError('X must be a pandas.DataFrame')
-
         self = super().fit(X)
         self.column_names_ = list(itertools.chain(*[
             [

@@ -29,6 +29,11 @@ class TestPCA(unittest.TestCase):
         pca = prince.PCA(n_components=2, engine='fbpca')
         self.assertTrue(isinstance(pca.fit(self.X.values), prince.PCA))
 
+    def test_fit_bad_engine(self):
+        pca = prince.PCA(n_components=2, engine='caca')
+        with self.assertRaises(ValueError):
+            pca.fit(self.X)
+
     def test_transform_numpy_array(self):
         pca = prince.PCA(n_components=2)
         self.assertTrue(isinstance(pca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
@@ -107,16 +112,16 @@ class TestPCA(unittest.TestCase):
     def test_plot_row_coordinates_numpy(self):
         pca = prince.PCA(n_components=4)
         pca.fit(self.X.to_numpy())
-        ax = pca.plot_row_coordinates(self.X)
+        ax = pca.plot_row_coordinates(self.X.to_numpy())
         self.assertTrue(isinstance(ax, mpl.axes.Axes))
 
     def test_check_estimator(self):
         estimator_checks.check_estimator(prince.PCA)
 
-    def test_column_correlations(self):
+    def test_column_correlations_numpy(self):
         pca = prince.PCA()
         pca.fit(self.X.to_numpy())
-        self.assertTrue(isinstance(pca.row_standard_coordinates(self.X), pd.DataFrame))
+        self.assertTrue(isinstance(pca.row_standard_coordinates(self.X.to_numpy()), pd.DataFrame))
 
     def test_row_standard_coordinates(self):
         pca = prince.PCA()

@@ -3,6 +3,7 @@ https://www.utdallas.edu/~herve/Abdi-MCA2007-pretty.pdf
 """
 import unittest
 
+import matplotlib as mpl
 import pandas as pd
 
 import prince
@@ -26,18 +27,24 @@ class TestMCA(unittest.TestCase):
             index=[1, 2, 3, 4, 5, 6]
         )
 
-    def test_fit_pandas_dataframe(self):
+    def test_pandas_dataframe(self):
         mca = prince.MCA(n_components=2)
         self.assertTrue(isinstance(mca.fit(self.X), prince.MCA))
+        self.assertTrue(isinstance(mca.transform(self.X), pd.DataFrame))
 
-    def test_transform_pandas_dataframe(self):
+    def test_numpy_array(self):
         mca = prince.MCA(n_components=2)
-        self.assertTrue(isinstance(mca.fit(self.X).transform(self.X), pd.DataFrame))
+        self.assertTrue(isinstance(mca.fit(self.X.to_numpy()), prince.MCA))
+        self.assertTrue(isinstance(mca.transform(self.X.to_numpy()), pd.DataFrame))
 
-    def test_fit_numpy_array(self):
+    def test_plot_show_row_labels(self):
         mca = prince.MCA(n_components=2)
-        self.assertTrue(isinstance(mca.fit(self.X.values), prince.MCA))
+        mca.fit(self.X)
+        ax = mca.plot_coordinates(self.X, show_row_labels=True)
+        self.assertTrue(isinstance(ax, mpl.axes.Axes))
 
-    def test_transform_numpy_array(self):
+    def test_plot_show_column_labels(self):
         mca = prince.MCA(n_components=2)
-        self.assertTrue(isinstance(mca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
+        mca.fit(self.X)
+        ax = mca.plot_coordinates(self.X, show_column_labels=True)
+        self.assertTrue(isinstance(ax, mpl.axes.Axes))
