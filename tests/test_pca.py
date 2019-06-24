@@ -121,7 +121,7 @@ class TestPCA(unittest.TestCase):
     def test_column_correlations_numpy(self):
         pca = prince.PCA()
         pca.fit(self.X.to_numpy())
-        self.assertTrue(isinstance(pca.row_standard_coordinates(self.X.to_numpy()), pd.DataFrame))
+        self.assertTrue(isinstance(pca.column_correlations(self.X.to_numpy()), pd.DataFrame))
 
     def test_row_standard_coordinates(self):
         pca = prince.PCA()

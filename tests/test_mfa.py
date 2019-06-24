@@ -3,6 +3,7 @@ https://www.utdallas.edu/~herve/Abdi-MFA2007-pretty.pdf
 """
 import unittest
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 
@@ -41,6 +42,14 @@ class TestMFA(unittest.TestCase):
     def test_transform_pandas_dataframe(self):
         mfa = prince.MFA(groups=self.groups)
         self.assertTrue(isinstance(mfa.fit(self.X).transform(self.X), pd.DataFrame))
+
+    def test_plot_partial_row_coordinates(self):
+        mfa = prince.MFA(groups=self.groups)
+        for col in ['E1 fruity', 'E1 woody', 'E1 coffee']:
+            self.X[col] = self.X[col].astype(str)
+        mfa.fit(self.X)
+        ax = mfa.plot_partial_row_coordinates(self.X)
+        self.assertTrue(isinstance(ax, mpl.axes.Axes))
 
     def test_fit_numpy_array(self):
         groups = {
