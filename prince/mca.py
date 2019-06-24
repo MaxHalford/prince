@@ -47,12 +47,12 @@ class MCA(ca.CA):
         return self.row_coordinates(X)
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
-                                   show_row_points=True, row_points_size=10, show_row_labels=False,
-                                   show_column_points=True, column_points_size=30,
-                                   show_column_labels=False, legend_n_cols=1):
+                         show_row_points=True, row_points_size=10, show_row_labels=False,
+                         show_column_points=True, column_points_size=30, show_column_labels=False,
+                         legend_n_cols=1):
         """Plot row and column principal coordinates.
 
-        Args:
+        Parameters:
             ax (matplotlib.Axis): A fresh one will be created and returned if not provided.
             figsize ((float, float)): The desired figure size if `ax` is not provided.
             x_component (int): Number of the component used for the x-axis.

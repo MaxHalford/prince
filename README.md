@@ -7,23 +7,23 @@
 <div align="center">
   <!-- Python version -->
   <a href="https://pypi.python.org/pypi/prince">
-    <img src="https://img.shields.io/badge/python-3.x-blue.svg?style=flat-square" alt="PyPI version"/>
+    <img src="https://img.shields.io/badge/python-3.x-blue.svg?style=for-the-badge" alt="PyPI version"/>
   </a>
   <!-- PyPi -->
   <a href="https://pypi.org/project/prince/">
-    <img src="https://badge.fury.io/py/prince.svg" alt="PyPI"/>
+    <img src="https://img.shields.io/pypi/v/prince.svg?style=for-the-badge" alt="pypi" />
   </a>
   <!-- Build status -->
-  <a href="https://travis-ci.org/MaxHalford/Prince?branch=master">
-    <img src="https://img.shields.io/travis/MaxHalford/prince/master.svg?style=flat-square" alt="Build Status"/>
+  <a href="https://travis-ci.org/MaxHalford/prince?branch=master">
+    <img src="https://img.shields.io/travis/MaxHalford/prince/master.svg?style=for-the-badge" alt="Build Status" />
   </a>
   <!-- Test coverage -->
   <a href="https://coveralls.io/github/MaxHalford/prince?branch=master">
-    <img src="https://coveralls.io/repos/github/MaxHalford/prince/badge.svg?branch=master&style=flat-square" alt="Coverage Status"/>
+    <img src="https://img.shields.io/coveralls/github/MaxHalford/prince.svg?branch=master&style=for-the-badge" alt="Coverage Status"/>
   </a>
   <!-- License -->
   <a href="https://opensource.org/licenses/MIT">
-    <img src="http://img.shields.io/:license-mit-ff69b4.svg?style=flat-square" alt="license"/>
+    <img src="http://img.shields.io/:license-mit-ff69b4.svg?style=for-the-badge" alt="license"/>
   </a>
 </div>
 

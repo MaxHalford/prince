@@ -13,3 +13,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - `MFA` and `FAMD` should now be able to `fit` and `transform` on categorical variables with different number of distinct values
+- Fixed a bug where `column_correlations` would raise an `AttributeError` in a `FAMD`

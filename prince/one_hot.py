@@ -1,6 +1,6 @@
-"""This module contains a custom one-hot encoder. It inherits from sklearn's
-OneHotEncoder and returns a pandas.SparseDataFrame with appropriate column
-names and index values.
+"""
+This module contains a custom one-hot encoder. It inherits from sklearn's OneHotEncoder and returns
+a pandas.SparseDataFrame with appropriate column names and index values.
 """
 import itertools
 

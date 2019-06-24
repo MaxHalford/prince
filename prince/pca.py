@@ -121,7 +121,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         if hasattr(self, 'scaler_'):
             X = self.scaler_.transform(X)
 
-        return pd.DataFrame(data=X.dot(self.V_.T), index=index)
+        return pd.DataFrame(data=X.dot(self.V_.T), index=index, dtype=np.float64)
 
     def row_standard_coordinates(self, X):
         """Returns the row standard coordinates.

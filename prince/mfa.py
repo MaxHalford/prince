@@ -196,6 +196,9 @@ class MFA(pca.PCA):
         X_global = self._build_X_global(X)
         row_pc = self._row_coordinates_from_global(X_global)
 
+        print(row_pc)
+        print(row_pc.dtypes)
+
         return pd.DataFrame({
             component: {
                 feature: row_pc[component].corr(X_global[feature].to_dense())
