@@ -96,10 +96,11 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         _, row_names, _, _ = util.make_labels_and_names(X)
 
-        if isinstance(X, pd.SparseDataFrame):
-            X = X.to_coo().astype(float)
-        elif isinstance(X, pd.DataFrame):
-            X = X.to_numpy()
+        if isinstance(X, pd.DataFrame):
+            try:
+                X = X.sparse.to_coo().astype(float)
+            except AttributeError:
+                X = X.to_numpy()
 
         if self.copy:
             X = X.copy()

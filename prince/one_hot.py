@@ -1,6 +1,6 @@
 """
 This module contains a custom one-hot encoder. It inherits from sklearn's OneHotEncoder and returns
-a pandas.SparseDataFrame with appropriate column names and index values.
+a pandas.DataFrame with sparse values.
 """
 import itertools
 
@@ -28,9 +28,10 @@ class OneHotEncoder(preprocessing.OneHotEncoder):
         return self
 
     def transform(self, X):
-        return pd.SparseDataFrame(
-            data=super().transform(X),
-            columns=self.column_names_,
-            index=X.index if isinstance(X, pd.DataFrame) else None,
-            default_fill_value=0
-        )
+
+        oh = pd.DataFrame.sparse.from_spmatrix(super().transform(X))
+        oh.columns = self.column_names_
+        if isinstance(X, pd.DataFrame):
+            oh.index = X.index
+
+        return oh

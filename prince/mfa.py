@@ -198,11 +198,11 @@ class MFA(pca.PCA):
 
         return pd.DataFrame({
             component: {
-                feature: row_pc[component].corr(X_global[feature].to_dense())
+                feature: row_pc[component].corr(X_global[feature])
                 for feature in X_global.columns
             }
             for component in row_pc.columns
-        })
+        }).sort_index()
 
     def plot_partial_row_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                      color_labels=None, **kwargs):

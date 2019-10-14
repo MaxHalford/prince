@@ -175,7 +175,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
                 for feature in X.columns
             }
             for component in row_pc.columns
-        })
+        }).sort_index()
 
     @property
     def eigenvalues_(self):
