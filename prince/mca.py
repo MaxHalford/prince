@@ -47,7 +47,8 @@ class MCA(ca.CA):
         return self.row_coordinates(X)
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
-                         show_row_points=True, row_points_size=10, show_row_labels=False,
+                         show_row_points=True, row_points_size=10, 
+                         row_points_alpha = 0.6, show_row_labels=False,
                          show_column_points=True, column_points_size=30, show_column_labels=False,
                          legend_n_cols=1):
         """Plot row and column principal coordinates.
@@ -59,6 +60,7 @@ class MCA(ca.CA):
             y_component (int): Number of the component used for the y-axis.
             show_row_points (bool): Whether to show row principal components or not.
             row_points_size (float): Row principal components point size.
+            row_points_alpha (float): Alpha for the row principal component.
             show_row_labels (bool): Whether to show row labels or not.
             show_column_points (bool): Whether to show column principal components or not.
             column_points_size (float): Column principal components point size.
@@ -89,7 +91,7 @@ class MCA(ca.CA):
                     s=row_points_size,
                     label=None,
                     color=plot.GRAY['dark'],
-                    alpha=0.6
+                    alpha=row_points_alpha
                 )
 
             if show_row_labels:
