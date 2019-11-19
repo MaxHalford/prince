@@ -48,7 +48,7 @@ class MCA(ca.CA):
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                          show_row_points=True, row_points_size=10, 
-                         row_points_alpha = 0.6, show_row_labels=False,
+                         row_points_alpha=0.6, show_row_labels=False,
                          show_column_points=True, column_points_size=30, show_column_labels=False,
                          legend_n_cols=1):
         """Plot row and column principal coordinates.
