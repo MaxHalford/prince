@@ -73,7 +73,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         dataset as you did when calling the `fit` method. You might however also want to included
         supplementary data.
         """
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         if self.check_input:
             utils.check_array(X)
         return self.row_coordinates(X)
@@ -81,18 +81,18 @@ class CA(base.BaseEstimator, base.TransformerMixin):
     @property
     def eigenvalues_(self):
         """The eigenvalues associated with each principal component."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         return np.square(self.s_).tolist()
 
     @property
     def explained_inertia_(self):
         """The percentage of explained inertia per principal component."""
-        utils.validation.check_is_fitted(self, 'total_inertia_')
+        utils.validation.check_is_fitted(self)
         return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
     def row_coordinates(self, X):
         """The row principal coordinates."""
-        utils.validation.check_is_fitted(self, 'V_')
+        utils.validation.check_is_fitted(self)
 
         _, row_names, _, _ = util.make_labels_and_names(X)
 
@@ -118,7 +118,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
     def column_coordinates(self, X):
         """The column principal coordinates."""
-        utils.validation.check_is_fitted(self, 'V_')
+        utils.validation.check_is_fitted(self)
 
         _, _, _, col_names = util.make_labels_and_names(X)
 
@@ -145,7 +145,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
                                    show_row_labels=True, show_col_labels=True, **kwargs):
         """Plot the principal coordinates."""
 
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)

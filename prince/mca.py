@@ -41,7 +41,7 @@ class MCA(ca.CA):
 
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
         return self.row_coordinates(X)
@@ -69,7 +69,7 @@ class MCA(ca.CA):
             matplotlib.Axis
         """
 
-        utils.validation.check_is_fitted(self, 'total_inertia_')
+        utils.validation.check_is_fitted(self)
 
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)

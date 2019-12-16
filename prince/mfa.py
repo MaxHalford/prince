@@ -131,7 +131,7 @@ class MFA(pca.PCA):
 
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         # Check input
         if self.check_input:
@@ -144,7 +144,7 @@ class MFA(pca.PCA):
 
     def row_contributions(self, X):
         """Returns the row contributions towards each principal component."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         # Check input
         if self.check_input:
@@ -157,7 +157,7 @@ class MFA(pca.PCA):
 
     def partial_row_coordinates(self, X):
         """Returns the row coordinates for each group."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         # Check input
         if self.check_input:
@@ -191,7 +191,7 @@ class MFA(pca.PCA):
 
     def column_correlations(self, X):
         """Returns the column correlations."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         X_global = self._build_X_global(X)
         row_pc = self._row_coordinates_from_global(X_global)
@@ -207,7 +207,7 @@ class MFA(pca.PCA):
     def plot_partial_row_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                      color_labels=None, **kwargs):
         """Plot the row principal coordinates."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)

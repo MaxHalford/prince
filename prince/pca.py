@@ -80,7 +80,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         supplementary data.
 
         """
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         if self.check_input:
             utils.check_array(X)
         return self.row_coordinates(X)
@@ -91,7 +91,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         In other words, return a dataset whose transform would be X.
 
         """
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         X_inv = np.dot(X, self.V_)
 
         if hasattr(self, 'scaler_'):
@@ -108,7 +108,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
 
         """
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         # Extract index
         index = X.index if isinstance(X, pd.DataFrame) else None
@@ -130,7 +130,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         associated eigenvalue.
 
         """
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         return self.row_coordinates(X).div(self.eigenvalues_, axis='columns')
 
     def row_contributions(self, X):
@@ -141,7 +141,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         eigenvalue associated to each principal component.
 
         """
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         return np.square(self.row_coordinates(X)).div(self.eigenvalues_, axis='columns')
 
     def row_cosine_similarities(self, X):
@@ -154,14 +154,14 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         squared cosine.
 
         """
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         squared_coordinates = np.square(self.row_coordinates(X))
         total_squares = squared_coordinates.sum(axis='columns')
         return squared_coordinates.div(total_squares, axis='rows')
 
     def column_correlations(self, X):
         """Returns the column correlations with each principal component."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         # Convert numpy array to pandas DataFrame
         if isinstance(X, np.ndarray):
@@ -180,20 +180,20 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     @property
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         return np.square(self.s_).tolist()
 
     @property
     def explained_inertia_(self):
         """Returns the percentage of explained inertia per principal component."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
         return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
     def plot_row_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                              labels=None, color_labels=None, ellipse_outline=False,
                              ellipse_fill=True, show_points=True, **kwargs):
         """Plot the row principal coordinates."""
-        utils.validation.check_is_fitted(self, 's_')
+        utils.validation.check_is_fitted(self)
 
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)
