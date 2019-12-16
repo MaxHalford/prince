@@ -116,7 +116,7 @@ class TestPCA(unittest.TestCase):
         self.assertTrue(isinstance(ax, mpl.axes.Axes))
 
     def test_check_estimator(self):
-        estimator_checks.check_estimator(prince.PCA)
+        estimator_checks.check_estimator(prince.PCA(as_array=True))
 
     def test_column_correlations_numpy(self):
         pca = prince.PCA()

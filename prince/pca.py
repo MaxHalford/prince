@@ -21,11 +21,13 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         n_iter (int): The number of iterations used for computing the SVD.
         copy (bool): Whether to perform the computations inplace or not.
         check_input (bool): Whether to check the consistency of the inputs or not.
+        as_array (bool): Whether to output an ``numpy.ndarray`` instead of a ``pandas.DataFrame``
+            in ``tranform`` and ``inverse_transform``.
 
     """
 
     def __init__(self, rescale_with_mean=True, rescale_with_std=True, n_components=2, n_iter=3,
-                 copy=True, check_input=True, random_state=None, engine='auto'):
+                 copy=True, check_input=True, random_state=None, engine='auto', as_array=False):
         self.n_components = n_components
         self.n_iter = n_iter
         self.rescale_with_mean = rescale_with_mean
@@ -34,6 +36,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.check_input = check_input
         self.random_state = random_state
         self.engine = engine
+        self.as_array = as_array
 
     def fit(self, X, y=None):
 
@@ -47,7 +50,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         # Copy data
         if self.copy:
-            X = np.copy(X)
+            X = np.array(X, copy=True)
 
         # Scale data
         if self.rescale_with_mean or self.rescale_with_std:
@@ -83,7 +86,10 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         utils.validation.check_is_fitted(self)
         if self.check_input:
             utils.check_array(X)
-        return self.row_coordinates(X)
+        rc = self.row_coordinates(X)
+        if self.as_array:
+            return rc.to_numpy()
+        return rc
 
     def inverse_transform(self, X):
         """Transforms row projections back to their original space.
@@ -97,9 +103,11 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         if hasattr(self, 'scaler_'):
             X_inv = self.scaler_.inverse_transform(X_inv)
 
+        if self.as_array:
+            return X_inv
+
         # Extract index
         index = X.index if isinstance(X, pd.DataFrame) else None
-
         return pd.DataFrame(data=X_inv, index=index)
 
     def row_coordinates(self, X):
@@ -115,7 +123,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         # Copy data
         if self.copy:
-            X = np.copy(X)
+            X = np.array(X, copy=True)
 
         # Scale data
         if hasattr(self, 'scaler_'):
