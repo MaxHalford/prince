@@ -13,13 +13,14 @@ from . import svd
 
 class CA(base.BaseEstimator, base.TransformerMixin):
 
-    def __init__(self, n_components=2, n_iter=10, copy=True, check_input=True, random_state=None,
-                 engine='auto'):
+    def __init__(self, n_components=2, n_iter=10, copy=True, check_input=True, benzecri=False,
+                 random_state=None, engine='auto'):
         self.n_components = n_components
         self.n_iter = n_iter
         self.copy = copy
         self.check_input = check_input
         self.random_state = random_state
+        self.benzecri = benzecri
         self.engine = engine
 
     def fit(self, X, y=None):
@@ -72,6 +73,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         Same as calling `row_coordinates`. In most cases you should be using the same
         dataset as you did when calling the `fit` method. You might however also want to included
         supplementary data.
+
         """
         utils.validation.check_is_fitted(self)
         if self.check_input:
@@ -80,8 +82,22 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
     @property
     def eigenvalues_(self):
-        """The eigenvalues associated with each principal component."""
+        """The eigenvalues associated with each principal component.
+
+        Benzecri correction is applied if specified.
+
+        """
         utils.validation.check_is_fitted(self)
+
+        K = len(self.col_masses_)
+
+        if self.benzecri:
+            return [
+                (K / (K - 1.) * (s - 1. / K)) ** 2
+                if s > 1. / K else 0
+                for s in np.square(self.s_)
+            ]
+
         return np.square(self.s_).tolist()
 
     @property

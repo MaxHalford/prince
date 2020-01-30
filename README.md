@@ -447,7 +447,7 @@ The groups are passed as a dictionary to the `MFA` class.
 ...    for no in range(3)
 ... }
 >>> import pprint
->>> pprint.PrettyPrinter().pprint(groups)
+>>> pprint.pprint(groups)
 {'Expert #1': ['E1 fruity', 'E1 woody', 'E1 coffee'],
  'Expert #2': ['E2 red fruit', 'E2 roasted', 'E2 vanillin', 'E2 woody'],
  'Expert #3': ['E3 fruity', 'E3 butter', 'E3 woody']}

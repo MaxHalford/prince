@@ -5,7 +5,6 @@ import pandas as pd
 from sklearn import utils
 
 from . import ca
-from . import one_hot
 from . import plot
 
 
@@ -22,22 +21,26 @@ class MCA(ca.CA):
         n_initial_columns = X.shape[1]
 
         # One-hot encode the data
-        self.one_hot_ = one_hot.OneHotEncoder().fit(X)
+        one_hot = pd.get_dummies(X)
 
         # Apply CA to the indicator matrix
-        super().fit(self.one_hot_.transform(X))
+        super().fit(one_hot)
 
         # Compute the total inertia
-        n_new_columns = len(self.one_hot_.column_names_)
+        n_new_columns = one_hot.shape[1]
         self.total_inertia_ = (n_new_columns - n_initial_columns) / n_initial_columns
 
         return self
 
     def row_coordinates(self, X):
-        return super().row_coordinates(self.one_hot_.transform(X))
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+        return super().row_coordinates(pd.get_dummies(X))
 
     def column_coordinates(self, X):
-        return super().column_coordinates(self.one_hot_.transform(X))
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+        return super().column_coordinates(pd.get_dummies(X))
 
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
@@ -47,7 +50,7 @@ class MCA(ca.CA):
         return self.row_coordinates(X)
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
-                         show_row_points=True, row_points_size=10, 
+                         show_row_points=True, row_points_size=10,
                          row_points_alpha=0.6, show_row_labels=False,
                          show_column_points=True, column_points_size=30, show_column_labels=False,
                          legend_n_cols=1):

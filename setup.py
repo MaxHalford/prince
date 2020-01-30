@@ -27,7 +27,7 @@ REQUIRED = [
     'numpy>=1.17.1',
     'pandas>=0.25.1',
     'scipy>=1.3.0',
-    'scikit-learn>=0.20.1'
+    'scikit-learn>=0.22.1'
 ]
 
 # The rest you shouldn't have to touch too much :)

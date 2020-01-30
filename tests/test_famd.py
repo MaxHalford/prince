@@ -34,15 +34,18 @@ class TestFAMD(unittest.TestCase):
         X = self.X.select_dtypes(np.number)
         with self.assertRaises(ValueError):
             famd.fit(X)
+            famd.transform(X)
 
     def test_only_numerical_numpy(self):
         famd = prince.FAMD()
         X = self.X.select_dtypes(np.number)
         with self.assertRaises(ValueError):
             famd.fit(X.to_numpy())
+            famd.transform(X.to_numpy())
 
     def test_only_categorical(self):
         famd = prince.FAMD()
         X = self.X.select_dtypes(exclude=np.number)
         with self.assertRaises(ValueError):
             famd.fit(X)
+            famd.transform(X)

@@ -8,7 +8,6 @@ import pandas as pd
 from sklearn import utils
 
 from . import mca
-from . import one_hot
 from . import pca
 from . import plot
 
@@ -76,7 +75,6 @@ class MFA(pca.PCA):
             self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
-        self.cat_one_hots_ = {}
         super().fit(self._build_X_global(X))
 
         return self
@@ -107,13 +105,9 @@ class MFA(pca.PCA):
         for name, cols in sorted(self.groups.items()):
             X_partial = X.loc[:, cols]
 
+            # Dummify if there are categorical variable
             if not self.all_nums_[name]:
-                if name in self.cat_one_hots_:
-                    oh = self.cat_one_hots_[name]
-                else:
-                    oh = one_hot.OneHotEncoder().fit(X_partial)
-                X_partial = oh.transform(X_partial)
-                self.cat_one_hots_[name] = oh
+                X_partial = pd.get_dummies(X_partial)
 
             X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
 
@@ -175,7 +169,7 @@ class MFA(pca.PCA):
             X_partial = X.loc[:, cols]
 
             if not self.all_nums_[name]:
-                X_partial = self.cat_one_hots_[name].transform(X_partial)
+                X_partial = pd.get_dummies(X_partial)
 
             Z_partial = X_partial / self.partial_factor_analysis_[name].s_[0]
             coords[name] = len(self.groups) * (Z_partial @ Z_partial.T) @ P
