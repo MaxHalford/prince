@@ -40,7 +40,7 @@ class MFA(pca.PCA):
             utils.check_array(X, dtype=[str, np.number])
 
         # Prepare input
-        X = self._prepare_input(X)
+        #X = self._prepare_input(X)
 
         # Check group types are consistent
         self.all_nums_ = {}
@@ -64,6 +64,9 @@ class MFA(pca.PCA):
                     random_state=self.random_state,
                     engine=self.engine
                 )
+                XX = X.loc[:, cols] - X.loc[:, cols].mean()
+                XX /= ((XX ** 2).sum(axis='rows') ** .5).replace({0: 1})
+                self.partial_factor_analysis_[name] = fa.fit(XX)
             else:
                 fa = mca.MCA(
                     n_components=self.n_components,
@@ -72,7 +75,7 @@ class MFA(pca.PCA):
                     random_state=self.random_state,
                     engine=self.engine
                 )
-            self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
+                self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
         super().fit(self._build_X_global(X))
@@ -94,8 +97,6 @@ class MFA(pca.PCA):
             num = X.select_dtypes(np.number).columns
             # If a column's cardinality is 1 then it's variance is 0 which can
             # can cause a division by 0
-            normalize = lambda x: x / (np.sqrt((x ** 2).sum()) or 1)
-            X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(normalize, axis='rows')
 
         return X
 
@@ -105,14 +106,21 @@ class MFA(pca.PCA):
         for name, cols in sorted(self.groups.items()):
             X_partial = X.loc[:, cols]
 
-            # Dummify if there are categorical variable
+            # Dummify if there are any categorical variable
             if not self.all_nums_[name]:
                 X_partial = pd.get_dummies(X_partial)
 
-            X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
+            else:
+
+                X_partial -= X_partial.mean()
+                X_partial /= X_partial.std(ddof=0)
+
+            X_partials.append(X_partial)
+            #X_partials.append(X_partial / (self.partial_factor_analysis_[name].s_[0] ** 2))
 
         X_global = pd.concat(X_partials, axis='columns')
         X_global.index = X.index
+
         return X_global
 
     def transform(self, X):
