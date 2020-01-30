@@ -69,7 +69,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             random_state=self.random_state,
             engine=self.engine
         )
-        self._n = len(X)
 
         # Compute total inertia
         self.total_inertia_ = np.sum(np.square(X))
@@ -190,13 +189,13 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         utils.validation.check_is_fitted(self)
-        return (np.square(self.s_) / self._n).tolist()
+        return np.square(self.s_).tolist()
 
     @property
     def explained_inertia_(self):
         """Returns the percentage of explained inertia per principal component."""
         utils.validation.check_is_fitted(self)
-        return (np.square(self.s_) / self.total_inertia_).tolist()
+        return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
     def plot_row_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                              labels=None, color_labels=None, ellipse_outline=False,

@@ -51,7 +51,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         # Compute standardised residuals
         r = self.row_masses_.to_numpy()
         c = self.col_masses_.to_numpy()
-        S = sparse.diags(r ** -.5) @ (X - np.outer(r, c)) @ sparse.diags(c ** -.5)
+        S = sparse.diags(r ** -0.5) @ (X - np.outer(r, c)) @ sparse.diags(c ** -0.5)
 
         # Compute SVD on the standardised residuals
         self.U_, self.s_, self.V_ = svd.compute_svd(
@@ -93,8 +93,8 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         if self.benzecri:
             return [
-                (K / (K - 1) * (s - 1 / K)) ** 2
-                if s > 1 / K else 0
+                (K / (K - 1.) * (s - 1. / K)) ** 2
+                if s > 1. / K else 0
                 for s in np.square(self.s_)
             ]
 
@@ -128,7 +128,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = X / X.sum(axis=1)
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.col_masses_.to_numpy() ** -.5) @ self.V_.T,
+            data=X @ sparse.diags(self.col_masses_.to_numpy() ** -0.5) @ self.V_.T,
             index=row_names
         )
 
@@ -153,12 +153,12 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = X.T / X.T.sum(axis=1)
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.row_masses_.to_numpy() ** -.5) @ self.U_,
+            data=X @ sparse.diags(self.row_masses_.to_numpy() ** -0.5) @ self.U_,
             index=col_names
         )
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
-                         show_row_labels=True, show_col_labels=True, **kwargs):
+                                   show_row_labels=True, show_col_labels=True, **kwargs):
         """Plot the principal coordinates."""
 
         utils.validation.check_is_fitted(self)
