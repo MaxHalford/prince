@@ -92,11 +92,11 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         K = len(self.col_masses_)
 
         if self.benzecri:
-            return [
+            return np.array([
                 (K / (K - 1.) * (s - 1. / K)) ** 2
                 if s > 1. / K else 0
                 for s in np.square(self.s_)
-            ]
+            ])
 
         return np.square(self.s_).tolist()
 

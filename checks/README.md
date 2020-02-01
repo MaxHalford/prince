@@ -1,0 +1,4 @@
+- prince and sklearn have the same U, s, V
+- prince and sklearn have the same V as FactoMineR
+- prince has a different s than FactoMineR for PCA, it can be obtained via sqrt(self.eigenvalues_)
+- prince has the same s as FactoMineR for CA

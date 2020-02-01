@@ -107,9 +107,26 @@ class MFA(pca.PCA):
 
             # Dummify if there are categorical variable
             if not self.all_nums_[name]:
-                X_partial = pd.get_dummies(X_partial)
 
-            X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
+                # From FactoMineR MFA code, needs checking
+                tmp = pd.get_dummies(X_partial)
+                centre_tmp = tmp.mean() / len(tmp)
+                tmp2 = tmp / len(tmp)
+                poids_bary = tmp2.sum()
+                poids_tmp = 1 - tmp2.sum()
+                ponderation = poids_tmp ** .5 / (self.partial_factor_analysis_[name].s_[0] * len(cols))
+
+                normalize = lambda x: x / (np.sqrt((x ** 2).sum()) or 1)
+                tmp = (tmp - tmp.mean()).apply(normalize, axis='rows')
+
+                X_partial = tmp
+                X_partial *= ponderation ** .5
+
+                X_partials.append(X_partial)
+
+            else:
+
+                X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
 
         X_global = pd.concat(X_partials, axis='columns')
         X_global.index = X.index

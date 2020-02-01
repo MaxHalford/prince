@@ -183,22 +183,22 @@ Each column stands for a principal component whilst each row stands a row in the
 Each principal component explains part of the underlying of the distribution. You can see by how much by using the accessing the `explained_inertia_` property:
 
 ```python
->>> pca.explained_inertia_  # doctest: +ELLIPSIS
-[0.729624..., 0.228507...]
+>>> pca.explained_inertia_
+array([0.72962445, 0.22850762])
 
 ```
 
 The explained inertia represents the percentage of the inertia each principal component contributes. It sums up to 1 if the `n_components` property is equal to the number of columns in the original dataset. you The explained inertia is obtained by dividing the eigenvalues obtained with the SVD by the total inertia, both of which are also accessible.
 
 ```python
->>> pca.eigenvalues_  # doctest: +ELLIPSIS
-[437.774672..., 137.104570...]
+>>> pca.eigenvalues_
+array([2.91849782, 0.91403047])
 
 >>> pca.total_inertia_  # doctest: +ELLIPSIS
-600.0...
+4.000000...
 
 >>> pca.explained_inertia_
-[0.729624..., 0.228507...]
+array([0.72962445, 0.22850762])
 
 ```
 
@@ -219,11 +219,11 @@ You may also want to know how much each observation contributes to each principa
 ```python
 >>> pca.row_contributions(X).head()
           0         1
-0  0.011716  0.001681
-1  0.009892  0.003315
-2  0.012768  0.000853
-3  0.012077  0.002603
-4  0.013046  0.003052
+0  1.757369  0.252098
+1  1.483777  0.497200
+2  1.915225  0.127896
+3  1.811606  0.390447
+4  1.956947  0.457748
 
 ```
 
@@ -545,25 +545,25 @@ Likewhise you can visualize the partial row coordinates with the `plot_partial_r
 As usual you have access to inertia information.
 
 ```python
->>> mfa.eigenvalues_  # doctest: +ELLIPSIS
-[2.834800..., 0.356859...]
+>>> mfa.eigenvalues_
+array([0.47246678, 0.05947651])
 
 >>> mfa.total_inertia_
-3.353004...
+0.558834...
 
->>> mfa.explained_inertia_  # doctest: +ELLIPSIS
-[0.845450..., 0.106429...]
+>>> mfa.explained_inertia_
+array([0.84545097, 0.10642965])
 
 ```
 
 You can also access information concerning each partial factor analysis via the `partial_factor_analysis_` attribute.
 
 ```python
->>> for name, fa in sorted(mfa.partial_factor_analysis_.items()):  # doctest: +ELLIPSIS
+>>> for name, fa in sorted(mfa.partial_factor_analysis_.items()):
 ...     print('{} eigenvalues: {}'.format(name, fa.eigenvalues_))
-Expert #1 eigenvalues: [2.862595..., 0.119836...]
-Expert #2 eigenvalues: [3.651083..., 0.194159...]
-Expert #3 eigenvalues: [2.480488..., 0.441195...]
+Expert #1 eigenvalues: [0.47709918 0.01997272]
+Expert #2 eigenvalues: [0.60851399 0.03235984]
+Expert #3 eigenvalues: [0.41341481 0.07353257]
 
 ```
 
@@ -572,12 +572,12 @@ The `row_contributions` method will provide you with the inertia contribution of
 ```python
 >>> mfa.row_contributions(X)
               0        1
-Wine 1 1.664406 0.724851
-Wine 2 0.109450 0.109203
-Wine 3 1.894865 1.931661
-Wine 4 1.184657 2.295325
-Wine 5 0.695152 0.008470
-Wine 6 0.451471 0.930490
+Wine 1  9.986433  4.349104
+Wine 2  0.656699  0.655218
+Wine 3 11.369187 11.589968
+Wine 4  7.107942 13.771950
+Wine 5  4.170915  0.050817
+Wine 6  2.708824  5.582943
 
 ```
 
@@ -646,12 +646,12 @@ The `FAMD` inherits from the `MFA` class, which entails that you have access to 
 ```python
 >>> famd.row_coordinates(X)
               0         1
-Wine 1 3.351475  4.278852
-Wine 2 3.396873  4.135743
-Wine 3 4.777638 -1.643254
-Wine 4 4.769714 -1.665251
-Wine 5 3.779385 -3.053543
-Wine 6 3.465413 -0.304409
+Wine 1 -1.488689 -1.002711
+Wine 2 -0.449783 -1.354847
+Wine 3  1.774255 -0.258528
+Wine 4  1.565402  0.016484
+Wine 5 -0.349655  1.516425
+Wine 6 -1.051531  1.083178
 
 ```
 
