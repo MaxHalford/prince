@@ -645,7 +645,7 @@ The `FAMD` inherits from the `MFA` class, which entails that you have access to 
 
 ```python
 >>> famd.row_coordinates(X)
-              0         1
+               0         1
 Wine 1 -1.488689 -1.002711
 Wine 2 -0.449783 -1.354847
 Wine 3  1.774255 -0.258528
