@@ -571,7 +571,7 @@ The `row_contributions` method will provide you with the inertia contribution of
 
 ```python
 >>> mfa.row_contributions(X)
-              0        1
+               0         1
 Wine 1  9.986433  4.349104
 Wine 2  0.656699  0.655218
 Wine 3 11.369187 11.589968
