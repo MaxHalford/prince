@@ -138,10 +138,12 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         _, _, _, col_names = util.make_labels_and_names(X)
 
-        if X.dtypes.apply(pd.api.types.is_sparse).all():
-            X = X.sparse.to_coo()
-        else:
-            X = X.to_numpy()
+        if isinstance(X, pd.DataFrame):
+            is_sparse = X.dtypes.apply(pd.api.types.is_sparse).all()
+            if is_sparse:
+                X = X.sparse.to_coo()
+            else:
+                X = X.to_numpy()
 
         if self.copy:
             X = X.copy()
