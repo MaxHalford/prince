@@ -21,15 +21,6 @@ AUTHOR = 'Max Halford'
 REQUIRES_PYTHON = '>=3.4.0'
 VERSION = None
 
-# What packages are required for this module to be executed?
-REQUIRED = [
-    'matplotlib>=3.0.2',
-    'numpy>=1.17.1',
-    'pandas>=0.25.1',
-    'scipy>=1.3.0',
-    'scikit-learn>=0.22.1'
-]
-
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
 # Except, perhaps the License and Trove Classifiers!
@@ -106,7 +97,21 @@ setup(
     # entry_points={
     #     'console_scripts': ['mycli=mymodule:cli'],
     # },
-    install_requires=REQUIRED,
+    install_requires=[
+        'matplotlib>=3.0.2',
+        'numpy>=1.17.1',
+        'pandas>=1.0.3',
+        'scipy>=1.3.0',
+        'scikit-learn>=0.22.1'
+    ],
+    extras_require={
+        'dev': [
+            'nose>=1.3.7',
+            'pytest>=3.5.1',
+            'pytest-cov>=2.6.0',
+            'fbpca>=1.0'
+        ]
+    },
     include_package_data=True,
     license='MIT',
     classifiers=[

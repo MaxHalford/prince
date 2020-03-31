@@ -33,6 +33,7 @@ Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Fact
 
 ## Table of contents
 
+- [Table of contents](#table-of-contents)
 - [Installation](#installation)
 - [Usage](#usage)
   - [Guidelines](#guidelines)
@@ -53,13 +54,13 @@ Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Fact
 **Via PyPI**
 
 ```sh
->>> pip install prince  # doctest: +SKIP
+> pip install prince
 ```
 
 **Via GitHub for the latest development version**
 
 ```sh
->>> pip install git+https://github.com/MaxHalford/Prince  # doctest: +SKIP
+> pip install git+https://github.com/MaxHalford/Prince  # doctest: +SKIP
 ```
 
 Prince doesn't have any extra dependencies apart from the usual suspects (`sklearn`, `pandas`, `matplotlib`) which are included with Anaconda.
