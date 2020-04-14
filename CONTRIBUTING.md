@@ -19,22 +19,8 @@ Then install the necessary dependencies.
 ## Upload to PyPI
 
 ```sh
-> pip install --upgrade setuptools twine
-```
-
-Create `$HOME/.pypirc` with the following content:
-
-```sh
-[distutils]
-index-servers=
-  pypi
-
-[pypi]
-repository=https://pypi.org
-username=your_username
-password=your_password
-```
-
-```sh
-> python setup.py upload
+> python3 -m pip install --user --upgrade setuptools wheel
+> python3 setup.py sdist bdist_wheel
+> python3 -m pip install --user --upgrade twine
+> python3 -m twine upload dist/*
 ```
