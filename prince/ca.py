@@ -42,7 +42,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = np.copy(X)
 
         # Compute the correspondence matrix which contains the relative frequencies
-        X = X / np.sum(X)
+        X /= np.sum(X)
 
         # Compute row and column masses
         self.row_masses_ = pd.Series(X.sum(axis=1), index=row_names)
@@ -51,7 +51,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         # Compute standardised residuals
         r = self.row_masses_.to_numpy()
         c = self.col_masses_.to_numpy()
-        S = sparse.diags(r ** -0.5) @ (X - np.outer(r, c)) @ sparse.diags(c ** -0.5)
+        S = sparse.diags(r ** -.5) @ (X - np.outer(r, c)) @ sparse.diags(c ** -.5)
 
         # Compute SVD on the standardised residuals
         self.U_, self.s_, self.V_ = svd.compute_svd(
@@ -138,10 +138,12 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         _, _, _, col_names = util.make_labels_and_names(X)
 
-        if isinstance(X, pd.SparseDataFrame):
-            X = X.to_coo()
-        elif isinstance(X, pd.DataFrame):
-            X = X.to_numpy()
+        if isinstance(X, pd.DataFrame):
+            is_sparse = X.dtypes.apply(pd.api.types.is_sparse).all()
+            if is_sparse:
+                X = X.sparse.to_coo()
+            else:
+                X = X.to_numpy()
 
         if self.copy:
             X = X.copy()
