@@ -42,7 +42,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = np.copy(X)
 
         # Compute the correspondence matrix which contains the relative frequencies
-        X /= np.sum(X)
+        X = X.astype(float) / np.sum(X)
 
         # Compute row and column masses
         self.row_masses_ = pd.Series(X.sum(axis=1), index=row_names)
@@ -67,6 +67,9 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         return self
 
+    def _check_is_fitted(self):
+        utils.validation.check_is_fitted(self, 'total_inertia_')
+
     def transform(self, X):
         """Computes the row principal coordinates of a dataset.
 
@@ -75,7 +78,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         supplementary data.
 
         """
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
         if self.check_input:
             utils.check_array(X)
         return self.row_coordinates(X)
@@ -87,7 +90,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         Benzecri correction is applied if specified.
 
         """
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
 
         K = len(self.col_masses_)
 
@@ -103,12 +106,12 @@ class CA(base.BaseEstimator, base.TransformerMixin):
     @property
     def explained_inertia_(self):
         """The percentage of explained inertia per principal component."""
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
         return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
     def row_coordinates(self, X):
         """The row principal coordinates."""
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
 
         _, row_names, _, _ = util.make_labels_and_names(X)
 
@@ -134,7 +137,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
     def column_coordinates(self, X):
         """The column principal coordinates."""
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
 
         _, _, _, col_names = util.make_labels_and_names(X)
 
@@ -163,7 +166,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
                                    show_row_labels=True, show_col_labels=True, **kwargs):
         """Plot the principal coordinates."""
 
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
 
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)

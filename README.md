@@ -54,13 +54,13 @@ Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Fact
 **Via PyPI**
 
 ```sh
-> pip install prince
+$ pip install prince
 ```
 
 **Via GitHub for the latest development version**
 
 ```sh
-> pip install git+https://github.com/MaxHalford/Prince  # doctest: +SKIP
+$ pip install git+https://github.com/MaxHalford/Prince
 ```
 
 Prince doesn't have any extra dependencies apart from the usual suspects (`sklearn`, `pandas`, `matplotlib`) which are included with Anaconda.
@@ -68,7 +68,7 @@ Prince doesn't have any extra dependencies apart from the usual suspects (`sklea
 ## Usage
 
 ```python
-import numpy as np; np.random.set_state(42)  # This is for doctests reproducibility
+import numpy as np; np.random.set_state(42)  # this is for doctests reproducibility
 ```
 
 ### Guidelines
@@ -148,7 +148,7 @@ The available parameters are:
 Once the `PCA` has been fitted, it can be used to extract the row principal coordinates as so:
 
 ```python
->>> pca.transform(X).head()  # Same as pca.row_coordinates(X).head()
+>>> pca.transform(X).head()  # same as pca.row_coordinates(X).head()
           0         1
 0 -2.264703  0.480027
 1 -2.080961 -0.674134
@@ -195,7 +195,7 @@ The explained inertia represents the percentage of the inertia each principal co
 >>> pca.eigenvalues_
 array([2.91849782, 0.91403047])
 
->>> pca.total_inertia_  # doctest: +ELLIPSIS
+>>> pca.total_inertia_
 4.000000...
 
 >>> pca.explained_inertia_
@@ -329,13 +329,13 @@ You can plot both sets of principal coordinates with the `plot_coordinates` meth
 Like for the `PCA` you can access the inertia contribution of each principal component as well as the eigenvalues and the total inertia.
 
 ```python
->>> ca.eigenvalues_  # doctest: +ELLIPSIS
+>>> ca.eigenvalues_
 [0.199244..., 0.030086...]
 
->>> ca.total_inertia_  # doctest: +ELLIPSIS
+>>> ca.total_inertia_
 0.230191...
 
->>> ca.explained_inertia_  # doctest: +ELLIPSIS
+>>> ca.explained_inertia_
 [0.865562..., 0.130703...]
 
 ```
@@ -401,13 +401,13 @@ Like the `CA` class, the `MCA` class also has `plot_coordinates` method.
 The eigenvalues and inertia values are also accessible.
 
 ```python
->>> mca.eigenvalues_  # doctest: +ELLIPSIS
+>>> mca.eigenvalues_
 [0.401656..., 0.211111...]
 
 >>> mca.total_inertia_
 1.0
 
->>> mca.explained_inertia_  # doctest: +ELLIPSIS
+>>> mca.explained_inertia_
 [0.401656..., 0.211111...]
 
 ```
@@ -638,7 +638,7 @@ Now we can fit an `FAMD`.
 ...     engine='auto',
 ...     random_state=42
 ... )
->>> famd = famd.fit(X.drop('Oak type', axis='columns'))  # No need for 'Oak type'
+>>> famd = famd.fit(X.drop('Oak type', axis='columns'))
 
 ```
 
