@@ -44,7 +44,7 @@ class MCA(ca.CA):
 
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
         return self.row_coordinates(X)
@@ -74,7 +74,7 @@ class MCA(ca.CA):
             matplotlib.Axis
         """
 
-        utils.validation.check_is_fitted(self)
+        self._check_is_fitted()
 
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)

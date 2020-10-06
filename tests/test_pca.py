@@ -77,7 +77,7 @@ class TestPCA(unittest.TestCase):
         # Compare eigenvalues
         np.testing.assert_array_almost_equal(
             pca_prince.eigenvalues_,
-            np.square(pca_sklearn.singular_values_),
+            pca_sklearn.explained_variance_ * (len(self.X) - 1) / len(self.X),
         )
 
         # Compare row projections
