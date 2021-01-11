@@ -31,6 +31,8 @@
 
 Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Factor_analysis). This includes a variety of methods including [principal component analysis (PCA)](https://www.wikiwand.com/en/Principal_component_analysis) and [correspondence analysis (CA)](https://www.wikiwand.com/en/Correspondence_analysis). The goal is to provide an efficient implementation for each algorithm along with a scikit-learn API.
 
+☝️ I made this package when I was a student at university. I have very little time to work on this now that I have a full-time job. Feel to contribute and even take ownership if that sort of thing floats your boat. Thank you in advance for your understanding.
+
 ## Table of contents
 
 - [Table of contents](#table-of-contents)
