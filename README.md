@@ -385,6 +385,7 @@ Like the `CA` class, the `MCA` class also has `plot_coordinates` method.
 ...     show_row_points=True,
 ...     row_points_size=10,
 ...     show_row_labels=False,
+...     row_groups=None,
 ...     show_column_points=True,
 ...     column_points_size=30,
 ...     show_column_labels=False,
