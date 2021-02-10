@@ -9,9 +9,7 @@ import prince
 
 
 class TestGPA(unittest.TestCase):
-
-    # def setUp(self):
-    def __init__(self):
+    def setUp(self):
         # Create a list of 2-D circles with different locations and rotations
         n_shapes = 4
         n_points = 12
@@ -41,6 +39,14 @@ class TestGPA(unittest.TestCase):
         gpa = prince.GPA()
         self.assertIsInstance(gpa.fit(self.shapes), prince.GPA)
 
+    def test_fit_random(self):
+        gpa = prince.GPA(init='random')
+        self.assertIsInstance(gpa.fit(self.shapes), prince.GPA)
+
+    def test_fit_mean(self):
+        gpa = prince.GPA(init='mean')
+        self.assertIsInstance(gpa.fit(self.shapes), prince.GPA)
+
     def test_transform(self):
         gpa = prince.GPA(copy=True)
         aligned_shapes = gpa.fit(self.shapes).transform(self.shapes)
@@ -53,11 +59,13 @@ class TestGPA(unittest.TestCase):
         self.assertIsInstance(aligned_shapes, np.ndarray)
 
     def test_fit_transform_single(self):
-        """Aligning a single shape should return the same shape."""
+        """Aligning a single shape should return the same shape, just normalized."""
         gpa = prince.GPA()
-        shapes = self.shapes.shape[0:1]
+        shapes = self.shapes[0:1]
         aligned_shapes = gpa.fit_transform(shapes)
-        np.testing.assert_array_equal(shapes, aligned_shapes)
+        np.testing.assert_array_almost_equal(
+            shapes / np.linalg.norm(shapes), aligned_shapes
+        )
 
     def test_copy(self):
         shapes_copy = np.copy(self.shapes)
@@ -71,6 +79,3 @@ class TestGPA(unittest.TestCase):
         self.assertRaises(
             AssertionError, np.testing.assert_array_equal, self.shapes, shapes_copy
         )
-
-    def test_check_estimator(self):
-        estimator_checks.check_estimator(prince.GPA(as_array=True))

@@ -1,13 +1,9 @@
 """Generalized Procrustes Analysis (GPA)"""
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.spatial import procrustes
 from sklearn import base
 from sklearn import utils
-
-from . import svd
 
 
 class GPA(base.BaseEstimator, base.TransformerMixin):
@@ -130,7 +126,8 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         # Pick reference shape
         if self.init == 'random':
             random_state = utils.check_random_state(self.random_state)
-            reference_shape = random_state.choice(X)
+            ref_shape_idx = random_state.randint(X.shape[0])
+            reference_shape = X[ref_shape_idx]
         elif self.init == 'mean':
             reference_shape = X.mean(axis=0)
         else:
@@ -154,7 +151,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
                 break
 
         # Store properties
-        self.reference_shape_ = reference_shape
+        self._reference_shape = reference_shape
 
         # Return the aligned shapes
         return X
@@ -167,10 +164,10 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
             )
 
     def _check_is_fitted(self):
-        utils.validation.check_is_fitted(self, 'reference_shape_')
+        utils.validation.check_is_fitted(self, '_reference_shape')
 
     @property
-    def reference_shape_(self):
+    def reference_shape(self):
         """Returns the final reference shape."""
         self._check_is_fitted()
-        return self.reference_shape_
+        return self._reference_shape
