@@ -53,10 +53,13 @@ class TestGPA(unittest.TestCase):
         self.assertIsInstance(aligned_shapes, np.ndarray)
         self.assertEqual(self.shapes.shape, aligned_shapes.shape)
 
-    def test_fit_transform(self):
+    def test_fit_transform_equal(self):
+        """In our specific case of all-same-shape circles, the shapes should
+        align perfectly."""
         gpa = prince.GPA()
         aligned_shapes = gpa.fit_transform(self.shapes)
         self.assertIsInstance(aligned_shapes, np.ndarray)
+        np.testing.assert_array_almost_equal(aligned_shapes[:-1], aligned_shapes[1:])
 
     def test_fit_transform_single(self):
         """Aligning a single shape should return the same shape, just normalized."""
