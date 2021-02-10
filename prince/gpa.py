@@ -41,8 +41,16 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
 
     """
 
-    def __init__(self, max_iter=10, tol=1e-4, init='random',
-                 copy=True, check_input=True, random_state=None, as_array=False):
+    def __init__(
+        self,
+        max_iter=10,
+        tol=1e-4,
+        init='random',
+        copy=True,
+        check_input=True,
+        random_state=None,
+        as_array=False,
+    ):
         self.max_iter = max_iter
         self.tol = tol
         self.init = init
@@ -51,7 +59,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         self.random_state = random_state
         self.as_array = as_array
 
-    def fit(self, X, y=None)
+    def fit(self, X, y=None):
         """Fit the model with X.
 
         The algorithm naturally fits and transforms at the same time, so this
@@ -85,7 +93,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
             self._check_input(X)
 
         X_new = np.empty(X.shape)
-        for shape_idx in range(X.shape[0])
+        for shape_idx in range(X.shape[0]):
             _, X_new[shape_idx], _ = procrustes(self.reference_shape, X[shape_idx])
 
         return X_new
@@ -151,10 +159,12 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         # Return the aligned shapes
         return X
 
-    def _check_input(self, X)
+    def _check_input(self, X):
         utils.check_array(X, allow_nd=True)
         if X.ndim != 3:
-            raise ValueError('Expected 3-dimensional input of (n_shapes, n_points, n_dim)')
+            raise ValueError(
+                'Expected 3-dimensional input of (n_shapes, n_points, n_dim)'
+            )
 
     def _check_is_fitted(self):
         utils.validation.check_is_fitted(self, 'reference_shape_')
