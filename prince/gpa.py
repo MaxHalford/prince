@@ -32,8 +32,6 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         check_input (bool): Whether to check the consistency of the inputs.
         random_state (int, RandomState instance or None): Determines random
             number generation for initialization when ``init=='random'``
-        as_array (bool): Whether to output an ``numpy.ndarray`` instead of a
-            ``pandas.DataFrame`` in ``tranform`` and ``inverse_transform``.
 
     """
 
@@ -45,7 +43,6 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         copy=True,
         check_input=True,
         random_state=None,
-        as_array=False,
     ):
         self.max_iter = max_iter
         self.tol = tol
@@ -53,7 +50,6 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         self.copy = copy
         self.check_input = check_input
         self.random_state = random_state
-        self.as_array = as_array
 
     def fit(self, X, y=None):
         """Fit the model with X.
@@ -110,10 +106,6 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         # Check input
         if self.check_input:
             self._check_input(X)
-
-        # Convert pandas DataFrame to numpy array
-        if isinstance(X, pd.DataFrame):
-            X = X.to_numpy(dtype=np.float64)
 
         # Copy data
         if self.copy:

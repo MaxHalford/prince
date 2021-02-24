@@ -47,6 +47,18 @@ class TestGPA(unittest.TestCase):
         gpa = prince.GPA(init='mean')
         self.assertIsInstance(gpa.fit(self.shapes), prince.GPA)
 
+    def test_fit_bad_init(self):
+        gpa = prince.GPA(init='bad init type')
+
+        with self.assertRaises(ValueError):
+            gpa.fit(self.shapes)
+
+    def test_fit_bad_input_size(self):
+        gpa = prince.GPA()
+
+        with self.assertRaises(ValueError):
+            gpa.fit(self.shapes[0])
+
     def test_transform(self):
         gpa = prince.GPA(copy=True)
         aligned_shapes = gpa.fit(self.shapes).transform(self.shapes)
