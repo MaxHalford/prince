@@ -134,6 +134,7 @@ class MCA(ca.CA):
                     for i, label in enumerate(col_coords[mask].index):
                         ax.annotate(label, (x[mask][i], y[mask][i]))
 
+        if (show_row_points and row_groups) or (show_column_points):
             ax.legend(ncol=legend_n_cols)
 
         # Text
