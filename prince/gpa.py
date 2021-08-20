@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial import procrustes
+from scipy.linalg import orthogonal_procrustes
 from sklearn import base
 from sklearn import utils
 
@@ -25,6 +26,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         init ({'random', 'mean'}): Method for initializing reference shape.
             'random' : choose reference shape from shape list
             'mean' : initialize reference shape as mean of shape list
+        scale (bool): Whether to compute transformations with a scale component
         copy (bool): Whether to copy data or perform the computations inplace.
             If False, data passed to fit are overwritten and running
             fit(X).transform(X) will not yield the expected results,
@@ -40,6 +42,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         max_iter=10,
         tol=1e-4,
         init='random',
+        scale=True,
         copy=True,
         check_input=True,
         random_state=None,
@@ -47,6 +50,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         self.max_iter = max_iter
         self.tol = tol
         self.init = init
+        self.scale = scale
         self.copy = copy
         self.check_input = check_input
         self.random_state = random_state
@@ -128,12 +132,14 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         for iter_idx in range(self.max_iter):
             # Align each shape to reference shape
             for shape_idx in range(X.shape[0]):
-                _, X[shape_idx], _ = procrustes(reference_shape, X[shape_idx])
+                if self.scale:
+                    _, X[shape_idx], _ = procrustes(reference_shape, X[shape_idx])
+                else:
+                    _, X[shape_idx] = unscaled_procrustes(reference_shape, X[shape_idx])
 
             # Compute diagnostics
             mean_shape = X.mean(axis=0)
-            _, _, disparity = procrustes(reference_shape, mean_shape)
-            procrustes_distance = np.sqrt(disparity)
+            procrustes_distance = np.linalg.norm(reference_shape - mean_shape)
 
             # Update reference shape
             reference_shape = mean_shape
@@ -163,3 +169,35 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         """Returns the final reference shape."""
         self._check_is_fitted()
         return self._reference_shape
+
+
+def unscaled_procrustes(reference, data):
+    """Fit `data` to `reference` using procrustes analysis without scaling.
+    Uses translation (mean-centering), reflection, and orthogonal rotation.
+
+    Parameters:
+        reference (array-like of shape (n_points, n_dim)): reference shape to
+            fit `data` to
+        data (array-like of shape (n_points, n_dim)): shape to align to
+            `reference`
+
+    Returns:
+        reference_centered (np.ndarray of shape (n_points, n_dim)): 0-centered
+            `reference` shape
+        data_aligned (np.ndarray of shape (n_points, n_dim)): `data` aligned to
+            the reference shape
+    """
+    # Convert inputs to np.ndarray types
+    reference = np.array(reference, dtype=np.double)
+    data = np.array(data, dtype=np.double)
+
+    # Translate data to the origin
+    reference_centered = reference - reference.mean(axis=0)
+    data_centered = data - data.mean(axis=0)
+
+    # Rotate / reflect data to match reference
+    # transform mtx2 to minimize disparity
+    R, _ = orthogonal_procrustes(data_centered, reference_centered)
+    data_aligned = data_centered @ R
+
+    return reference_centered, data_aligned
