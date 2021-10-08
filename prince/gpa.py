@@ -123,7 +123,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         if self.init == 'random':
             random_state = utils.check_random_state(self.random_state)
             ref_shape_idx = random_state.randint(X.shape[0])
-            reference_shape = X[ref_shape_idx]
+            reference_shape = X[ref_shape_idx].copy()
         elif self.init == 'mean':
             reference_shape = X.mean(axis=0)
         else:
