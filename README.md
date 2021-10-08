@@ -44,7 +44,7 @@ Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Fact
   - [Multiple correspondence analysis (MCA)](#multiple-correspondence-analysis-mca)
   - [Multiple factor analysis (MFA)](#multiple-factor-analysis-mfa)
   - [Factor analysis of mixed data (FAMD)](#factor-analysis-of-mixed-data-famd)
-  - [Generalized procrustes analysis (GFA)](#generalized-procrustes-analysis-gpa)
+  - [Generalized procrustes analysis (GPA)](#generalized-procrustes-analysis-gpa)
 - [Going faster](#going-faster)
 - [License](#license)
 
