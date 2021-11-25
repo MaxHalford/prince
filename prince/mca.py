@@ -10,7 +10,13 @@ from . import plot
 
 class MCA(ca.CA):
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, K=None):
+        """Fit the MCA for the dataframe X.
+
+        The MCA is computed on the indicator matrix (i.e. `X.get_dummies()`). If some of the columns are already
+        in indicator matrix format, you'll want to pass in `K` as the number of "real" variables that it represents.
+        (That's used for correcting the inertia linked to each dimension.)
+        """
 
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
@@ -18,19 +24,61 @@ class MCA(ca.CA):
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
 
-        n_initial_columns = X.shape[1]
+        # K is the number of actual variables, to apply the Benzécri correction
+        if K is None:
+            self.K = X.shape[1]
+        elif X.shape[1] > K:
+            raise ValueError(f"K ({K}) can't be higher than number of columns ({X.shape[1]})")
+        else:
+            self.K = K
 
         # One-hot encode the data
         one_hot = pd.get_dummies(X)
 
+        # We need the number of columns to apply the Greenacre correction
+        self.J = one_hot.shape[1]
+
         # Apply CA to the indicator matrix
         super().fit(one_hot)
 
-        # Compute the total inertia
-        n_new_columns = one_hot.shape[1]
-        self.total_inertia_ = (n_new_columns - n_initial_columns) / n_initial_columns
-
+        self.total_inertia_ = np.sum(self.eigenvalues_)
         return self
+
+    @property
+    def eigenvalues_(self):
+        """The eigenvalues associated with each principal component.
+
+        This applies the Benzécri correction for MCA which corrects for the inflated dimensionality
+        related to the extra columns of the indicator matrix.
+        """
+        self._check_is_fitted()
+
+        K = self.K
+
+        return np.array([
+            (K / (K - 1.) * (s - 1. / K)) ** 2
+            if s > 1. / K else 0
+            for s in np.square(self.s_)
+        ])
+
+
+    @property
+    def explained_inertia_(self):
+        """The percentage of explained inertia per principal component.
+        
+        This applies the Greenacre correction to compensate for overestimation of 
+        contribution.
+        """
+        self._check_is_fitted()
+        K = self.K
+        J = self.J
+
+        # Average inertia on the diagonal of the Burt Matrix (JxJ)
+        # s_ are the eigenvalues of the residials matrix. Square to obtain the eigenvalues of the Indicator matrix (IxJ), 
+        # and square again for the eigenvalues of the Burt Matrix (JxJ)
+        Theta = (K / (K - 1.)) * (np.sum(np.square(self.s_)**2) - (J-K)/(K**2))
+
+        return self.eigenvalues_ / Theta
 
     def row_coordinates(self, X):
         if not isinstance(X, pd.DataFrame):
