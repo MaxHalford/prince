@@ -50,6 +50,11 @@ class TestMCA(unittest.TestCase):
         ax = mca.plot_coordinates(self.X, show_column_labels=True)
         self.assertTrue(isinstance(ax, mpl.axes.Axes))
 
+    def test_fit_with_K(self):
+        mca = prince.MCA(n_components=2, random_state=42)
+        mca.fit(pd.get_dummies(self.X), K=10)
+        self.assertEquals(mca.K, 10)
+
     def test_eigenvalues_are_corrected(self):
         mca = prince.MCA(n_components=4, random_state=42)
         mca.fit(self.X)

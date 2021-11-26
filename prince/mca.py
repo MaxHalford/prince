@@ -27,7 +27,7 @@ class MCA(ca.CA):
         # K is the number of actual variables, to apply the Benzécri correction
         if K is None:
             self.K = X.shape[1]
-        elif X.shape[1] > K:
+        elif X.shape[1] < K:
             raise ValueError(f"K ({K}) can't be higher than number of columns ({X.shape[1]})")
         else:
             self.K = K
