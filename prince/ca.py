@@ -171,7 +171,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         """
         F = self.F
         cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.s_**2)
-        return cont_r
+        return pd.DataFrame(cont_r.values, index=self.row_masses_.index)
     
     def column_contributions(self):
         """Return the contributions of each column to the dimension's inertia.
@@ -184,7 +184,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         """
         G = self.G
         cont_c = (np.diag(self.col_masses_) @ (G**2)).div(self.s_**2)
-        return cont_c
+        return pd.DataFrame(cont_c.values, index=self.col_masses_.index)
 
     def row_cos2(self):
         """Return the cos2 for each row against the dimensions.
