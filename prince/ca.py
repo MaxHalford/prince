@@ -95,6 +95,20 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         self._check_is_fitted()
         return [eig / self.total_inertia_ for eig in self.eigenvalues_]
 
+    @property
+    def F(self):
+        """Return the row scores on each principal component."""
+        self._check_is_fitted()
+        return pd.DataFrame(np.diag(self.row_masses_ ** -0.5) @ self.U_@ np.diag(self.s_),
+                            index=self.row_masses_.index, columns=pd.RangeIndex(0, len(self.s_)))
+
+    @property
+    def G(self):
+        """Return the column scores on each principal component."""
+        return pd.DataFrame(np.diag(self.col_masses_ ** -0.5) @ self.V_.T @ np.diag(self.s_),
+                            index=self.col_masses_.index, columns=pd.RangeIndex(0, len(self.s_)))
+
+
     def row_coordinates(self, X):
         """The row principal coordinates."""
         self._check_is_fitted()
@@ -147,6 +161,55 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             data=X @ sparse.diags(self.row_masses_.to_numpy() ** -0.5) @ self.U_,
             index=col_names
         )
+
+    def row_contributions(self):
+        """Return the contributions of each row to the dimension's inertia.
+        
+        Contributions are returned as a score between 0 and 1 representing how much the row contributes to 
+        the dimension's inertia. The sum of contributions on each dimensions should sum to 1. 
+        It's usual to ignore score below 1/n_row.
+        """
+        F = self.F
+        cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.s_**2)
+        return pd.DataFrame(cont_r.values, index=self.row_masses_.index)
+    
+    def column_contributions(self):
+        """Return the contributions of each column to the dimension's inertia.
+        
+        Contributions are returned as a score between 0 and 1 representing how much the column contributes to 
+        the dimension's inertia. The sum of contributions on each dimensions should sum to 1. 
+
+        To obtain the contribution of a particular variable, you can sum the contribution of each of its levels.
+        It's usual to ignore score below 1/n_column.
+        """
+        G = self.G
+        cont_c = (np.diag(self.col_masses_) @ (G**2)).div(self.s_**2)
+        return pd.DataFrame(cont_c.values, index=self.col_masses_.index)
+
+    def row_cos2(self):
+        """Return the cos2 for each row against the dimensions.
+
+        The cos2 value gives an indicator of the accuracy of the row projection on the dimension. 
+
+        Values above 0.5 usually means that the row is relatively accurately well projected onto that dimension. Its often
+        used to identify which factor/dimension is important for a given element as the cos2 can be interpreted as the proportion
+        of the variance of the element attributed to a particular factor.
+        """
+        F = self.F
+        return (F**2).div(np.diag(F @ F.T)**2, axis=0)
+
+    def column_cos2(self):
+        """Return the cos2 for each column against the dimensions.
+
+        The cos2 value gives an indicator of the accuracy of the column projection on the dimension. 
+
+        Values above 0.5 usually means that the column is relatively accurately well projected onto that dimension. Its often
+        used to identify which factor/dimension is important for a given element as the cos2 can be interpreted as the proportion
+        of the variance of the element attributed to a particular factor.
+        """
+        G = self.G
+        return (G**2).div(np.diag(G @ G.T)**2, axis=0)
+
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
                                    show_row_labels=True, show_col_labels=True, **kwargs):
