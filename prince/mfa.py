@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn import utils
+from sklearn.preprocessing import OneHotEncoder
 
 from . import mca
 from . import pca
@@ -109,7 +110,12 @@ class MFA(pca.PCA):
             if not self.all_nums_[name]:
 
                 # From FactoMineR MFA code, needs checking
-                tmp = pd.get_dummies(X_partial)
+                try:
+                    tmp= pd.DataFrame(self.enc.transform(X_partial))
+                except AttributeError:
+                    self.enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
+                    self.enc.fit(X_partial)
+                    tmp= pd.DataFrame(self.enc.transform(X_partial))
                 centre_tmp = tmp.mean() / len(tmp)
                 tmp2 = tmp / len(tmp)
                 poids_bary = tmp2.sum()
@@ -186,7 +192,7 @@ class MFA(pca.PCA):
             X_partial = X.loc[:, cols]
 
             if not self.all_nums_[name]:
-                X_partial = pd.get_dummies(X_partial)
+                X_partial = pd.DataFrame(self.enc.transform(X_partial))
 
             Z_partial = X_partial / self.partial_factor_analysis_[name].s_[0]
             coords[name] = len(self.groups) * (Z_partial @ Z_partial.T) @ P
