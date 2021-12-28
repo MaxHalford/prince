@@ -34,9 +34,9 @@ class MCA(ca.CA):
             self.K = K
 
         # One-hot encode the data
-        self.enc = OneHotEncoder(handle_unknown='ignore')
+        self.enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
         self.enc.fit(X)
-        one_hot = pd.DataFrame(self.enc.transform(X).toarray())
+        one_hot = self.enc.transform(X)
 
         # We need the number of columns to apply the Greenacre correction
         self.J = one_hot.shape[1]
@@ -86,15 +86,14 @@ class MCA(ca.CA):
     def row_coordinates(self, X):
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
-        one_hot = pd.DataFrame(self.enc.transform(X).toarray())
-        return super().row_coordinates(one_hot)
+        
+        return super().row_coordinates(self.enc.transform(X))
 
     def column_coordinates(self, X):
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
-        one_hot = pd.DataFrame(self.enc.transform(X).toarray())
-        return super().row_coordinates(one_hot)
-    
+        return super().column_coordinates(self.enc.transform(X))
+
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
         self._check_is_fitted()
