@@ -98,8 +98,8 @@ class MCA(ca.CA):
         return self.row_coordinates(X)
 
     def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
-                         show_row_points=True, row_points_size=10,
-                         row_points_alpha=0.6, show_row_labels=False,
+                         show_row_points=True, row_points_size=10, row_points_alpha=0.6,
+                         row_groups=None, show_row_labels=False,
                          show_column_points=True, column_points_size=30, show_column_labels=False,
                          legend_n_cols=1):
         """Plot row and column principal coordinates.
@@ -112,6 +112,7 @@ class MCA(ca.CA):
             show_row_points (bool): Whether to show row principal components or not.
             row_points_size (float): Row principal components point size.
             row_points_alpha (float): Alpha for the row principal component.
+            row_groups (list): Groups list for coloring row points. Default: all grey.
             show_row_labels (bool): Whether to show row labels or not.
             show_column_points (bool): Whether to show column principal components or not.
             column_points_size (float): Column principal components point size.
@@ -136,14 +137,27 @@ class MCA(ca.CA):
             row_coords = self.row_coordinates(X)
 
             if show_row_points:
-                ax.scatter(
-                    row_coords.iloc[:, x_component],
-                    row_coords.iloc[:, y_component],
-                    s=row_points_size,
-                    label=None,
-                    color=plot.GRAY['dark'],
-                    alpha=row_points_alpha
-                )
+                
+                if row_groups:
+                    row_coords['groups'] = row_groups
+                    for group, group_row_coords in row_coords.groupby('groups'):
+                        ax.scatter(
+                            group_row_coords.iloc[:, x_component],
+                            group_row_coords.iloc[:, y_component],
+                            s=row_points_size,
+                            label=group,
+                            alpha=row_points_alpha
+                        )
+
+                else:
+                    ax.scatter(
+                        row_coords.iloc[:, x_component],
+                        row_coords.iloc[:, y_component],
+                        s=row_points_size,
+                        label=None,
+                        c='grey',
+                        alpha=row_points_alpha
+                    )
 
             if show_row_labels:
                 for _, row in row_coords.iterrows():
@@ -162,12 +176,13 @@ class MCA(ca.CA):
                 mask = prefixes == prefix
 
                 if show_column_points:
-                    ax.scatter(x[mask], y[mask], s=column_points_size, label=prefix)
+                    ax.scatter(x[mask], y[mask], s=column_points_size, marker='X', label=prefix)
 
                 if show_column_labels:
                     for i, label in enumerate(col_coords[mask].index):
                         ax.annotate(label, (x[mask][i], y[mask][i]))
 
+        if (show_row_points and row_groups) or (show_column_points):
             ax.legend(ncol=legend_n_cols)
 
         # Text

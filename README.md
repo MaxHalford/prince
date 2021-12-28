@@ -388,6 +388,7 @@ Like the `CA` class, the `MCA` class also has `plot_coordinates` method.
 ...     show_row_points=True,
 ...     row_points_size=10,
 ...     show_row_labels=False,
+...     row_groups=None,
 ...     show_column_points=True,
 ...     column_points_size=30,
 ...     show_column_labels=False,
@@ -399,6 +400,31 @@ Like the `CA` class, the `MCA` class also has `plot_coordinates` method.
 
 <div align="center">
   <img src="images/mca_coordinates.svg" />
+</div>
+
+The optional parameter `row_groups` takes a list of labels for coloring the observations. This list must have the same lenght than the amount of observations. If no list of labels is passed, then all observations are grey.
+
+```python
+>>> groups = ['CAT_A']*10+['CAT_B']*9
+>>> ax = mca.plot_coordinates(
+...     X=X,
+...     ax=None,
+...     figsize=(6, 6),
+...     show_row_points=True,
+...     row_points_size=10,
+...     show_row_labels=False,
+...     row_groups=groups,
+...     show_column_points=True,
+...     column_points_size=30,
+...     show_column_labels=False,
+...     legend_n_cols=1
+... )
+>>> ax.get_figure().savefig('images/mca_coordinates_with_groups.svg')
+
+```
+
+<div align="center">
+  <img src="images/mca_coordinates_with_groups.svg" />
 </div>
 
 The eigenvalues and inertia values are also accessible.
