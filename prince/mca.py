@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn import utils
+from sklearn.preprocessing import OneHotEncoder
 
 from . import ca
 from . import plot
@@ -33,7 +34,9 @@ class MCA(ca.CA):
             self.K = K
 
         # One-hot encode the data
-        one_hot = pd.get_dummies(X)
+        self.enc = OneHotEncoder(handle_unknown='ignore')
+        self.enc.fit(X)
+        one_hot = pd.DataFrame(self.enc.transform(X).toarray())
 
         # We need the number of columns to apply the Greenacre correction
         self.J = one_hot.shape[1]
@@ -83,13 +86,15 @@ class MCA(ca.CA):
     def row_coordinates(self, X):
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
-        return super().row_coordinates(pd.get_dummies(X))
+        one_hot = pd.DataFrame(self.enc.transform(X).toarray())
+        return super().row_coordinates(one_hot)
 
     def column_coordinates(self, X):
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
-        return super().column_coordinates(pd.get_dummies(X))
-
+        one_hot = pd.DataFrame(self.enc.transform(X).toarray())
+        return super().row_coordinates(one_hot)
+    
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
         self._check_is_fitted()
