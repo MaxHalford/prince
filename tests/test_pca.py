@@ -11,14 +11,13 @@ import prince
 
 
 class TestPCA(unittest.TestCase):
-
     def setUp(self):
         X, _ = datasets.load_iris(return_X_y=True)
-        columns = ['Sepal length', 'Sepal width', 'Petal length', 'Sepal length']
+        columns = ["Sepal length", "Sepal width", "Petal length", "Sepal length"]
         self.X = pd.DataFrame(X, columns=columns)
 
     def test_fit_pandas_dataframe(self):
-        pca = prince.PCA(n_components=2, engine='fbpca')
+        pca = prince.PCA(n_components=2, engine="fbpca")
         self.assertTrue(isinstance(pca.fit(self.X), prince.PCA))
 
     def test_transform_pandas_dataframe(self):
@@ -26,17 +25,19 @@ class TestPCA(unittest.TestCase):
         self.assertTrue(isinstance(pca.fit(self.X).transform(self.X), pd.DataFrame))
 
     def test_fit_numpy_array(self):
-        pca = prince.PCA(n_components=2, engine='fbpca')
+        pca = prince.PCA(n_components=2, engine="fbpca")
         self.assertTrue(isinstance(pca.fit(self.X.values), prince.PCA))
 
     def test_fit_bad_engine(self):
-        pca = prince.PCA(n_components=2, engine='caca')
+        pca = prince.PCA(n_components=2, engine="caca")
         with self.assertRaises(ValueError):
             pca.fit(self.X)
 
     def test_transform_numpy_array(self):
         pca = prince.PCA(n_components=2)
-        self.assertTrue(isinstance(pca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
+        self.assertTrue(
+            isinstance(pca.fit(self.X.values).transform(self.X.values), pd.DataFrame)
+        )
 
     def test_copy(self):
         XX = np.copy(self.X)
@@ -52,17 +53,19 @@ class TestPCA(unittest.TestCase):
     def test_fit_transform(self):
 
         # Without rescaling
-        prince_pca = prince.PCA(n_components=3, rescale_with_mean=False, rescale_with_std=False)
+        prince_pca = prince.PCA(
+            n_components=3, rescale_with_mean=False, rescale_with_std=False
+        )
         pd.testing.assert_frame_equal(
-            prince_pca.fit_transform(self.X),
-            prince_pca.fit(self.X).transform(self.X)
+            prince_pca.fit_transform(self.X), prince_pca.fit(self.X).transform(self.X)
         )
 
         # With rescaling
-        prince_pca = prince.PCA(n_components=3, rescale_with_mean=True, rescale_with_std=True)
+        prince_pca = prince.PCA(
+            n_components=3, rescale_with_mean=True, rescale_with_std=True
+        )
         pd.testing.assert_frame_equal(
-            prince_pca.fit_transform(self.X),
-            prince_pca.fit(self.X).transform(self.X)
+            prince_pca.fit_transform(self.X), prince_pca.fit(self.X).transform(self.X)
         )
 
     def test_compare_sklearn(self):
@@ -82,14 +85,12 @@ class TestPCA(unittest.TestCase):
 
         # Compare row projections
         np.testing.assert_array_almost_equal(
-            pca_prince.transform(self.X),
-            pca_sklearn.transform(self.X)
+            pca_prince.transform(self.X), pca_sklearn.transform(self.X)
         )
 
         # Compare explained inertia
         np.testing.assert_array_almost_equal(
-            pca_prince.explained_inertia_,
-            pca_sklearn.explained_variance_ratio_
+            pca_prince.explained_inertia_, pca_sklearn.explained_variance_ratio_
         )
 
         # Compare inverse transforms
@@ -121,7 +122,23 @@ class TestPCA(unittest.TestCase):
     def test_column_correlations_numpy(self):
         pca = prince.PCA()
         pca.fit(self.X.to_numpy())
-        self.assertTrue(isinstance(pca.column_correlations(self.X.to_numpy()), pd.DataFrame))
+        self.assertTrue(
+            isinstance(pca.column_correlations(self.X.to_numpy()), pd.DataFrame)
+        )
+
+    def test_row_coordinates_alternative_formula(self):
+        pca = prince.PCA()
+        pca.fit(self.X.to_numpy())
+        alternative = pd.DataFrame(
+            (pca.svd_.U * len(pca.svd_.U) ** 0.5) * pca.eigenvalues_**0.5
+        )
+        pd.testing.assert_frame_equal(pca.row_coordinates(X), alternative)
+
+    def test_column_coordinates_alternative_formula(self):
+        pca = prince.PCA()
+        pca.fit(self.X.to_numpy())
+        alternative = pd.DataFrame(pca.svd_.V.T * pca.eigenvalues_**0.5)
+        pd.testing.assert_frame_equal(pca.row_coordinates(X), alternative)
 
     def test_row_standard_coordinates(self):
         pca = prince.PCA()
@@ -132,3 +149,16 @@ class TestPCA(unittest.TestCase):
         pca = prince.PCA()
         pca.fit(self.X)
         self.assertTrue(isinstance(pca.row_cosine_similarities(self.X), pd.DataFrame))
+
+    def test_variable_coordinates(self):
+        corr = pd.DataFrame(
+            {
+                component: {
+                    feature: row_pc[component].corr(X[feature]) for feature in X.columns
+                }
+                for component in row_pc.columns
+            }
+        )
+        pca = prince.PCA()
+        pca.fit(self.X)
+        pd.testing.assert_frame_equal(pca.column_coordinates(self.X), corr)

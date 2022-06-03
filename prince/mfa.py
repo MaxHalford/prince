@@ -14,9 +14,17 @@ from . import plot
 
 
 class MFA(pca.PCA):
-
-    def __init__(self, groups=None, normalize=True, n_components=2, n_iter=10,
-                 copy=True, check_input=True, random_state=None, engine='auto'):
+    def __init__(
+        self,
+        groups=None,
+        normalize=True,
+        n_components=2,
+        n_iter=10,
+        copy=True,
+        check_input=True,
+        random_state=None,
+        engine="sklearn",
+    ):
         super().__init__(
             rescale_with_mean=False,
             rescale_with_std=False,
@@ -25,7 +33,7 @@ class MFA(pca.PCA):
             copy=copy,
             check_input=check_input,
             random_state=random_state,
-            engine=engine
+            engine=engine,
         )
         self.groups = groups
         self.normalize = normalize
@@ -34,7 +42,7 @@ class MFA(pca.PCA):
 
         # Checks groups are provided
         if self.groups is None:
-            raise ValueError('Groups have to be specified')
+            raise ValueError("Groups have to be specified")
 
         # Check input
         if self.check_input:
@@ -49,7 +57,9 @@ class MFA(pca.PCA):
             all_num = all(pd.api.types.is_numeric_dtype(X[c]) for c in cols)
             all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
             if not (all_num or all_cat):
-                raise ValueError('Not all columns in "{}" group are of the same type'.format(name))
+                raise ValueError(
+                    'Not all columns in "{}" group are of the same type'.format(name)
+                )
             self.all_nums_[name] = all_num
 
         # Run a factor analysis in each group
@@ -63,7 +73,7 @@ class MFA(pca.PCA):
                     n_iter=self.n_iter,
                     copy=True,
                     random_state=self.random_state,
-                    engine=self.engine
+                    engine=self.engine,
                 )
             else:
                 fa = mca.MCA(
@@ -71,7 +81,7 @@ class MFA(pca.PCA):
                     n_iter=self.n_iter,
                     copy=self.copy,
                     random_state=self.random_state,
-                    engine=self.engine
+                    engine=self.engine,
                 )
             self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
 
@@ -95,8 +105,10 @@ class MFA(pca.PCA):
             num = X.select_dtypes(np.number).columns
             # If a column's cardinality is 1 then it's variance is 0 which can
             # can cause a division by 0
-            normalize = lambda x: x / (np.sqrt((x ** 2).sum()) or 1)
-            X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(normalize, axis='rows')
+            normalize = lambda x: x / (np.sqrt((x**2).sum()) or 1)
+            X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(
+                normalize, axis="rows"
+            )
 
         return X
 
@@ -111,22 +123,24 @@ class MFA(pca.PCA):
 
                 # From FactoMineR MFA code, needs checking
                 try:
-                    tmp= pd.DataFrame(self.enc.transform(X_partial))
+                    tmp = pd.DataFrame(self.enc.transform(X_partial))
                 except AttributeError:
-                    self.enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
+                    self.enc = OneHotEncoder(handle_unknown="ignore", sparse=False)
                     self.enc.fit(X_partial)
-                    tmp= pd.DataFrame(self.enc.transform(X_partial))
+                    tmp = pd.DataFrame(self.enc.transform(X_partial))
                 centre_tmp = tmp.mean() / len(tmp)
                 tmp2 = tmp / len(tmp)
                 poids_bary = tmp2.sum()
                 poids_tmp = 1 - tmp2.sum()
-                ponderation = poids_tmp ** .5 / (self.partial_factor_analysis_[name].s_[0] * len(cols))
+                ponderation = poids_tmp**0.5 / (
+                    self.partial_factor_analysis_[name].s_[0] * len(cols)
+                )
 
-                normalize = lambda x: x / (np.sqrt((x ** 2).sum()) or 1)
-                tmp = (tmp - tmp.mean()).apply(normalize, axis='rows')
+                normalize = lambda x: x / (np.sqrt((x**2).sum()) or 1)
+                tmp = (tmp - tmp.mean()).apply(normalize, axis="rows")
 
                 X_partial = tmp
-                X_partial *= ponderation ** .5
+                X_partial *= ponderation**0.5
 
                 X_partials.append(X_partial)
 
@@ -134,7 +148,7 @@ class MFA(pca.PCA):
 
                 X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
 
-        X_global = pd.concat(X_partials, axis='columns')
+        X_global = pd.concat(X_partials, axis="columns")
         X_global.index = X.index
         return X_global
 
@@ -198,11 +212,13 @@ class MFA(pca.PCA):
             coords[name] = len(self.groups) * (Z_partial @ Z_partial.T) @ P
 
         # Convert coords to a MultiIndex DataFrame
-        coords = pd.DataFrame({
-            (name, i): group_coords.loc[:, i]
-            for name, group_coords in coords.items()
-            for i in range(group_coords.shape[1])
-        })
+        coords = pd.DataFrame(
+            {
+                (name, i): group_coords.loc[:, i]
+                for name, group_coords in coords.items()
+                for i in range(group_coords.shape[1])
+            }
+        )
 
         return coords
 
@@ -213,16 +229,26 @@ class MFA(pca.PCA):
         X_global = self._build_X_global(X)
         row_pc = self._row_coordinates_from_global(X_global)
 
-        return pd.DataFrame({
-            component: {
-                feature: row_pc[component].corr(X_global[feature])
-                for feature in X_global.columns
+        return pd.DataFrame(
+            {
+                component: {
+                    feature: row_pc[component].corr(X_global[feature])
+                    for feature in X_global.columns
+                }
+                for component in row_pc.columns
             }
-            for component in row_pc.columns
-        }).sort_index()
+        ).sort_index()
 
-    def plot_partial_row_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
-                                     color_labels=None, **kwargs):
+    def plot_partial_row_coordinates(
+        self,
+        X,
+        ax=None,
+        figsize=(6, 6),
+        x_component=0,
+        y_component=1,
+        color_labels=None,
+        **kwargs
+    ):
         """Plot the row principal coordinates."""
         self._check_is_fitted()
 
@@ -244,7 +270,10 @@ class MFA(pca.PCA):
 
         # Determine the color of each group if there are group labels
         if color_labels is not None:
-            colors = {g: ax._get_lines.get_next_color() for g in sorted(list(set(color_labels)))}
+            colors = {
+                g: ax._get_lines.get_next_color()
+                for g in sorted(list(set(color_labels)))
+            }
 
         # Get the list of all possible markers
         marks = itertools.cycle(list(markers.MarkerStyle.markers.keys()))
@@ -264,16 +293,22 @@ class MFA(pca.PCA):
 
             for color_label, color in sorted(colors.items()):
                 mask = np.array(color_labels) == color_label
-                label = '{} - {}'.format(name, color_label)
-                ax.scatter(x[mask], y[mask], marker=mark, color=color, label=label, **kwargs)
+                label = "{} - {}".format(name, color_label)
+                ax.scatter(
+                    x[mask], y[mask], marker=mark, color=color, label=label, **kwargs
+                )
 
         # Legend
         ax.legend()
 
         # Text
-        ax.set_title('Partial row principal coordinates')
+        ax.set_title("Partial row principal coordinates")
         ei = self.explained_inertia_
-        ax.set_xlabel('Component {} ({:.2f}% inertia)'.format(x_component, 100 * ei[x_component]))
-        ax.set_ylabel('Component {} ({:.2f}% inertia)'.format(y_component, 100 * ei[y_component]))
+        ax.set_xlabel(
+            "Component {} ({:.2f}% inertia)".format(x_component, 100 * ei[x_component])
+        )
+        ax.set_ylabel(
+            "Component {} ({:.2f}% inertia)".format(y_component, 100 * ei[y_component])
+        )
 
         return ax

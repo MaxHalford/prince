@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "prince"
+version = "0.7.0"
+description = "PCA, CA, MCA, MFA, FAMD, GPA"
+authors = ["Max Halford <maxhalford25@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+scikit-learn = "^1.0.2"
+pandas = "^1.4.1"
+matplotlib = "^3.5.1"
+fbpca = "^1.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.1"
+ipykernel = "^6.13.0"
+rpy2 = "^3.5.2"
+black = {version = "^22.3.0", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

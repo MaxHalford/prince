@@ -6,9 +6,15 @@ from . import mfa
 
 
 class FAMD(mfa.MFA):
-
-    def __init__(self, n_components=2, n_iter=3, copy=True, check_input=True, random_state=None,
-                 engine='auto'):
+    def __init__(
+        self,
+        n_components=2,
+        n_iter=3,
+        copy=True,
+        check_input=True,
+        random_state=None,
+        engine="sklearn",
+    ):
         super().__init__(
             groups=None,
             normalize=True,
@@ -17,7 +23,7 @@ class FAMD(mfa.MFA):
             copy=copy,
             check_input=check_input,
             random_state=random_state,
-            engine=engine
+            engine=engine,
         )
 
     def fit(self, X, y=None):
@@ -32,14 +38,18 @@ class FAMD(mfa.MFA):
         # Make one group per variable type
         self.groups = {}
         if num_cols:
-            self.groups['Numerical'] = num_cols
+            self.groups["Numerical"] = num_cols
         else:
-            raise ValueError('FAMD works with categorical and numerical data but ' +
-                             'you only have categorical data; you should consider using MCA')
+            raise ValueError(
+                "FAMD works with categorical and numerical data but "
+                + "you only have categorical data; you should consider using MCA"
+            )
         if cat_cols:
-            self.groups['Categorical'] = cat_cols
+            self.groups["Categorical"] = cat_cols
         else:
-            raise ValueError('FAMD works with categorical and numerical data but ' +
-                             'you only have numerical data; you should consider using PCA')
+            raise ValueError(
+                "FAMD works with categorical and numerical data but "
+                + "you only have numerical data; you should consider using PCA"
+            )
 
         return super().fit(X)

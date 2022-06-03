@@ -1,0 +1,14 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Prince
+message: >-
+  Please use this citation if you use this software
+  as part of a scientific publication.
+type: software
+authors:
+  - given-names: Max
+    family-names: Halford
+    email: maxhalford25@gmail.com
+    orcid: "https://orcid.org/0000-0003-1464-4520"
