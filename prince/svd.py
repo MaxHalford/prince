@@ -21,6 +21,8 @@ class SVD:
 def compute_svd(X, n_components, n_iter, random_state, engine) -> SVD:
     """Computes an SVD with k components."""
 
+    # TODO: support sample weights
+
     # Compute the SVD
     if engine == "fbpca":
         if FBPCA_INSTALLED:

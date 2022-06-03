@@ -21,6 +21,18 @@ def check_is_fitted(method):
     return _impl
 
 
+def select_active_variables(method):
+    @functools.wraps(method)
+    def _impl(self, X, *method_args, **method_kwargs):
+        if hasattr(self, "feature_names_in_") and isinstance(X, pd.DataFrame):
+            return method(
+                self, X[self.feature_names_in_], *method_args, **method_kwargs
+            )
+        return method(self, X, *method_args, **method_kwargs)
+
+    return _impl
+
+
 class PCA(base.BaseEstimator, base.TransformerMixin):
     """Principal Component Analysis (PCA).
 
@@ -166,7 +178,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         return summary
 
     @check_is_fitted
-    def row_coordinates(self, X, ignore_supplementary_variables=True):
+    @select_active_variables
+    def row_coordinates(self, X):
         """Returns the row principal coordinates.
 
         The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
@@ -178,14 +191,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         Loadings
 
         """
-
-        if (
-            ignore_supplementary_variables
-            and hasattr(self, "feature_names_in_")
-            and isinstance(X, pd.DataFrame)
-        ):
-            X = X[self.feature_names_in_]
-
         index = X.index if isinstance(X, pd.DataFrame) else None
         X = self._scale(X)
         X = np.array(X, copy=self.copy)
@@ -258,6 +263,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
 
     @check_is_fitted
+    @select_active_variables
     def row_cosine_similarities(self, X):
         """Returns the cosine similarities between the rows and their principal components.
 
@@ -300,11 +306,9 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         The column principal coordinates are obtained by projecting `X` on the left eigenvectors.
 
         """
-        X = X.copy()
 
         index = X.columns if isinstance(X, pd.DataFrame) else None
         X = self._scale(X)
-        X = np.array(X, copy=self.copy)
 
         coord = pd.DataFrame(
             data=X.T @ (self.svd_.U / len(self.svd_.U) ** 0.5), index=index
