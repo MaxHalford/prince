@@ -75,17 +75,24 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.engine = engine
         self.as_array = as_array
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, supplementary_variables=None):
 
-        # Convert pandas DataFrame to numpy array
-        if isinstance(X, pd.DataFrame):
-            self.feature_names_in_ = X.columns.tolist()
-            X = X.to_numpy(dtype=np.float64, copy=self.copy)
-
-        self._check_input(X)
+        supplementary_variables = supplementary_variables or []
+        active_variables = X.columns.difference(
+            supplementary_variables, sort=False
+        ).tolist()
 
         # https://scikit-learn.org/stable/developers/develop.html#universal-attributes
-        self.n_features_in_ = X.shape[1]
+        self.feature_names_in_ = active_variables
+        self.n_features_in_ = len(active_variables)
+
+        X_active = X[active_variables].to_numpy(dtype=np.float64, copy=self.copy)
+        if supplementary_variables:
+            X_sup = X[supplementary_variables].to_numpy(
+                dtype=np.float64, copy=self.copy
+            )
+        # X = X.to_numpy(dtype=np.float64, copy=self.copy)
+        # self._check_input(X)
 
         # Scale data
         if self.rescale_with_mean or self.rescale_with_std:
@@ -93,18 +100,46 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
                 copy=self.copy,
                 with_mean=self.rescale_with_mean,
                 with_std=self.rescale_with_std,
-            ).fit(X)
-            X = self.scaler_.transform(X)
+            ).fit(X_active)
+            X_active = self.scaler_.transform(
+                X_active
+            )  # TODO: maybe fit_transform is faster
+            if supplementary_variables:
+                X_sup = preprocessing.StandardScaler(
+                    copy=self.copy,
+                    with_mean=self.rescale_with_mean,
+                    with_std=self.rescale_with_std,
+                ).fit_transform(X_sup)
 
         self.svd_ = svd.compute_svd(
-            X=X,
+            X=X_active,
             n_components=self.n_components,
             n_iter=self.n_iter,
             random_state=self.random_state,
             engine=self.engine,
         )
 
-        self.total_inertia_ = np.sum(np.square(X)) / len(X)
+        self.total_inertia_ = np.sum(np.square(X_active)) / len(X_active)
+
+        self.column_coordinates_ = pd.DataFrame(
+            data=self.svd_.V.T * self.eigenvalues_**0.5,
+            index=active_variables,
+        )
+        if supplementary_variables:
+            self.column_coordinates_ = pd.concat(
+                [
+                    self.column_coordinates_,
+                    pd.DataFrame(
+                        data=X_sup.T @ (self.svd_.U / len(self.svd_.U) ** 0.5),
+                        index=supplementary_variables,
+                    ),
+                ]
+            )
+        self.column_coordinates_.columns.name = "component"
+        self.row_contributions_ = (self.active_row_coordinates**2 / len(X)).div(
+            self.eigenvalues_, axis=1
+        )
+        self.row_contributions_.index = X.index
 
         return self
 
@@ -213,6 +248,18 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             return rc.to_numpy()
         return rc
 
+    @property
+    @check_is_fitted
+    def active_row_coordinates(self):
+        coords = pd.DataFrame(
+            (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
+            index=self.row_contributions.index
+            if hasattr(self, "row_contributions")
+            else None,
+        )
+        coords.columns.name = "component"
+        return coords
+
     @check_is_fitted
     def fit_transform(self, X, as_array=False):
         """A faster way to fit/transform.
@@ -223,14 +270,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         directly from the left eigenvectors.
 
         """
-        index = X.index if isinstance(X, pd.DataFrame) else None
         self.fit(X)
-        coords = pd.DataFrame(
-            (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
-            index=index,
-        )
-        coords.columns.name = "component"
-        return coords
+        return self.active_row_coordinates
 
     @check_is_fitted
     def inverse_transform(self, X):
@@ -277,47 +318,30 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         squared_coordinates = np.square(self._scale(X)).sum(axis=1)
         return (self.row_coordinates(X) ** 2).div(squared_coordinates, axis=0)
 
+    # @check_is_fitted
+    # def row_contributions(self, X):
+    #     """Returns the row contributions towards each principal component.
+
+    #     The eigenvalue associated to a component is equal to the sum of the squared factor scores
+    #     for this component. Therefore, the importance of an observation for a component can be
+    #     obtained by the ratio of the squared factor score of this observation by the eigenvalue
+    #     associated with that component. This ratio is called the contribution of the observation to
+    #     the component.
+
+    #     The value of a contribution is between 0 and 1 and, for a given component, the sum of the
+    #     contributions of all observations is equal to 1. The larger the value of the contribution,
+    #     the more the observation contributes to the component. A useful heuristic is to base the
+    #     interpretation of a component on the observations whose contribution is larger than the
+    #     average contribution (i.e., observations whose contribution is larger than `1 / n`). The
+    #     observations with high contributions and different signs can then be opposed to help
+    #     interpret the component because these observations represent the two endpoints of this
+    #     component.
+
+    #     """
+
+    @property
     @check_is_fitted
-    def row_contributions(self, X):
-        """Returns the row contributions towards each principal component.
-
-        The eigenvalue associated to a component is equal to the sum of the squared factor scores
-        for this component. Therefore, the importance of an observation for a component can be
-        obtained by the ratio of the squared factor score of this observation by the eigenvalue
-        associated with that component. This ratio is called the contribution of the observation to
-        the component.
-
-        The value of a contribution is between 0 and 1 and, for a given component, the sum of the
-        contributions of all observations is equal to 1. The larger the value of the contribution,
-        the more the observation contributes to the component. A useful heuristic is to base the
-        interpretation of a component on the observations whose contribution is larger than the
-        average contfribution (i.e., observations whose contribution is larger than `1 / n`). The
-        observations with high contributions and different signs can then be opposed to help
-        interpret the component because these observations represent the two endpoints of this
-        component.
-
-        """
-        return (self.row_coordinates(X) ** 2 / len(X)).div(self.eigenvalues_, axis=1)
-
-    @check_is_fitted
-    def column_coordinates(self, X):
-        """Returns the column principal coordinates.
-
-        The column principal coordinates are obtained by projecting `X` on the left eigenvectors.
-
-        """
-
-        index = X.columns if isinstance(X, pd.DataFrame) else None
-        X = self._scale(X)
-
-        coord = pd.DataFrame(
-            data=X.T @ (self.svd_.U / len(self.svd_.U) ** 0.5), index=index
-        )
-        coord.columns.name = "component"
-        return coord
-
-    @check_is_fitted
-    def column_correlations(self, X):
+    def column_correlations(self):
         """Calculate correlations between variables and components.
 
         The correlation between a variable and a component estimates the information they share. In
@@ -329,15 +353,19 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         variables explained by the components).
 
         """
-        return self.column_coordinates(X)
+        return self.column_coordinates_
 
+    @property
     @check_is_fitted
-    def column_cosine_similarities(self, X):
-        return self.column_correlations(X) ** 2
+    def column_cosine_similarities(self):
+        return self.column_correlations**2
 
+    @property
     @check_is_fitted
-    def column_contributions(self, X):
-        return (self.column_coordinates(X) ** 2).div(self.eigenvalues_, axis=1)
+    def column_contributions(self):
+        return (self.column_coordinates_.loc[self.feature_names_in_] ** 2).div(
+            self.eigenvalues_, axis=1
+        )
 
     @check_is_fitted
     def plot_row_coordinates(

@@ -137,8 +137,10 @@ class TestPCA(unittest.TestCase):
     def test_column_coordinates_alternative_formula(self):
         pca = prince.PCA()
         pca.fit(self.X.to_numpy())
-        alternative = pd.DataFrame(pca.svd_.V.T * pca.eigenvalues_**0.5)
-        pd.testing.assert_frame_equal(pca.row_coordinates(X), alternative)
+        alternative = pd.DataFrame(
+            data=self.X.T @ (pca.svd_.U / len(pca.svd_.U) ** 0.5)
+        )
+        pd.testing.assert_frame_equal(pca.column_coordinates(X), alternative)
 
     def test_row_standard_coordinates(self):
         pca = prince.PCA()
