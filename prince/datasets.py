@@ -46,7 +46,7 @@ def load_decathlon():
     return decathlon
 
 
-def load_french_elections_2022():
+def load_french_elections():
     """Voting data for the 2022 French elections, by region.
 
     The [original dataset](https://www.data.gouv.fr/fr/datasets/resultats-du-premier-tour-de-lelection-presidentielle-2022-par-commune-et-par-departement/#resources)

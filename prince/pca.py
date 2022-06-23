@@ -4,21 +4,14 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.express as px
 from sklearn import base
 from sklearn import preprocessing
-from sklearn import utils
+from sklearn.utils import check_array
 
-from . import plot
-from . import svd
-
-
-def check_is_fitted(method):
-    @functools.wraps(method)
-    def _impl(self, *method_args, **method_kwargs):
-        self._check_is_fitted()
-        return method(self, *method_args, **method_kwargs)
-
-    return _impl
+from prince import plot
+from prince import svd
+from prince import utils
 
 
 def select_active_variables(method):
@@ -143,12 +136,9 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         return self
 
-    def _check_is_fitted(self):
-        utils.validation.check_is_fitted(self, "total_inertia_")
-
     def _check_input(self, X):
         if self.check_input:
-            utils.check_array(X)
+            check_array(X)
 
     def _scale(self, X):
 
@@ -175,27 +165,27 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         return X
 
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         return np.square(self.svd_.s) / len(self.svd_.U)
 
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def percentage_of_variance_(self):
         """Returns the percentage of explained inertia per principal component."""
         return self.eigenvalues_ / self.total_inertia_
 
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def cumulative_percentage_of_variance_(self):
         """Returns the percentage of explained inertia per principal component."""
         return np.cumsum(self.percentage_of_variance_)
 
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def eigenvalues_summary(self):
-        """Returns the eigenvalues associated with each principal component."""
+        """Return a summary of the eigenvalues and their importance."""
         summary = pd.DataFrame(
             {
                 "eigenvalue": self.eigenvalues_,
@@ -212,7 +202,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         summary.index.name = "component"
         return summary
 
-    @check_is_fitted
+    @utils.check_is_fitted
     @select_active_variables
     def row_coordinates(self, X):
         """Returns the row principal coordinates.
@@ -234,7 +224,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         coord.columns.name = "component"
         return coord
 
-    @check_is_fitted
+    @utils.check_is_fitted
     def transform(self, X, as_array=False):
         """Computes the row principal coordinates of a dataset.
 
@@ -249,7 +239,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         return rc
 
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def active_row_coordinates(self):
         coords = pd.DataFrame(
             (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
@@ -260,7 +250,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         coords.columns.name = "component"
         return coords
 
-    @check_is_fitted
+    @utils.check_is_fitted
     def fit_transform(self, X, as_array=False):
         """A faster way to fit/transform.
 
@@ -273,7 +263,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.fit(X)
         return self.active_row_coordinates
 
-    @check_is_fitted
+    @utils.check_is_fitted
     def inverse_transform(self, X):
         """Transforms row projections back to their original space.
 
@@ -293,7 +283,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         index = X.index if isinstance(X, pd.DataFrame) else None
         return pd.DataFrame(data=X_inv, index=index)
 
-    @check_is_fitted
+    @utils.check_is_fitted
     def row_standard_coordinates(self, X):
         """Returns the row standard coordinates.
 
@@ -303,7 +293,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         """
         return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
 
-    @check_is_fitted
+    @utils.check_is_fitted
     @select_active_variables
     def row_cosine_similarities(self, X):
         """Returns the cosine similarities between the rows and their principal components.
@@ -318,29 +308,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         squared_coordinates = np.square(self._scale(X)).sum(axis=1)
         return (self.row_coordinates(X) ** 2).div(squared_coordinates, axis=0)
 
-    # @check_is_fitted
-    # def row_contributions(self, X):
-    #     """Returns the row contributions towards each principal component.
-
-    #     The eigenvalue associated to a component is equal to the sum of the squared factor scores
-    #     for this component. Therefore, the importance of an observation for a component can be
-    #     obtained by the ratio of the squared factor score of this observation by the eigenvalue
-    #     associated with that component. This ratio is called the contribution of the observation to
-    #     the component.
-
-    #     The value of a contribution is between 0 and 1 and, for a given component, the sum of the
-    #     contributions of all observations is equal to 1. The larger the value of the contribution,
-    #     the more the observation contributes to the component. A useful heuristic is to base the
-    #     interpretation of a component on the observations whose contribution is larger than the
-    #     average contribution (i.e., observations whose contribution is larger than `1 / n`). The
-    #     observations with high contributions and different signs can then be opposed to help
-    #     interpret the component because these observations represent the two endpoints of this
-    #     component.
-
-    #     """
-
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def column_correlations(self):
         """Calculate correlations between variables and components.
 
@@ -356,18 +325,68 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         return self.column_coordinates_
 
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def column_cosine_similarities(self):
         return self.column_correlations**2
 
     @property
-    @check_is_fitted
+    @utils.check_is_fitted
     def column_contributions(self):
         return (self.column_coordinates_.loc[self.feature_names_in_] ** 2).div(
             self.eigenvalues_, axis=1
         )
 
-    @check_is_fitted
+    @utils.check_is_fitted
+    def plot(self, X, x_component=0, y_component=1, **scatter_params):
+
+        index_names = X.index.names
+        row_coordinates = self.row_coordinates(X).reset_index(drop=False)
+        fig = px.scatter(
+            row_coordinates,
+            x=x_component,
+            y=y_component,
+            hover_data=index_names,
+            labels={
+                str(
+                    x_component
+                ): f"Component #{x_component} — {self.percentage_of_variance_[x_component]:.2%} inertia",
+                str(
+                    y_component
+                ): f"Component #{y_component} — {self.percentage_of_variance_[y_component]:.2%} inertia",
+            },
+            **scatter_params,
+        )
+        fig.add_scatter(
+            x=self.column_coordinates_[x_component],
+            y=self.column_coordinates_[y_component],
+            mode="markers",
+        )
+
+        # x_mean, y_mean, width, height, angle = plot.build_ellipse(
+        #     row_coordinates[0], row_coordinates[1]
+        # )
+        # print(x_mean, y_mean, width, height, angle)
+        # ax.add_patch(
+        #     mpl.patches.Ellipse(
+        #         (x_mean, y_mean),
+        #         width,
+        #         height,
+        #         angle=angle,
+        #         linewidth=2 if ellipse_outline else 0,
+        #         color=color,
+        #         fill=ellipse_fill,
+        #         alpha=0.2 + (0.3 if not show_points else 0)
+        #         if ellipse_fill
+        #         else 1,
+        #     )
+        # )
+        fig.update_yaxes(
+            scaleanchor="x",
+            scaleratio=1,
+        )
+        return fig
+
+    @utils.check_is_fitted
     def plot_row_coordinates(
         self,
         X,

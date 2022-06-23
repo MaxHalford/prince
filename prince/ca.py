@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn import base
-from sklearn import utils
+from sklearn.utils import check_array
 
-from . import plot
-from . import util
-from . import svd
+from prince import plot
+from prince import utils
+from prince import svd
 
 
 class CA(base.BaseEstimator, base.TransformerMixin):
@@ -32,13 +32,13 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         # Check input
         if self.check_input:
-            utils.check_array(X)
+            check_array(X)
 
         # Check all values are positive
         if (X < 0).any().any():
             raise ValueError("All values in X should be positive")
 
-        _, row_names, _, col_names = util.make_labels_and_names(X)
+        _, row_names, _, col_names = utils.make_labels_and_names(X)
 
         if isinstance(X, pd.DataFrame):
             X = X.to_numpy()
@@ -57,9 +57,10 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         r = self.row_masses_.to_numpy()
         c = self.col_masses_.to_numpy()
         S = sparse.diags(r**-0.5) @ (X - np.outer(r, c)) @ sparse.diags(c**-0.5)
+        # S = sparse.diags(1 / r**2) @ X @ sparse.diags(1 / c**2) - 1
 
         # Compute SVD on the standardised residuals
-        self.U_, self.s_, self.V_ = svd.compute_svd(
+        self.svd_ = svd.compute_svd(
             X=S,
             n_components=self.n_components,
             n_iter=self.n_iter,
@@ -72,9 +73,6 @@ class CA(base.BaseEstimator, base.TransformerMixin):
 
         return self
 
-    def _check_is_fitted(self):
-        utils.validation.check_is_fitted(self, "total_inertia_")
-
     def transform(self, X):
         """Computes the row principal coordinates of a dataset.
 
@@ -83,48 +81,71 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         supplementary data.
 
         """
-        self._check_is_fitted()
         if self.check_input:
-            utils.check_array(X)
+            pass
+            # utils.check_array(X)
         return self.row_coordinates(X)
 
     @property
+    @utils.check_is_fitted
     def eigenvalues_(self):
-        """The eigenvalues associated with each principal component."""
-        self._check_is_fitted()
-
-        return np.square(self.s_).tolist()
+        """Returns the eigenvalues associated with each principal component."""
+        return np.square(self.svd_.s)
 
     @property
-    def explained_inertia_(self):
-        """The percentage of explained inertia per principal component."""
-        self._check_is_fitted()
-        return [eig / self.total_inertia_ for eig in self.eigenvalues_]
+    @utils.check_is_fitted
+    def percentage_of_variance_(self):
+        """Returns the percentage of explained inertia per principal component."""
+        return self.eigenvalues_ / self.total_inertia_
+
+    @property
+    @utils.check_is_fitted
+    def cumulative_percentage_of_variance_(self):
+        """Returns the percentage of explained inertia per principal component."""
+        return np.cumsum(self.percentage_of_variance_)
+
+    @property
+    @utils.check_is_fitted
+    def eigenvalues_summary(self):
+        """Return a summary of the eigenvalues and their importance."""
+        summary = pd.DataFrame(
+            {
+                "eigenvalue": self.eigenvalues_,
+                r"% of variance": self.percentage_of_variance_,
+                r"% of variance (cumulative)": self.cumulative_percentage_of_variance_,
+            }
+        ).style.format(
+            {
+                "eigenvalue": "{:,.3f}".format,
+                "% of variance": "{:,.2%}".format,
+                "% of variance (cumulative)": "{:,.2%}".format,
+            }
+        )
+        summary.index.name = "component"
+        return summary
 
     @property
     def F(self):
         """Return the row scores on each principal component."""
-        self._check_is_fitted()
         return pd.DataFrame(
-            np.diag(self.row_masses_**-0.5) @ self.U_ @ np.diag(self.s_),
+            np.diag(self.row_masses_**-0.5) @ self.svd_.U @ np.diag(self.svd_.s),
             index=self.row_masses_.index,
-            columns=pd.RangeIndex(0, len(self.s_)),
+            columns=pd.RangeIndex(0, len(self.svd_.s)),
         )
 
     @property
     def G(self):
         """Return the column scores on each principal component."""
         return pd.DataFrame(
-            np.diag(self.col_masses_**-0.5) @ self.V_.T @ np.diag(self.s_),
+            np.diag(self.col_masses_**-0.5) @ self.svd_.V.T @ np.diag(self.svd_.s),
             index=self.col_masses_.index,
-            columns=pd.RangeIndex(0, len(self.s_)),
+            columns=pd.RangeIndex(0, len(self.svd_.s)),
         )
 
     def row_coordinates(self, X):
         """The row principal coordinates."""
-        self._check_is_fitted()
 
-        _, row_names, _, _ = util.make_labels_and_names(X)
+        _, row_names, _, _ = utils.make_labels_and_names(X)
 
         if isinstance(X, pd.DataFrame):
             try:
@@ -142,13 +163,12 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = X / X.sum(axis=1)
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.col_masses_.to_numpy() ** -0.5) @ self.V_.T,
+            data=X @ sparse.diags(self.col_masses_.to_numpy() ** -0.5) @ self.svd_.V.T,
             index=row_names,
         )
 
     def column_coordinates(self, X):
         """The column principal coordinates."""
-        self._check_is_fitted()
 
         _, _, _, col_names = util.make_labels_and_names(X)
 
@@ -169,7 +189,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             X = X.T / X.T.sum(axis=1)
 
         return pd.DataFrame(
-            data=X @ sparse.diags(self.row_masses_.to_numpy() ** -0.5) @ self.U_,
+            data=X @ sparse.diags(self.row_masses_.to_numpy() ** -0.5) @ self.svd_.U,
             index=col_names,
         )
 
@@ -181,7 +201,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         It's usual to ignore score below 1/n_row.
         """
         F = self.F
-        cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.s_**2)
+        cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.svd_.s**2)
         return pd.DataFrame(cont_r.values, index=self.row_masses_.index)
 
     def column_contributions(self):
@@ -194,7 +214,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         It's usual to ignore score below 1/n_column.
         """
         G = self.G
-        cont_c = (np.diag(self.col_masses_) @ (G**2)).div(self.s_**2)
+        cont_c = (np.diag(self.col_masses_) @ (G**2)).div(self.svd_.s**2)
         return pd.DataFrame(cont_c.values, index=self.col_masses_.index)
 
     def row_cos2(self):
@@ -233,8 +253,6 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         **kwargs
     ):
         """Plot the principal coordinates."""
-
-        self._check_is_fitted()
 
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)
