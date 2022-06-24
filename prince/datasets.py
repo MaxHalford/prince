@@ -2,7 +2,7 @@ import pathlib
 import pandas as pd
 
 
-DATASETS = pathlib.Path(__file__).parent / "datasets"
+DATASETS_DIR = pathlib.Path(__file__).parent / "datasets"
 
 
 def load_energy_mix(year=2019, normalize=True):
@@ -24,7 +24,7 @@ def load_energy_mix(year=2019, normalize=True):
     """
 
     df = (
-        pd.read_csv(DATASETS / "per-capita-energy-stacked.csv")
+        pd.read_csv(DATASETS_DIR / "per-capita-energy-stacked.csv")
         .query("Year == @year")
         .drop(columns=["Code", "Year"])
         .rename(columns={"Entity": "Country"})
@@ -39,7 +39,7 @@ def load_energy_mix(year=2019, normalize=True):
 
 def load_decathlon():
     """The Decathlon dataset from FactoMineR."""
-    decathlon = pd.read_csv(DATASETS / "decathlon.csv")
+    decathlon = pd.read_csv(DATASETS_DIR / "decathlon.csv")
     decathlon.columns = ["athlete", *map(str.lower, decathlon.columns[1:])]
     decathlon.athlete = decathlon.athlete.apply(str.title)
     decathlon = decathlon.set_index(["competition", "athlete"])
@@ -56,7 +56,7 @@ def load_french_elections():
     [on Wikipedia](https://www.wikiwand.com/fr/Région_française).
 
     """
-    dataset = pd.read_csv(DATASETS / "02-resultats-par-region.csv")
+    dataset = pd.read_csv(DATASETS_DIR / "02-resultats-par-region.csv")
     cont = dataset.pivot("reg_name", "cand_nom", "cand_nb_voix")
     cont["Abstention"] = dataset.groupby("reg_name")["abstention_nb"].min()
     cont["Blank"] = dataset.groupby("reg_name")["blancs_nb"].min()
@@ -64,3 +64,8 @@ def load_french_elections():
     cont.index.name = "region"
     cont.columns.name = "candidate"
     return cont
+
+
+def load_punctuation_marks():
+    """Punctuation marks of six French writers."""
+    return pd.read_csv(DATASETS_DIR / "punctuation_marks.csv", index_col="author")

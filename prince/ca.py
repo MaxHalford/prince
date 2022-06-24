@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from sklearn import base
 from sklearn.utils import check_array
 
 from prince import plot
@@ -11,17 +10,15 @@ from prince import utils
 from prince import svd
 
 
-class CA(base.BaseEstimator, base.TransformerMixin):
+class CA:
     def __init__(
         self,
-        n_components=2,
         n_iter=10,
         copy=True,
         check_input=True,
         random_state=None,
         engine="sklearn",
     ):
-        self.n_components = n_components
         self.n_iter = n_iter
         self.copy = copy
         self.check_input = check_input
@@ -62,7 +59,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         # Compute SVD on the standardised residuals
         self.svd_ = svd.compute_svd(
             X=S,
-            n_components=self.n_components,
+            n_components=min(X.shape),
             n_iter=self.n_iter,
             random_state=self.random_state,
             engine=self.engine,
@@ -72,19 +69,6 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         self.total_inertia_ = np.einsum("ij,ji->", S, S.T)
 
         return self
-
-    def transform(self, X):
-        """Computes the row principal coordinates of a dataset.
-
-        Same as calling `row_coordinates`. In most cases you should be using the same
-        dataset as you did when calling the `fit` method. You might however also want to included
-        supplementary data.
-
-        """
-        if self.check_input:
-            pass
-            # utils.check_array(X)
-        return self.row_coordinates(X)
 
     @property
     @utils.check_is_fitted
@@ -167,10 +151,37 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             index=row_names,
         )
 
+    def row_cos2(self):
+        """Return the cos2 for each row against the dimensions.
+
+        The cos2 value gives an indicator of the accuracy of the row projection on the dimension.
+
+        Values above 0.5 usually means that the row is relatively accurately well projected onto that dimension. Its often
+        used to identify which factor/dimension is important for a given element as the cos2 can be interpreted as the proportion
+        of the variance of the element attributed to a particular factor.
+
+        """
+        return (self.F**2).div(np.diag(self.F @ self.F.T), axis=0)
+
+        # return (
+        #     (ca.row_coordinates(elections) ** 2).div(np.diag(ca.F @ ca.F.T), axis=0)
+        # ).head()
+
+    def row_contributions(self):
+        """Return the contributions of each row to the dimension's inertia.
+
+        Contributions are returned as a score between 0 and 1 representing how much the row contributes to
+        the dimension's inertia. The sum of contributions on each dimensions should sum to 1.
+        It's usual to ignore score below 1/n_row.
+        """
+        F = self.F
+        cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.eigenvalues_)
+        return pd.DataFrame(cont_r.values, index=self.row_masses_.index)
+
     def column_coordinates(self, X):
         """The column principal coordinates."""
 
-        _, _, _, col_names = util.make_labels_and_names(X)
+        _, _, _, col_names = utils.make_labels_and_names(X)
 
         if isinstance(X, pd.DataFrame):
             is_sparse = X.dtypes.apply(pd.api.types.is_sparse).all()
@@ -193,16 +204,16 @@ class CA(base.BaseEstimator, base.TransformerMixin):
             index=col_names,
         )
 
-    def row_contributions(self):
-        """Return the contributions of each row to the dimension's inertia.
+    def column_cos2(self):
+        """Return the cos2 for each column against the dimensions.
 
-        Contributions are returned as a score between 0 and 1 representing how much the row contributes to
-        the dimension's inertia. The sum of contributions on each dimensions should sum to 1.
-        It's usual to ignore score below 1/n_row.
+        The cos2 value gives an indicator of the accuracy of the column projection on the dimension.
+
+        Values above 0.5 usually means that the column is relatively accurately well projected onto that dimension. Its often
+        used to identify which factor/dimension is important for a given element as the cos2 can be interpreted as the proportion
+        of the variance of the element attributed to a particular factor.
         """
-        F = self.F
-        cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.svd_.s**2)
-        return pd.DataFrame(cont_r.values, index=self.row_masses_.index)
+        return (self.G**2).div(np.diag(self.G @ self.G.T), axis=0)
 
     def column_contributions(self):
         """Return the contributions of each column to the dimension's inertia.
@@ -214,32 +225,8 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         It's usual to ignore score below 1/n_column.
         """
         G = self.G
-        cont_c = (np.diag(self.col_masses_) @ (G**2)).div(self.svd_.s**2)
+        cont_c = (np.diag(self.col_masses_) @ (G**2)).div(self.eigenvalues_)
         return pd.DataFrame(cont_c.values, index=self.col_masses_.index)
-
-    def row_cos2(self):
-        """Return the cos2 for each row against the dimensions.
-
-        The cos2 value gives an indicator of the accuracy of the row projection on the dimension.
-
-        Values above 0.5 usually means that the row is relatively accurately well projected onto that dimension. Its often
-        used to identify which factor/dimension is important for a given element as the cos2 can be interpreted as the proportion
-        of the variance of the element attributed to a particular factor.
-        """
-        F = self.F
-        return (F**2).div(np.diag(F @ F.T) ** 2, axis=0)
-
-    def column_cos2(self):
-        """Return the cos2 for each column against the dimensions.
-
-        The cos2 value gives an indicator of the accuracy of the column projection on the dimension.
-
-        Values above 0.5 usually means that the column is relatively accurately well projected onto that dimension. Its often
-        used to identify which factor/dimension is important for a given element as the cos2 can be interpreted as the proportion
-        of the variance of the element attributed to a particular factor.
-        """
-        G = self.G
-        return (G**2).div(np.diag(G @ G.T) ** 2, axis=0)
 
     def plot_coordinates(
         self,
@@ -261,7 +248,7 @@ class CA(base.BaseEstimator, base.TransformerMixin):
         ax = plot.stylize_axis(ax)
 
         # Get labels and names
-        row_label, row_names, col_label, col_names = util.make_labels_and_names(X)
+        row_label, row_names, col_label, col_names = utils.make_labels_and_names(X)
 
         # Plot row principal coordinates
         row_coords = self.row_coordinates(X)

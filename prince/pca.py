@@ -243,9 +243,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     def active_row_coordinates(self):
         coords = pd.DataFrame(
             (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
-            index=self.row_contributions.index
-            if hasattr(self, "row_contributions")
-            else None,
+            index=self.row_contributions.index,
         )
         coords.columns.name = "component"
         return coords

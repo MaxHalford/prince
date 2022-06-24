@@ -39,6 +39,10 @@ Prince is a library for doing [factor analysis](https://www.wikiwand.com/en/Fact
 - [Installation](#installation)
 - [Usage](#usage)
   - [Guidelines](#guidelines)
+    - [PCA](#pca)
+    - [CA](#ca)
+    - [MCA](#mca)
+    - [MFA](#mfa)
   - [Principal component analysis (PCA)](#principal-component-analysis-pca)
   - [Correspondence analysis (CA)](#correspondence-analysis-ca)
   - [Multiple correspondence analysis (MCA)](#multiple-correspondence-analysis-mca)
@@ -92,11 +96,22 @@ You are supposed to use each method depending on your situation:
 
 The next subsections give an overview of each method along with usage information. The following papers give a good overview of the field of factor analysis if you want to go deeper:
 
+#### PCA
+
+- [Principal component analysis -- Hervé Abdi & Lynne J. Williams](https://personal.utdallas.edu/~herve/abdi-awPCA2010.pdf)
 - [A Tutorial on Principal Component Analysis](https://arxiv.org/pdf/1404.1100.pdf)
+
+#### CA
+
 - [Theory of Correspondence Analysis](http://statmath.wu.ac.at/courses/CAandRelMeth/caipA.pdf)
-- [Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions](https://arxiv.org/pdf/0909.4061.pdf)
+- [Correspondence analysis -- Hervé Abdi & Michael Béra](https://cedric.cnam.fr/fichiers/art_3066.pdf)
+
+#### MCA
+
 - [Computation of Multiple Correspondence Analysis, with code in R](https://core.ac.uk/download/pdf/6591520.pdf)
-- [Singular Value Decomposition Tutorial](https://davetang.org/file/Singular_Value_Decomposition_Tutorial.pdf)
+
+#### MFA
+
 - [Multiple Factor Analysis](https://www.utdallas.edu/~herve/Abdi-MFA2007-pretty.pdf)
 
 ### Principal component analysis (PCA)
