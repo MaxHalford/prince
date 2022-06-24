@@ -16,7 +16,7 @@ from prince import utils
 
 def select_active_variables(method):
     @functools.wraps(method)
-    def _impl(self, X, *method_args, **method_kwargs):
+    def _impl(self, X=None, *method_args, **method_kwargs):
         if hasattr(self, "feature_names_in_") and isinstance(X, pd.DataFrame):
             return method(
                 self, X[self.feature_names_in_], *method_args, **method_kwargs
@@ -87,7 +87,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         # X = X.to_numpy(dtype=np.float64, copy=self.copy)
         # self._check_input(X)
 
-        # Scale data
+        # Scale datarow_contributions
         if self.rescale_with_mean or self.rescale_with_std:
             self.scaler_ = preprocessing.StandardScaler(
                 copy=self.copy,
@@ -129,7 +129,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
                 ]
             )
         self.column_coordinates_.columns.name = "component"
-        self.row_contributions_ = (self.active_row_coordinates**2 / len(X)).div(
+        self.row_contributions_ = (self.row_coordinates() ** 2 / len(X)).div(
             self.eigenvalues_, axis=1
         )
         self.row_contributions_.index = X.index
@@ -204,7 +204,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
     @utils.check_is_fitted
     @select_active_variables
-    def row_coordinates(self, X):
+    def row_coordinates(self, X: pd.DataFrame = None):
         """Returns the row principal coordinates.
 
         The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
@@ -216,6 +216,20 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         Loadings
 
         """
+
+        # Return coordinates of active rows if X is not passed
+        if X is None:
+            coords = pd.DataFrame(
+                (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
+                # HACK: there's a circular dependency between row_contributions_
+                # and active_row_coordinates in self.__init__
+                index=self.row_contributions_.index
+                if hasattr(self, "row_contributions_")
+                else None,
+            )
+            coords.columns.name = "component"
+            return coords
+
         index = X.index if isinstance(X, pd.DataFrame) else None
         X = self._scale(X)
         X = np.array(X, copy=self.copy)
@@ -238,16 +252,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             return rc.to_numpy()
         return rc
 
-    @property
-    @utils.check_is_fitted
-    def active_row_coordinates(self):
-        coords = pd.DataFrame(
-            (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
-            index=self.row_contributions.index,
-        )
-        coords.columns.name = "component"
-        return coords
-
     @utils.check_is_fitted
     def fit_transform(self, X, as_array=False):
         """A faster way to fit/transform.
@@ -259,7 +263,10 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         """
         self.fit(X)
-        return self.active_row_coordinates
+        rc = self.row_coordinates()
+        if as_array:
+            return rc.to_numpy()
+        return rc
 
     @utils.check_is_fitted
     def inverse_transform(self, X):
@@ -282,7 +289,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         return pd.DataFrame(data=X_inv, index=index)
 
     @utils.check_is_fitted
-    def row_standard_coordinates(self, X):
+    def row_standard_coordinates(self, X: pd.DataFrame = None):
         """Returns the row standard coordinates.
 
         The row standard coordinates are obtained by dividing each row principal coordinate by it's
