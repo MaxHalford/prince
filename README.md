@@ -142,9 +142,9 @@ The available parameters are:
 
 - `n_components`: the number of components that are computed. You only need two if your intention is to make a chart.
 - `n_iter`: the number of iterations used for computing the SVD
-- `rescale_with_mean`: whether to substract each column's mean
+- `rescale_with_mean`: whether to subtract each column's mean
 - `rescale_with_std`: whether to divide each column by it's standard deviation
-- `copy`: if `False` then the computations will be done inplace which can have possible side-effects on the input data
+- `copy`: if `False` then the computations will be done in place which can have possible side-effects on the input data
 - `engine`: what SVD engine to use (should be one of `['auto', 'fbpca', 'sklearn']`)
 - `random_state`: controls the randomness of the SVD results.
 
@@ -402,7 +402,7 @@ Like the `CA` class, the `MCA` class also has `plot_coordinates` method.
   <img src="images/mca_coordinates.svg" />
 </div>
 
-The optional parameter `row_groups` takes a list of labels for coloring the observations. This list must have the same lenght than the amount of observations. If no list of labels is passed, then all observations are grey.
+The optional parameter `row_groups` takes a list of labels for coloring the observations. This list must have the same length than the amount of observations. If no list of labels is passed, then all observations are grey.
 
 ```python
 >>> groups = ['CAT_A']*10+['CAT_B']*9
@@ -553,7 +553,7 @@ Wine 6 -0.688623 -0.306527 -1.082723 -0.243122 -1.622541  2.278372
 
 ```
 
-Likewhise you can visualize the partial row coordinates with the `plot_partial_row_coordinates` method.
+Likewise you can visualize the partial row coordinates with the `plot_partial_row_coordinates` method.
 
 ```python
 >>> ax = mfa.plot_partial_row_coordinates(
