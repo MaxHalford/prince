@@ -12,6 +12,7 @@ pandas = "^1.4.1"
 fbpca = "^1.0"
 plotly = "^5.8.0"
 nbformat = "^5.4.0"
+rpy2 = "^3.5.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"

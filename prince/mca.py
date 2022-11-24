@@ -1,5 +1,4 @@
 """Multiple Correspondence Analysis (MCA)"""
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn import utils
@@ -10,7 +9,6 @@ from . import plot
 
 
 class MCA(ca.CA):
-
     def fit(self, X, y=None, K=None):
         """Fit the MCA for the dataframe X.
 
@@ -29,12 +27,14 @@ class MCA(ca.CA):
         if K is None:
             self.K = X.shape[1]
         elif X.shape[1] < K:
-            raise ValueError(f"K ({K}) can't be higher than number of columns ({X.shape[1]})")
+            raise ValueError(
+                f"K ({K}) can't be higher than number of columns ({X.shape[1]})"
+            )
         else:
             self.K = K
 
         # One-hot encode the data
-        self.enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
+        self.enc = OneHotEncoder(handle_unknown="ignore", sparse=False)
         self.enc.fit(X)
         one_hot = self.enc.transform(X)
 
@@ -58,18 +58,18 @@ class MCA(ca.CA):
 
         K = self.K
 
-        return np.array([
-            (K / (K - 1.) * (s - 1. / K)) ** 2
-            if s > 1. / K else 0
-            for s in np.square(self.s_)
-        ])
-
+        return np.array(
+            [
+                (K / (K - 1.0) * (s - 1.0 / K)) ** 2 if s > 1.0 / K else 0
+                for s in np.square(self.s_)
+            ]
+        )
 
     @property
     def explained_inertia_(self):
         """The percentage of explained inertia per principal component.
-        
-        This applies the Greenacre correction to compensate for overestimation of 
+
+        This applies the Greenacre correction to compensate for overestimation of
         contribution.
         """
         self._check_is_fitted()
@@ -77,16 +77,16 @@ class MCA(ca.CA):
         J = self.J
 
         # Average inertia on the diagonal of the Burt Matrix (JxJ)
-        # s_ are the eigenvalues of the residials matrix. Square to obtain the eigenvalues of the Indicator matrix (IxJ), 
+        # s_ are the eigenvalues of the residials matrix. Square to obtain the eigenvalues of the Indicator matrix (IxJ),
         # and square again for the eigenvalues of the Burt Matrix (JxJ)
-        Theta = (K / (K - 1.)) * (np.sum(np.square(self.s_)**2) - (J-K)/(K**2))
+        Theta = (K / (K - 1.0)) * (np.sum(np.square(self.s_) ** 2) - (J - K) / (K**2))
 
         return self.eigenvalues_ / Theta
 
     def row_coordinates(self, X):
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
-        
+
         return super().row_coordinates(self.enc.transform(X))
 
     def column_coordinates(self, X):
@@ -101,11 +101,23 @@ class MCA(ca.CA):
             utils.check_array(X, dtype=[str, np.number])
         return self.row_coordinates(X)
 
-    def plot_coordinates(self, X, ax=None, figsize=(6, 6), x_component=0, y_component=1,
-                         show_row_points=True, row_points_size=10, row_points_alpha=0.6,
-                         row_groups=None, show_row_labels=False,
-                         show_column_points=True, column_points_size=30, show_column_labels=False,
-                         legend_n_cols=1):
+    def plot_coordinates(
+        self,
+        X,
+        ax=None,
+        figsize=(6, 6),
+        x_component=0,
+        y_component=1,
+        show_row_points=True,
+        row_points_size=10,
+        row_points_alpha=0.6,
+        row_groups=None,
+        show_row_labels=False,
+        show_column_points=True,
+        column_points_size=30,
+        show_column_labels=False,
+        legend_n_cols=1,
+    ):
         """Plot row and column principal coordinates.
 
         Parameters:
@@ -141,16 +153,16 @@ class MCA(ca.CA):
             row_coords = self.row_coordinates(X)
 
             if show_row_points:
-                
+
                 if row_groups:
-                    row_coords['groups'] = row_groups
-                    for group, group_row_coords in row_coords.groupby('groups'):
+                    row_coords["groups"] = row_groups
+                    for group, group_row_coords in row_coords.groupby("groups"):
                         ax.scatter(
                             group_row_coords.iloc[:, x_component],
                             group_row_coords.iloc[:, y_component],
                             s=row_points_size,
                             label=group,
-                            alpha=row_points_alpha
+                            alpha=row_points_alpha,
                         )
 
                 else:
@@ -159,8 +171,8 @@ class MCA(ca.CA):
                         row_coords.iloc[:, y_component],
                         s=row_points_size,
                         label=None,
-                        c='grey',
-                        alpha=row_points_alpha
+                        c="grey",
+                        alpha=row_points_alpha,
                     )
 
             if show_row_labels:
@@ -174,13 +186,15 @@ class MCA(ca.CA):
             x = col_coords[x_component]
             y = col_coords[y_component]
 
-            prefixes = col_coords.index.str.split('_').map(lambda x: x[0])
+            prefixes = col_coords.index.str.split("_").map(lambda x: x[0])
 
             for prefix in prefixes.unique():
                 mask = prefixes == prefix
 
                 if show_column_points:
-                    ax.scatter(x[mask], y[mask], s=column_points_size, marker='X', label=prefix)
+                    ax.scatter(
+                        x[mask], y[mask], s=column_points_size, marker="X", label=prefix
+                    )
 
                 if show_column_labels:
                     for i, label in enumerate(col_coords[mask].index):
@@ -190,9 +204,13 @@ class MCA(ca.CA):
             ax.legend(ncol=legend_n_cols)
 
         # Text
-        ax.set_title('Row and column principal coordinates')
+        ax.set_title("Row and column principal coordinates")
         ei = self.explained_inertia_
-        ax.set_xlabel('Component {} ({:.2f}% inertia)'.format(x_component, 100 * ei[x_component]))
-        ax.set_ylabel('Component {} ({:.2f}% inertia)'.format(y_component, 100 * ei[y_component]))
+        ax.set_xlabel(
+            "Component {} ({:.2f}% inertia)".format(x_component, 100 * ei[x_component])
+        )
+        ax.set_ylabel(
+            "Component {} ({:.2f}% inertia)".format(y_component, 100 * ei[y_component])
+        )
 
         return ax

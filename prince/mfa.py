@@ -1,8 +1,6 @@
 """Multiple Factor Analysis (MFA)"""
 import itertools
 
-from matplotlib import markers
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn import utils
