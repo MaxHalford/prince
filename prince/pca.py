@@ -172,7 +172,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
     @utils.check_is_fitted
     def percentage_of_variance_(self):
         """Returns the percentage of explained inertia per principal component."""
-        return self.eigenvalues_ / self.total_inertia_
+        return 100 * self.eigenvalues_ / self.total_inertia_
 
     @property
     @utils.check_is_fitted
@@ -182,23 +182,31 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
     @property
     @utils.check_is_fitted
-    def eigenvalues_summary(self):
+    def _eigenvalues_summary(self):
         """Return a summary of the eigenvalues and their importance."""
-        summary = pd.DataFrame(
+        return pd.DataFrame(
             {
                 "eigenvalue": self.eigenvalues_,
                 r"% of variance": self.percentage_of_variance_,
                 r"% of variance (cumulative)": self.cumulative_percentage_of_variance_,
             }
-        ).style.format(
+        )
+
+    @property
+    def eigenvalues_summary(self):
+        """Return a summary of the eigenvalues and their importance."""
+        summary = self._eigenvalues_summary
+        summary["% of variance"] /= 100
+        summary["% of variance (cumulative)"] /= 100
+        pretty = summary.style.format(
             {
                 "eigenvalue": "{:,.3f}".format,
                 "% of variance": "{:,.2%}".format,
                 "% of variance (cumulative)": "{:,.2%}".format,
             }
         )
-        summary.index.name = "component"
-        return summary
+        pretty.index.name = "component"
+        return pretty
 
     @utils.check_is_fitted
     @select_active_variables
