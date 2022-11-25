@@ -96,7 +96,12 @@ class PCATestSuite:
         P = self.pca.column_cosine_similarities_
         if self.sup_cols:
             P = P.drop(["rank", "points"])
-        np.testing.assert_allclose(F.abs(), P.abs())
+        np.testing.assert_allclose(F, P)
+
+    def test_col_contrib(self):
+        F = load_df_from_R("pca$var$contrib")
+        P = self.pca.column_contributions_
+        np.testing.assert_allclose(F, P * 100)
 
 
 class TestPCANoSup(PCATestSuite):
