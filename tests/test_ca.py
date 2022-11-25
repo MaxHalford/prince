@@ -1,45 +1,52 @@
-"""Tests for correspondence analysis. The hair/eye data comes from section
-17.2.3 of http://ce.aut.ac.ir/~shiry/lecture/Advanced%20Machine%20Learning/Manifold_Modern_Multivariate%20Statistical%20Techniques%20-%20Regres.pdf
-"""
-import unittest
-
+import tempfile
+import numpy as np
 import pandas as pd
-
 import prince
+import rpy2.rinterface_lib
+from rpy2.robjects import r as R
+import sklearn.utils.estimator_checks
+import sklearn.utils.validation
+
+from tests import load_df_from_R
 
 
-class TestCA(unittest.TestCase):
+class CATestSuite:
+    sup_rows = False
+    sup_cols = False
 
-    def setUp(self):
-        self.X = pd.DataFrame(
-            data=[
-                [326, 38, 241, 110, 3],
-                [688, 116, 584, 188, 4],
-                [343, 84, 909, 412, 26],
-                [98, 48, 403, 681, 85]
-            ],
-            columns=pd.Series(['Fair', 'Red', 'Medium', 'Dark', 'Black']).rename('Hair color'),
-            index=pd.Series(['Blue', 'Light', 'Medium', 'Dark']).rename('Eye color')
-        )
+    @classmethod
+    def setup_class(cls):
 
-    def test_fit_numpy_array(self):
-        ca = prince.CA(n_components=2)
-        self.assertTrue(isinstance(ca.fit(self.X.values), prince.CA))
+        # Fit Prince
+        cls.dataset = prince.datasets.load_french_elections()
+        active = cls.dataset.copy()
+        cls.ca = prince.CA()
+        cls.ca.fit(active)
 
-    def test_transform_numpy_array(self):
-        ca = prince.CA(n_components=2)
-        self.assertTrue(isinstance(ca.fit(self.X.values).transform(self.X.values), pd.DataFrame))
+        # Fit FactoMineR
+        R("library('FactoMineR')")
+        with tempfile.NamedTemporaryFile() as fp:
+            cls.dataset.to_csv(fp)
+            R(f"dataset <- read.csv('{fp.name}', row.names=1)")
 
-    def test_fit_pandas_dataframe(self):
-        ca = prince.CA(n_components=2)
-        self.assertTrue(isinstance(ca.fit(self.X), prince.CA))
+        R(f"ca <- CA(dataset, graph=F)")
 
-    def test_transform_pandas_dataframe(self):
-        ca = prince.CA(n_components=2)
-        self.assertTrue(isinstance(ca.fit(self.X).transform(self.X), pd.DataFrame))
+    def test_whatever(self):
+        assert True
 
-    def test_negative_input(self):
-        ca = prince.CA()
-        self.X.iloc[0, 0] = -1
-        with self.assertRaises(ValueError):
-            ca.fit(self.X)
+
+class TestCANoSup(CATestSuite):
+    ...
+
+
+class TestCASupRows(CATestSuite):
+    sup_rows = True
+
+
+class TestCASupCols(CATestSuite):
+    sup_cols = True
+
+
+class TestCASupRowsSupCols(CATestSuite):
+    sup_rows = True
+    sup_cols = True

@@ -3,14 +3,10 @@ import pandas as pd
 import prince
 import rpy2.rinterface_lib
 import rpy2.robjects as robjects
+import sklearn.utils.estimator_checks
 import sklearn.utils.validation
 
-
-def load_df_from_R(code):
-    df = robjects.r(code)
-    if isinstance(df.names, rpy2.rinterface_lib.sexp.NULLType):
-        return pd.DataFrame(np.array(df))
-    return pd.DataFrame(np.array(df), index=df.names[0], columns=df.names[1])
+from tests import load_df_from_R
 
 
 class PCATestSuite:

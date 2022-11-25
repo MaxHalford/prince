@@ -57,7 +57,7 @@ def load_french_elections():
 
     """
     dataset = pd.read_csv(DATASETS_DIR / "02-resultats-par-region.csv")
-    cont = dataset.pivot("reg_name", "cand_nom", "cand_nb_voix")
+    cont = dataset.pivot(index="reg_name", columns="cand_nom", values="cand_nb_voix")
     cont["Abstention"] = dataset.groupby("reg_name")["abstention_nb"].min()
     cont["Blank"] = dataset.groupby("reg_name")["blancs_nb"].min()
     cont.columns = [c.title() for c in cont.columns]
