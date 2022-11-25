@@ -25,7 +25,7 @@ class PCATestSuite:
         active = cls.dataset.copy()
         if cls.sup_rows:
             active = active.query('competition == "Decastar"')
-        n_components = len(active.columns)
+        n_components = 5
         cls.pca = prince.PCA(n_components=n_components)
         cls.pca.fit(
             active, supplementary_columns=["rank", "points"] if cls.sup_cols else None
@@ -83,6 +83,13 @@ class PCATestSuite:
         F = load_df_from_R("pca$ind$contrib")
         P = self.pca.row_contributions_
         np.testing.assert_allclose(F, P * 100)
+
+    def test_col_coords(self):
+        F = load_df_from_R("pca$var$coord")
+        P = self.pca.column_coordinates_
+        if self.sup_cols:
+            P = P.drop(["rank", "points"])
+        np.testing.assert_allclose(F.abs(), P.abs())
 
 
 class TestPCANoSup(PCATestSuite):
