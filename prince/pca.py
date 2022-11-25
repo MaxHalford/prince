@@ -335,12 +335,12 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
     @property
     @utils.check_is_fitted
-    def column_cosine_similarities(self):
+    def column_cosine_similarities_(self):
         return self.column_correlations**2
 
     @property
     @utils.check_is_fitted
-    def column_contributions(self):
+    def column_contributions_(self):
         return (self.column_coordinates_.loc[self.feature_names_in_] ** 2).div(
             self.eigenvalues_, axis=1
         )
