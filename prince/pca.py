@@ -66,11 +66,11 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.engine = engine
         self.as_array = as_array
 
-    def fit(self, X, y=None, supplementary_variables=None):
+    def fit(self, X, y=None, supplementary_columns=None):
 
-        supplementary_variables = supplementary_variables or []
+        supplementary_columns = supplementary_columns or []
         active_variables = X.columns.difference(
-            supplementary_variables, sort=False
+            supplementary_columns, sort=False
         ).tolist()
 
         # https://scikit-learn.org/stable/developers/develop.html#universal-attributes
@@ -78,10 +78,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
         self.n_features_in_ = len(active_variables)
 
         X_active = X[active_variables].to_numpy(dtype=np.float64, copy=self.copy)
-        if supplementary_variables:
-            X_sup = X[supplementary_variables].to_numpy(
-                dtype=np.float64, copy=self.copy
-            )
+        if supplementary_columns:
+            X_sup = X[supplementary_columns].to_numpy(dtype=np.float64, copy=self.copy)
         # X = X.to_numpy(dtype=np.float64, copy=self.copy)
         # self._check_input(X)
 
@@ -95,7 +93,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             X_active = self.scaler_.transform(
                 X_active
             )  # TODO: maybe fit_transform is faster
-            if supplementary_variables:
+            if supplementary_columns:
                 X_sup = preprocessing.StandardScaler(
                     copy=self.copy,
                     with_mean=self.rescale_with_mean,
@@ -116,13 +114,13 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
             data=self.svd_.V.T * self.eigenvalues_**0.5,
             index=active_variables,
         )
-        if supplementary_variables:
+        if supplementary_columns:
             self.column_coordinates_ = pd.concat(
                 [
                     self.column_coordinates_,
                     pd.DataFrame(
                         data=X_sup.T @ (self.svd_.U / len(self.svd_.U) ** 0.5),
-                        index=supplementary_variables,
+                        index=supplementary_columns,
                     ),
                 ]
             )
