@@ -72,12 +72,17 @@ class PCATestSuite:
         P = self.pca.row_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
-    def test_cos2(self):
+    def test_row_cos2(self):
         F = load_df_from_R("pca$ind$cos2")
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$cos2")))
         P = self.pca.row_cosine_similarities(self.dataset)
-        np.testing.assert_allclose(F.abs(), P.abs())
+        np.testing.assert_allclose(F, P)
+
+    def test_row_contrib(self):
+        F = load_df_from_R("pca$ind$contrib")
+        P = self.pca.row_contributions_
+        np.testing.assert_allclose(F, P * 100)
 
 
 class TestPCANoSup(PCATestSuite):
