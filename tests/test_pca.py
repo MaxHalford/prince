@@ -117,4 +117,5 @@ class TestPCASupCols(PCATestSuite):
 
 
 class TestPCASupRowsSupCols(PCATestSuite):
+    sup_rows = True
     sup_cols = True
