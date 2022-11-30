@@ -9,7 +9,7 @@ from prince import utils
 from prince import svd
 
 
-class CA:
+class CA(utils.EigenvaluesMixin):
     def __init__(
         self,
         n_iter=10,
@@ -68,44 +68,6 @@ class CA:
         self.total_inertia_ = np.einsum("ij,ji->", S, S.T)
 
         return self
-
-    @property
-    @utils.check_is_fitted
-    def eigenvalues_(self):
-        """Returns the eigenvalues associated with each principal component."""
-        return np.square(self.svd_.s)
-
-    @property
-    @utils.check_is_fitted
-    def percentage_of_variance_(self):
-        """Returns the percentage of explained inertia per principal component."""
-        return self.eigenvalues_ / self.total_inertia_
-
-    @property
-    @utils.check_is_fitted
-    def cumulative_percentage_of_variance_(self):
-        """Returns the percentage of explained inertia per principal component."""
-        return np.cumsum(self.percentage_of_variance_)
-
-    @property
-    @utils.check_is_fitted
-    def eigenvalues_summary(self):
-        """Return a summary of the eigenvalues and their importance."""
-        summary = pd.DataFrame(
-            {
-                "eigenvalue": self.eigenvalues_,
-                r"% of variance": self.percentage_of_variance_,
-                r"% of variance (cumulative)": self.cumulative_percentage_of_variance_,
-            }
-        ).style.format(
-            {
-                "eigenvalue": "{:,.3f}".format,
-                "% of variance": "{:,.2%}".format,
-                "% of variance (cumulative)": "{:,.2%}".format,
-            }
-        )
-        summary.index.name = "component"
-        return summary
 
     @property
     def F(self):

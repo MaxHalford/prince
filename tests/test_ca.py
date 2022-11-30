@@ -31,8 +31,14 @@ class CATestSuite:
 
         R(f"ca <- CA(dataset, graph=F)")
 
-    def test_whatever(self):
-        assert True
+    def test_eigenvalues(self):
+        F = load_df_from_R("ca$eig")
+        P = self.ca._eigenvalues_summary
+        np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
+        np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
+        np.testing.assert_allclose(
+            F["cumulative percentage of variance"], P["% of variance (cumulative)"]
+        )
 
 
 class TestCANoSup(CATestSuite):
