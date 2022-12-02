@@ -90,6 +90,11 @@ class CATestSuite:
         P = self.ca.column_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
+    def test_col_contrib(self):
+        F = load_df_from_R("ca$col$contrib")
+        P = self.ca.column_contributions_
+        np.testing.assert_allclose(F, P * 100)
+
 
 class TestCANoSup(CATestSuite):
     ...

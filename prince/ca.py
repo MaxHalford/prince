@@ -212,7 +212,8 @@ class CA(utils.EigenvaluesMixin):
         """
         return (self.G**2).div(np.diag(self.G @ self.G.T), axis=0)
 
-    def column_contributions(self):
+    @property
+    def column_contributions_(self):
         """Return the contributions of each column to the dimension's inertia.
 
         Contributions are returned as a score between 0 and 1 representing how much the column contributes to
