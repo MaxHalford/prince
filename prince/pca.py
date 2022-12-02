@@ -132,6 +132,12 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
 
         return self
 
+    @property
+    @utils.check_is_fitted
+    def eigenvalues_(self):
+        """Returns the eigenvalues associated with each principal component."""
+        return np.square(self.svd_.s) / len(self.svd_.U)
+
     def _check_input(self, X):
         if self.check_input:
             check_array(X)

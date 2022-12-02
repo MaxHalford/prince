@@ -97,6 +97,12 @@ class CA(utils.EigenvaluesMixin):
         return self
 
     @property
+    @utils.check_is_fitted
+    def eigenvalues_(self):
+        """Returns the eigenvalues associated with each principal component."""
+        return np.square(self.svd_.s)
+
+    @property
     def F(self):
         """Return the row scores on each principal component."""
         return pd.DataFrame(

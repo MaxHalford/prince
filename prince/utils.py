@@ -34,12 +34,6 @@ def make_labels_and_names(X):
 class EigenvaluesMixin:
     @property
     @check_is_fitted
-    def eigenvalues_(self):
-        """Returns the eigenvalues associated with each principal component."""
-        return np.square(self.svd_.s) / len(self.svd_.U)
-
-    @property
-    @check_is_fitted
     def percentage_of_variance_(self):
         """Returns the percentage of explained inertia per principal component."""
         return 100 * self.eigenvalues_ / self.total_inertia_

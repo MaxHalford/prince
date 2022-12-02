@@ -4,6 +4,7 @@ import pandas as pd
 import prince
 import rpy2.rinterface_lib
 from rpy2.robjects import r as R
+from scipy import sparse
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
 
@@ -46,6 +47,29 @@ class CATestSuite:
                 R(f"ca <- CA({args}, row.sup=c(18))")
             else:
                 R(f"ca <- CA({args})")
+
+    def test_check_is_fitted(self):
+        assert isinstance(self.ca, prince.CA)
+        sklearn.utils.validation.check_is_fitted(self.ca)
+
+    def test_svd_U(self):
+        F = load_df_from_R("ca$svd$U").to_numpy()
+        P = sparse.diags(self.ca.row_masses_.to_numpy() ** -0.5) @ self.ca.svd_.U
+        np.testing.assert_allclose(np.abs(F), np.abs(P))
+
+    def test_svd_V(self):
+        F = load_df_from_R("ca$svd$V").to_numpy()
+        P = sparse.diags(self.ca.col_masses_.to_numpy() ** -0.5) @ self.ca.svd_.V.T
+        np.testing.assert_allclose(np.abs(F), np.abs(P))
+
+    def test_eigenvalues(self):
+        F = load_df_from_R("ca$eig")[: self.ca.n_components]
+        P = self.ca._eigenvalues_summary
+        np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
+        np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
+        np.testing.assert_allclose(
+            F["cumulative percentage of variance"], P["% of variance (cumulative)"]
+        )
 
     def test_row_coords(self):
         F = load_df_from_R("ca$row$coord")
