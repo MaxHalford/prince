@@ -94,6 +94,32 @@ class CA(utils.EigenvaluesMixin):
         # Compute total inertia
         self.total_inertia_ = np.einsum("ij,ji->", S, S.T)
 
+        self.row_contributions_ = pd.DataFrame(
+            np.diag(self.row_masses_)
+            @ (
+                # Same as row_coordinates(X)
+                (np.diag(self.row_masses_**-0.5) @ self.svd_.U @ np.diag(self.svd_.s))
+                ** 2
+            )
+            / self.eigenvalues_,
+            index=self.row_masses_.index,
+        )
+
+        self.column_contributions_ = pd.DataFrame(
+            np.diag(self.col_masses_)
+            @ (
+                # Same as col_coordinates(X)
+                (
+                    np.diag(self.col_masses_**-0.5)
+                    @ self.svd_.V.T
+                    @ np.diag(self.svd_.s)
+                )
+                ** 2
+            )
+            / self.eigenvalues_,
+            index=self.col_masses_.index,
+        )
+
         return self
 
     @property
@@ -101,24 +127,6 @@ class CA(utils.EigenvaluesMixin):
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         return np.square(self.svd_.s)
-
-    @property
-    def F(self):
-        """Return the row scores on each principal component."""
-        return pd.DataFrame(
-            np.diag(self.row_masses_**-0.5) @ self.svd_.U @ np.diag(self.svd_.s),
-            index=self.row_masses_.index,
-            columns=pd.RangeIndex(0, len(self.svd_.s)),
-        )
-
-    @property
-    def G(self):
-        """Return the column scores on each principal component."""
-        return pd.DataFrame(
-            np.diag(self.col_masses_**-0.5) @ self.svd_.V.T @ np.diag(self.svd_.s),
-            index=self.col_masses_.index,
-            columns=pd.RangeIndex(0, len(self.svd_.s)),
-        )
 
     @select_active_columns
     def row_coordinates(self, X):
@@ -146,7 +154,7 @@ class CA(utils.EigenvaluesMixin):
             index=row_names,
         )
 
-    def row_cos2(self):
+    def row_cos2(self, X):
         """Return the cos2 for each row against the dimensions.
 
         The cos2 value gives an indicator of the accuracy of the row projection on the dimension.
@@ -156,23 +164,8 @@ class CA(utils.EigenvaluesMixin):
         of the variance of the element attributed to a particular factor.
 
         """
-        return (self.F**2).div(np.diag(self.F @ self.F.T), axis=0)
-
-        # return (
-        #     (ca.row_coordinates(elections) ** 2).div(np.diag(ca.F @ ca.F.T), axis=0)
-        # ).head()
-
-    @property
-    def row_contributions_(self):
-        """Return the contributions of each row to the dimension's inertia.
-
-        Contributions are returned as a score between 0 and 1 representing how much the row contributes to
-        the dimension's inertia. The sum of contributions on each dimensions should sum to 1.
-        It's usual to ignore score below 1/n_row.
-        """
-        F = self.F
-        cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.eigenvalues_)
-        return pd.DataFrame(cont_r.values, index=self.row_masses_.index)
+        F = self.row_coordinates(X)
+        return (F**2).div(np.diag(F @ F.T), axis=0)
 
     @select_active_rows
     def column_coordinates(self, X):
@@ -201,7 +194,7 @@ class CA(utils.EigenvaluesMixin):
             index=col_names,
         )
 
-    def column_cos2(self):
+    def column_cos2(self, X):
         """Return the cos2 for each column against the dimensions.
 
         The cos2 value gives an indicator of the accuracy of the column projection on the dimension.
@@ -210,21 +203,8 @@ class CA(utils.EigenvaluesMixin):
         used to identify which factor/dimension is important for a given element as the cos2 can be interpreted as the proportion
         of the variance of the element attributed to a particular factor.
         """
-        return (self.G**2).div(np.diag(self.G @ self.G.T), axis=0)
-
-    @property
-    def column_contributions_(self):
-        """Return the contributions of each column to the dimension's inertia.
-
-        Contributions are returned as a score between 0 and 1 representing how much the column contributes to
-        the dimension's inertia. The sum of contributions on each dimensions should sum to 1.
-
-        To obtain the contribution of a particular variable, you can sum the contribution of each of its levels.
-        It's usual to ignore score below 1/n_column.
-        """
-        G = self.G
-        cont_c = (np.diag(self.col_masses_) @ (G**2)).div(self.eigenvalues_)
-        return pd.DataFrame(cont_c.values, index=self.col_masses_.index)
+        G = self.column_coordinates(X)
+        return (G**2).div(np.diag(G @ G.T), axis=0)
 
     def plot_coordinates(
         self,
