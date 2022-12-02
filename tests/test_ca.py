@@ -17,10 +17,16 @@ class CATestSuite:
     @classmethod
     def setup_class(cls):
 
+        n_components = 5
+
         # Fit Prince
         cls.dataset = prince.datasets.load_french_elections()
         active = cls.dataset.copy()
-        cls.ca = prince.CA()
+        if cls.sup_rows:
+            active = active.drop("Île-de-France")
+        if cls.sup_cols:
+            active = active.drop(columns=["Abstention", "Blank"])
+        cls.ca = prince.CA(n_components=n_components)
         cls.ca.fit(active)
 
         # Fit FactoMineR
@@ -29,16 +35,24 @@ class CATestSuite:
             cls.dataset.to_csv(fp)
             R(f"dataset <- read.csv('{fp.name}', row.names=1)")
 
-        R(f"ca <- CA(dataset, graph=F)")
+        args = f"dataset, ncp={n_components}, graph=F"
+        if cls.sup_cols:
+            if cls.sup_rows:
+                R(f"ca <- CA({args}, col.sup=c(13, 14), row.sup=c(18))")
+            else:
+                R(f"ca <- CA({args}, col.sup=c(13, 14))")
+        else:
+            if cls.sup_rows:
+                R(f"ca <- CA({args}, row.sup=c(18))")
+            else:
+                R(f"ca <- CA({args})")
 
-    def test_eigenvalues(self):
-        F = load_df_from_R("ca$eig")
-        P = self.ca._eigenvalues_summary
-        np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
-        np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
-        np.testing.assert_allclose(
-            F["cumulative percentage of variance"], P["% of variance (cumulative)"]
-        )
+    def test_row_coords(self):
+        F = load_df_from_R("ca$row$coord")
+        if self.sup_rows:
+            F = pd.concat((F, load_df_from_R("ca$row.sup$coord")))
+        P = self.ca.row_coordinates(self.dataset)
+        np.testing.assert_allclose(F.abs(), P.abs())
 
 
 class TestCANoSup(CATestSuite):

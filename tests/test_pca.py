@@ -16,12 +16,13 @@ class PCATestSuite:
     @classmethod
     def setup_class(cls):
 
+        n_components = 5
+
         # Fit Prince
         cls.dataset = prince.datasets.load_decathlon()
         active = cls.dataset.copy()
         if cls.sup_rows:
             active = active.query('competition == "Decastar"')
-        n_components = 5
         cls.pca = prince.PCA(n_components=n_components)
         cls.pca.fit(
             active, supplementary_columns=["rank", "points"] if cls.sup_cols else None
