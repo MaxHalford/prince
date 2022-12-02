@@ -78,6 +78,11 @@ class CATestSuite:
         P = self.ca.row_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
+    def test_row_contrib(self):
+        F = load_df_from_R("ca$row$contrib")
+        P = self.ca.row_contributions_
+        np.testing.assert_allclose(F, P * 100)
+
     def test_col_coords(self):
         F = load_df_from_R("ca$col$coord")
         if self.sup_cols:

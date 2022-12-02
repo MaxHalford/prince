@@ -162,7 +162,8 @@ class CA(utils.EigenvaluesMixin):
         #     (ca.row_coordinates(elections) ** 2).div(np.diag(ca.F @ ca.F.T), axis=0)
         # ).head()
 
-    def row_contributions(self):
+    @property
+    def row_contributions_(self):
         """Return the contributions of each row to the dimension's inertia.
 
         Contributions are returned as a score between 0 and 1 representing how much the row contributes to
