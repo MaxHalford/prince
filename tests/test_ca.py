@@ -54,6 +54,13 @@ class CATestSuite:
         P = self.ca.row_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
+    def test_col_coords(self):
+        F = load_df_from_R("ca$col$coord")
+        if self.sup_cols:
+            F = pd.concat((F, load_df_from_R("ca$col.sup$coord")))
+        P = self.ca.column_coordinates(self.dataset)
+        np.testing.assert_allclose(F.abs(), P.abs())
+
 
 class TestCANoSup(CATestSuite):
     ...

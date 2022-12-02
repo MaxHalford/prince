@@ -10,12 +10,24 @@ from prince import utils
 from prince import svd
 
 
-def select_active_variables(method):
+def select_active_columns(method):
     @functools.wraps(method)
     def _impl(self, X=None, *method_args, **method_kwargs):
         if hasattr(self, "col_masses_") and isinstance(X, pd.DataFrame):
             return method(
                 self, X[self.col_masses_.index], *method_args, **method_kwargs
+            )
+        return method(self, X, *method_args, **method_kwargs)
+
+    return _impl
+
+
+def select_active_rows(method):
+    @functools.wraps(method)
+    def _impl(self, X=None, *method_args, **method_kwargs):
+        if hasattr(self, "row_masses_") and isinstance(X, pd.DataFrame):
+            return method(
+                self, X.loc[self.row_masses_.index], *method_args, **method_kwargs
             )
         return method(self, X, *method_args, **method_kwargs)
 
@@ -102,7 +114,7 @@ class CA(utils.EigenvaluesMixin):
             columns=pd.RangeIndex(0, len(self.svd_.s)),
         )
 
-    @select_active_variables
+    @select_active_columns
     def row_coordinates(self, X):
         """The row principal coordinates."""
 
@@ -155,6 +167,7 @@ class CA(utils.EigenvaluesMixin):
         cont_r = (np.diag(self.row_masses_) @ (F**2)).div(self.eigenvalues_)
         return pd.DataFrame(cont_r.values, index=self.row_masses_.index)
 
+    @select_active_rows
     def column_coordinates(self, X):
         """The column principal coordinates."""
 
