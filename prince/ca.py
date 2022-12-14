@@ -209,6 +209,7 @@ class CA(utils.EigenvaluesMixin):
             index=col_names,
         )
 
+    @select_active_rows
     def column_cos2(self, X):
         """Return the cos2 for each column against the dimensions.
 
@@ -219,7 +220,23 @@ class CA(utils.EigenvaluesMixin):
         of the variance of the element attributed to a particular factor.
         """
         G = self.column_coordinates(X)
-        return (G**2).div(np.diag(G @ G.T), axis=0)
+
+        # Active
+        X_act = X[self.col_masses_.index]
+        X_act = X_act / X_act.sum().sum()
+        marge_row = X_act.sum(axis=1)
+        Tc = X_act.div(marge_row, axis=0).div(X_act.sum(axis=0), axis=1) - 1
+        dist2_col = (Tc**2).mul(marge_row, axis=0).sum(axis=0)
+
+        # Supplementary
+        X_sup = X[X.columns.difference(self.col_masses_.index)]
+        X_sup = X_sup.div(X_sup.sum(axis=0), axis=1)
+        dist2_col_sup = (
+            ((X_sup.sub(marge_row, axis=0)) ** 2).div(marge_row, axis=0).sum(axis=0)
+        )
+
+        dist2_col = pd.concat((dist2_col, dist2_col_sup))
+        return (G**2).div(dist2_col, axis=0)
 
     def plot_coordinates(
         self,

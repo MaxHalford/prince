@@ -102,6 +102,13 @@ class CATestSuite:
         P = self.ca.column_contributions_
         np.testing.assert_allclose(F, P * 100)
 
+    def test_col_cos2(self):
+        F = load_df_from_R("ca$col$cos2")
+        if self.sup_cols:
+            F = pd.concat((F, load_df_from_R("ca$col.sup$cos2")))
+        P = self.ca.column_cos2(self.dataset)
+        np.testing.assert_allclose(F, P)
+
 
 class TestCANoSup(CATestSuite):
     ...
