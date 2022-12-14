@@ -83,6 +83,13 @@ class CATestSuite:
         P = self.ca.row_contributions_
         np.testing.assert_allclose(F, P * 100)
 
+    def test_row_cos2(self):
+        F = load_df_from_R("ca$row$cos2")
+        if self.sup_rows:
+            F = pd.concat((F, load_df_from_R("ca$row.sup$cos2")))
+        P = self.ca.row_cos2(self.dataset)
+        np.testing.assert_allclose(F, P)
+
     def test_col_coords(self):
         F = load_df_from_R("ca$col$coord")
         if self.sup_cols:

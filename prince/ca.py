@@ -154,6 +154,7 @@ class CA(utils.EigenvaluesMixin):
             index=row_names,
         )
 
+    @select_active_columns
     def row_cos2(self, X):
         """Return the cos2 for each row against the dimensions.
 
@@ -165,7 +166,21 @@ class CA(utils.EigenvaluesMixin):
 
         """
         F = self.row_coordinates(X)
-        return (F**2).div(np.diag(F @ F.T), axis=0)
+
+        # Active
+        X_act = X.loc[self.row_masses_.index]
+        X_act = X_act / X_act.sum().sum()
+        marge_col = X_act.sum(axis=0)
+        Tc = X_act.div(X_act.sum(axis=1), axis=0).div(marge_col, axis=1) - 1
+        dist2_row = (Tc**2).mul(marge_col, axis=1).sum(axis=1)
+
+        # Supplementary
+        X_sup = X.loc[X.index.difference(self.row_masses_.index)]
+        X_sup = X_sup.div(X_sup.sum(axis=1), axis=0)
+        dist2_row_sup = ((X_sup - marge_col) ** 2).div(marge_col, axis=1).sum(axis=1)
+
+        dist2_row = pd.concat((dist2_row, dist2_row_sup))
+        return (F**2).div(dist2_row, axis=0)
 
     @select_active_rows
     def column_coordinates(self, X):
