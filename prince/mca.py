@@ -9,7 +9,7 @@ from . import plot
 
 
 class MCA(ca.CA):
-    def fit(self, X, y=None, K=None):
+    def fit(self, X, y=None):
         """Fit the MCA for the dataframe X.
 
         The MCA is computed on the indicator matrix (i.e. `X.get_dummies()`). If some of the columns are already
@@ -20,79 +20,64 @@ class MCA(ca.CA):
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
 
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-
         # K is the number of actual variables, to apply the Benzécri correction
-        if K is None:
-            self.K = X.shape[1]
-        elif X.shape[1] < K:
-            raise ValueError(
-                f"K ({K}) can't be higher than number of columns ({X.shape[1]})"
-            )
-        else:
-            self.K = K
+        self.K_ = X.shape[1]
 
         # One-hot encode the data
-        self.enc = OneHotEncoder(handle_unknown="ignore", sparse=False)
-        self.enc.fit(X)
-        one_hot = self.enc.transform(X)
+        one_hot = pd.get_dummies(X)
 
         # We need the number of columns to apply the Greenacre correction
-        self.J = one_hot.shape[1]
+        self.J_ = one_hot.shape[1]
 
         # Apply CA to the indicator matrix
         super().fit(one_hot)
 
-        self.total_inertia_ = np.sum(self.eigenvalues_)
+        self.active_cols_ = X.columns
+
         return self
 
-    @property
-    def eigenvalues_(self):
-        """The eigenvalues associated with each principal component.
+    # @property
+    # def eigenvalues_(self):
+    #     """The eigenvalues associated with each principal component.
 
-        This applies the Benzécri correction for MCA which corrects for the inflated dimensionality
-        related to the extra columns of the indicator matrix.
-        """
-        self._check_is_fitted()
+    #     This applies the Benzécri correction for MCA which corrects for the inflated dimensionality
+    #     related to the extra columns of the indicator matrix.
+    #     """
 
-        K = self.K
+    #     K = self.K_
 
-        return np.array(
-            [
-                (K / (K - 1.0) * (s - 1.0 / K)) ** 2 if s > 1.0 / K else 0
-                for s in np.square(self.s_)
-            ]
-        )
+    #     return np.array(
+    #         [
+    #             (K / (K - 1.0) * (s - 1.0 / K)) ** 2 if s > 1.0 / K else 0
+    #             for s in np.square(self.svd_.s)
+    #         ]
+    #     )
 
-    @property
-    def explained_inertia_(self):
-        """The percentage of explained inertia per principal component.
+    # @property
+    # def percentage_of_variance_(self):
+    #     """The percentage of explained inertia per principal component.
 
-        This applies the Greenacre correction to compensate for overestimation of
-        contribution.
-        """
-        self._check_is_fitted()
-        K = self.K
-        J = self.J
+    #     This applies the Greenacre correction to compensate for overestimation of
+    #     contribution.
+    #     """
+    #     K = self.K_
+    #     J = self.J_
 
-        # Average inertia on the diagonal of the Burt Matrix (JxJ)
-        # s_ are the eigenvalues of the residials matrix. Square to obtain the eigenvalues of the Indicator matrix (IxJ),
-        # and square again for the eigenvalues of the Burt Matrix (JxJ)
-        Theta = (K / (K - 1.0)) * (np.sum(np.square(self.s_) ** 2) - (J - K) / (K**2))
+    #     # Average inertia on the diagonal of the Burt Matrix (JxJ)
+    #     # s_ are the eigenvalues of the residials matrix. Square to obtain the eigenvalues of the Indicator matrix (IxJ),
+    #     # and square again for the eigenvalues of the Burt Matrix (JxJ)
+    #     Theta = (K / (K - 1.0)) * (np.sum(self.eigenvalues_**2) - (J - K) / (K**2))
 
-        return self.eigenvalues_ / Theta
+    #     return self.eigenvalues_ / Theta
 
     def row_coordinates(self, X):
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
+        return super().row_coordinates(pd.get_dummies(X))
 
-        return super().row_coordinates(self.enc.transform(X))
+    def row_cos2(self, X):
+        return super().row_cos2(pd.get_dummies(X))
 
     def column_coordinates(self, X):
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-        return super().column_coordinates(self.enc.transform(X))
+        return super().column_coordinates(pd.get_dummies(X))
 
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""

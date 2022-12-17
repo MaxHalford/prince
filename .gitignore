@@ -4,3 +4,4 @@
 tests/*.csv
 *.ipynb
 .venv
+.DS_Store

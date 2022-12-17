@@ -69,3 +69,43 @@ def load_french_elections():
 def load_punctuation_marks():
     """Punctuation marks of six French writers."""
     return pd.read_csv(DATASETS_DIR / "punctuation_marks.csv", index_col="author")
+
+
+def load_hearthstone_cards():
+    """Hearthstone standard cards.
+
+    Source: https://gist.github.com/MaxHalford/32ed2c80672d7391ec5b4e6f291f14c1
+
+    """
+    return pd.read_csv(DATASETS_DIR / "hearthstone_cards.csv", index_col="id")
+
+
+def load_burgundy_wines():
+    """Burgundy wines dataset.
+
+    Source: https://personal.utdallas.edu/~herve/Abdi-MCA2007-pretty.pdf
+
+    """
+    return pd.DataFrame(
+        data=[
+            ["N", "C", "Y", "N", "Y", "C", "Y", "Y", "Y", "Y"],
+            ["Y", "B", "N", "Y", "N", "B", "N", "Y", "N", "N"],
+            ["Y", "A", "N", "Y", "N", "A", "N", "Y", "N", "N"],
+            ["Y", "A", "N", "Y", "N", "A", "N", "N", "N", "N"],
+            ["N", "C", "Y", "N", "Y", "C", "Y", "N", "Y", "Y"],
+            ["N", "B", "Y", "N", "Y", "B", "Y", "N", "Y", "Y"],
+        ],
+        columns=[
+            "E1 fruity",
+            "E1 woody",
+            "E1 coffee",
+            "E2 red fruit",
+            "E2 roasted",
+            "E2 vanillin",
+            "E2 woody",
+            "E3 fruity",
+            "E3 butter",
+            "E3 woody",
+        ],
+        index=[1, 2, 3, 4, 5, 6],
+    )

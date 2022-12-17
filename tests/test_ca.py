@@ -12,6 +12,8 @@ from tests import load_df_from_R
 
 
 class CATestSuite:
+    _row_name = "row"
+    _col_name = "col"
     sup_rows = False
     sup_cols = False
 
@@ -72,40 +74,40 @@ class CATestSuite:
         )
 
     def test_row_coords(self):
-        F = load_df_from_R("ca$row$coord")
+        F = load_df_from_R(f"ca${self._row_name}$coord")
         if self.sup_rows:
-            F = pd.concat((F, load_df_from_R("ca$row.sup$coord")))
+            F = pd.concat((F, load_df_from_R(f"ca${self._row_name}.sup$coord")))
         P = self.ca.row_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_row_contrib(self):
-        F = load_df_from_R("ca$row$contrib")
+        F = load_df_from_R(f"ca${self._row_name}$contrib")
         P = self.ca.row_contributions_
         np.testing.assert_allclose(F, P * 100)
 
     def test_row_cos2(self):
-        F = load_df_from_R("ca$row$cos2")
+        F = load_df_from_R(f"ca${self._row_name}$cos2")
         if self.sup_rows:
-            F = pd.concat((F, load_df_from_R("ca$row.sup$cos2")))
+            F = pd.concat((F, load_df_from_R(f"ca${self._row_name}.sup$cos2")))
         P = self.ca.row_cos2(self.dataset)
         np.testing.assert_allclose(F, P)
 
     def test_col_coords(self):
-        F = load_df_from_R("ca$col$coord")
+        F = load_df_from_R(f"ca${self._col_name}$coord")
         if self.sup_cols:
-            F = pd.concat((F, load_df_from_R("ca$col.sup$coord")))
+            F = pd.concat((F, load_df_from_R(f"ca${self._col_name}.sup$coord")))
         P = self.ca.column_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_col_contrib(self):
-        F = load_df_from_R("ca$col$contrib")
+        F = load_df_from_R(f"ca${self._col_name}$contrib")
         P = self.ca.column_contributions_
         np.testing.assert_allclose(F, P * 100)
 
     def test_col_cos2(self):
-        F = load_df_from_R("ca$col$cos2")
+        F = load_df_from_R(f"ca${self._col_name}$cos2")
         if self.sup_cols:
-            F = pd.concat((F, load_df_from_R("ca$col.sup$cos2")))
+            F = pd.concat((F, load_df_from_R(f"ca${self._col_name}.sup$cos2")))
         P = self.ca.column_cos2(self.dataset)
         np.testing.assert_allclose(F, P)
 
