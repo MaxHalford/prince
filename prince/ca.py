@@ -13,10 +13,8 @@ from prince import svd
 def select_active_columns(method):
     @functools.wraps(method)
     def _impl(self, X=None, *method_args, **method_kwargs):
-        if hasattr(self, "col_masses_") and isinstance(X, pd.DataFrame):
-            return method(
-                self, X[self.col_masses_.index], *method_args, **method_kwargs
-            )
+        if hasattr(self, "active_cols_") and isinstance(X, pd.DataFrame):
+            return method(self, X[self.active_cols_], *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
     return _impl
@@ -25,10 +23,8 @@ def select_active_columns(method):
 def select_active_rows(method):
     @functools.wraps(method)
     def _impl(self, X=None, *method_args, **method_kwargs):
-        if hasattr(self, "row_masses_") and isinstance(X, pd.DataFrame):
-            return method(
-                self, X.loc[self.row_masses_.index], *method_args, **method_kwargs
-            )
+        if hasattr(self, "active_rows_") and isinstance(X, pd.DataFrame):
+            return method(self, X.loc[self.active_rows_], *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
     return _impl
@@ -75,6 +71,9 @@ class CA(utils.EigenvaluesMixin):
         # Compute row and column masses
         self.row_masses_ = pd.Series(X.sum(axis=1), index=row_names)
         self.col_masses_ = pd.Series(X.sum(axis=0), index=col_names)
+
+        self.active_rows_ = self.row_masses_.index.unique()
+        self.active_cols_ = self.col_masses_.index.unique()
 
         # Compute standardised residuals
         r = self.row_masses_.to_numpy()
@@ -168,18 +167,19 @@ class CA(utils.EigenvaluesMixin):
         F = self.row_coordinates(X)
 
         # Active
-        X_act = X.loc[self.row_masses_.index]
+        X_act = X.loc[self.active_rows_]
         X_act = X_act / X_act.sum().sum()
         marge_col = X_act.sum(axis=0)
         Tc = X_act.div(X_act.sum(axis=1), axis=0).div(marge_col, axis=1) - 1
         dist2_row = (Tc**2).mul(marge_col, axis=1).sum(axis=1)
 
         # Supplementary
-        X_sup = X.loc[X.index.difference(self.row_masses_.index)]
+        X_sup = X.loc[X.index.difference(self.active_rows_)]
         X_sup = X_sup.div(X_sup.sum(axis=1), axis=0)
         dist2_row_sup = ((X_sup - marge_col) ** 2).div(marge_col, axis=1).sum(axis=1)
 
         dist2_row = pd.concat((dist2_row, dist2_row_sup))
+
         return (F**2).div(dist2_row, axis=0)
 
     @select_active_rows
@@ -222,14 +222,14 @@ class CA(utils.EigenvaluesMixin):
         G = self.column_coordinates(X)
 
         # Active
-        X_act = X[self.col_masses_.index]
+        X_act = X[self.active_cols_]
         X_act = X_act / X_act.sum().sum()
         marge_row = X_act.sum(axis=1)
         Tc = X_act.div(marge_row, axis=0).div(X_act.sum(axis=0), axis=1) - 1
         dist2_col = (Tc**2).mul(marge_row, axis=0).sum(axis=0)
 
         # Supplementary
-        X_sup = X[X.columns.difference(self.col_masses_.index)]
+        X_sup = X[X.columns.difference(self.active_cols_)]
         X_sup = X_sup.div(X_sup.sum(axis=0), axis=1)
         dist2_col_sup = (
             ((X_sup.sub(marge_row, axis=0)) ** 2).div(marge_row, axis=0).sum(axis=0)

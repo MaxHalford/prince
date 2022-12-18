@@ -32,8 +32,6 @@ class MCA(ca.CA):
         # Apply CA to the indicator matrix
         super().fit(one_hot)
 
-        self.active_cols_ = X.columns
-
         return self
 
     # @property
@@ -78,6 +76,9 @@ class MCA(ca.CA):
 
     def column_coordinates(self, X):
         return super().column_coordinates(pd.get_dummies(X))
+
+    def column_cos2(self, X):
+        return super().column_cos2(pd.get_dummies(X))
 
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""

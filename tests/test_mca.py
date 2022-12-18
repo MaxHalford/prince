@@ -56,3 +56,7 @@ class MCATestSuite(CATestSuite):
 
 class TestMCANoSup(MCATestSuite):
     ...
+
+
+# class TestMCASupRows(MCATestSuite):
+#     sup_rows = True
