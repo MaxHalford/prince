@@ -22,14 +22,13 @@ class MCATestSuite(CATestSuite):
     def setup_class(cls):
 
         n_components = 5
+        n_active_rows = 1_000
 
         # Fit Prince
         cls.dataset = prince.datasets.load_hearthstone_cards()
         active = cls.dataset.copy()
-        # if cls.sup_rows:
-        #     active = active.drop("Île-de-France")
-        # if cls.sup_cols:
-        #     active = active.drop(columns=["Abstention", "Blank"])
+        if cls.sup_rows:
+            active = active[:n_active_rows]
         cls.ca = prince.MCA(n_components=n_components, engine="scipy")
         cls.ca.fit(active)
 
@@ -40,23 +39,15 @@ class MCATestSuite(CATestSuite):
             R(f"dataset <- read.csv('{fp.name}')[,-1]")
 
         args = f"dataset, ncp={n_components}, graph=F"
-        R(f"ca <- MCA({args})")
-
-        # if cls.sup_cols:
-        #     if cls.sup_rows:
-        #         R(f"ca <- CA({args}, col.sup=c(13, 14), row.sup=c(18))")
-        #     else:
-        #         R(f"ca <- CA({args}, col.sup=c(13, 14))")
-        # else:
-        #     if cls.sup_rows:
-        #         R(f"ca <- CA({args}, row.sup=c(18))")
-        #     else:
-        #         R(f"ca <- CA({args})")
+        if cls.sup_rows:
+            R(f"ca <- MCA({args}, ind.sup=c({n_active_rows + 1}:nrow(dataset)))")
+        else:
+            R(f"ca <- MCA({args})")
 
 
 class TestMCANoSup(MCATestSuite):
     ...
 
 
-# class TestMCASupRows(MCATestSuite):
-#     sup_rows = True
+class TestMCASupRows(MCATestSuite):
+    sup_rows = True

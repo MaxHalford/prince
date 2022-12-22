@@ -12,46 +12,19 @@ from . import plot
 
 
 class MFA(pca.PCA):
-    def __init__(
-        self,
-        groups=None,
-        normalize=True,
-        n_components=2,
-        n_iter=10,
-        copy=True,
-        check_input=True,
-        random_state=None,
-        engine="sklearn",
-    ):
-        super().__init__(
-            rescale_with_mean=False,
-            rescale_with_std=False,
-            n_components=n_components,
-            n_iter=n_iter,
-            copy=copy,
-            check_input=check_input,
-            random_state=random_state,
-            engine=engine,
-        )
-        self.groups = groups
-        self.normalize = normalize
-
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, groups=None):
 
         # Checks groups are provided
-        if self.groups is None:
+        if groups is None:
             raise ValueError("Groups have to be specified")
 
         # Check input
         if self.check_input:
             utils.check_array(X, dtype=[str, np.number])
 
-        # Prepare input
-        X = self._prepare_input(X)
-
         # Check group types are consistent
         self.all_nums_ = {}
-        for name, cols in sorted(self.groups.items()):
+        for name, cols in sorted(groups.items()):
             all_num = all(pd.api.types.is_numeric_dtype(X[c]) for c in cols)
             all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
             if not (all_num or all_cat):
@@ -62,11 +35,11 @@ class MFA(pca.PCA):
 
         # Run a factor analysis in each group
         self.partial_factor_analysis_ = {}
-        for name, cols in sorted(self.groups.items()):
+        for name, cols in sorted(groups.items()):
             if self.all_nums_[name]:
                 fa = pca.PCA(
-                    rescale_with_mean=False,
-                    rescale_with_std=False,
+                    rescale_with_mean=self.rescale_with_mean,
+                    rescale_with_std=self.rescale_with_std,
                     n_components=self.n_components,
                     n_iter=self.n_iter,
                     copy=True,
@@ -84,7 +57,7 @@ class MFA(pca.PCA):
             self.partial_factor_analysis_[name] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
-        super().fit(self._build_X_global(X))
+        # super().fit(self._build_X_global(X))
 
         return self
 
@@ -98,15 +71,15 @@ class MFA(pca.PCA):
         if self.copy:
             X = X.copy()
 
-        if self.normalize:
-            # Scale continuous variables to unit variance
-            num = X.select_dtypes(np.number).columns
-            # If a column's cardinality is 1 then it's variance is 0 which can
-            # can cause a division by 0
-            normalize = lambda x: x / (np.sqrt((x**2).sum()) or 1)
-            X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(
-                normalize, axis="rows"
-            )
+        # if self.normalize:
+        #     # Scale continuous variables to unit variance
+        #     num = X.select_dtypes(np.number).columns
+        #     # If a column's cardinality is 1 then it's variance is 0 which can
+        #     # can cause a division by 0
+        #     normalize = lambda x: x / (np.sqrt((x**2).sum()) or 1)
+        #     X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(
+        #         normalize, axis="rows"
+        #     )
 
         return X
 

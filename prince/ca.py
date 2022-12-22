@@ -79,7 +79,6 @@ class CA(utils.EigenvaluesMixin):
         r = self.row_masses_.to_numpy()
         c = self.col_masses_.to_numpy()
         S = sparse.diags(r**-0.5) @ (X - np.outer(r, c)) @ sparse.diags(c**-0.5)
-        # S = sparse.diags(1 / r**2) @ X @ sparse.diags(1 / c**2) - 1
 
         # Compute SVD on the standardised residuals
         self.svd_ = svd.compute_svd(
@@ -180,7 +179,8 @@ class CA(utils.EigenvaluesMixin):
 
         dist2_row = pd.concat((dist2_row, dist2_row_sup))
 
-        return (F**2).div(dist2_row, axis=0)
+        # Can't use pandas.div method because it doesn't support duplicate indices
+        return F**2 / dist2_row.to_numpy()[:, None]
 
     @select_active_rows
     def column_coordinates(self, X):
@@ -247,7 +247,7 @@ class CA(utils.EigenvaluesMixin):
         y_component=1,
         show_row_labels=True,
         show_col_labels=True,
-        **kwargs
+        **kwargs,
     ):
         """Plot the principal coordinates."""
 

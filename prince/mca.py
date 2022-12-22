@@ -34,40 +34,6 @@ class MCA(ca.CA):
 
         return self
 
-    # @property
-    # def eigenvalues_(self):
-    #     """The eigenvalues associated with each principal component.
-
-    #     This applies the Benzécri correction for MCA which corrects for the inflated dimensionality
-    #     related to the extra columns of the indicator matrix.
-    #     """
-
-    #     K = self.K_
-
-    #     return np.array(
-    #         [
-    #             (K / (K - 1.0) * (s - 1.0 / K)) ** 2 if s > 1.0 / K else 0
-    #             for s in np.square(self.svd_.s)
-    #         ]
-    #     )
-
-    # @property
-    # def percentage_of_variance_(self):
-    #     """The percentage of explained inertia per principal component.
-
-    #     This applies the Greenacre correction to compensate for overestimation of
-    #     contribution.
-    #     """
-    #     K = self.K_
-    #     J = self.J_
-
-    #     # Average inertia on the diagonal of the Burt Matrix (JxJ)
-    #     # s_ are the eigenvalues of the residials matrix. Square to obtain the eigenvalues of the Indicator matrix (IxJ),
-    #     # and square again for the eigenvalues of the Burt Matrix (JxJ)
-    #     Theta = (K / (K - 1.0)) * (np.sum(self.eigenvalues_**2) - (J - K) / (K**2))
-
-    #     return self.eigenvalues_ / Theta
-
     def row_coordinates(self, X):
         return super().row_coordinates(pd.get_dummies(X))
 
