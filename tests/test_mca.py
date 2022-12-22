@@ -29,6 +29,8 @@ class MCATestSuite(CATestSuite):
         active = cls.dataset.copy()
         if cls.sup_rows:
             active = active[:n_active_rows]
+        if cls.sup_cols:
+            active = active.drop(columns=["type_or_school"])
         cls.ca = prince.MCA(n_components=n_components, engine="scipy")
         cls.ca.fit(active)
 
@@ -39,10 +41,18 @@ class MCATestSuite(CATestSuite):
             R(f"dataset <- read.csv('{fp.name}')[,-1]")
 
         args = f"dataset, ncp={n_components}, graph=F"
-        if cls.sup_rows:
-            R(f"ca <- MCA({args}, ind.sup=c({n_active_rows + 1}:nrow(dataset)))")
+        if cls.sup_cols:
+            if cls.sup_rows:
+                R(
+                    f"ca <- MCA({args}, quali.sup=c(4), ind.sup=c({n_active_rows + 1}:nrow(dataset)))"
+                )
+            else:
+                R(f"ca <- MCA({args}, quali.sup=c(4))")
         else:
-            R(f"ca <- MCA({args})")
+            if cls.sup_rows:
+                R(f"ca <- MCA({args}, ind.sup=c({n_active_rows + 1}:nrow(dataset)))")
+            else:
+                R(f"ca <- MCA({args})")
 
 
 class TestMCANoSup(MCATestSuite):
@@ -51,3 +61,25 @@ class TestMCANoSup(MCATestSuite):
 
 class TestMCASupRows(MCATestSuite):
     sup_rows = True
+
+
+class TestMCASupCols(MCATestSuite):
+    sup_cols = True
+
+    def test_col_coords(self):
+        F = load_df_from_R("ca$var$coord")
+        if self.sup_cols:
+            F = pd.concat((F, load_df_from_R("ca$quali.sup$coord")))
+        P = self.ca.column_coordinates(self.dataset)
+        np.testing.assert_allclose(F.abs(), P.abs())
+
+    def test_col_cos2(self):
+        F = load_df_from_R("ca$var$cos2")
+        if self.sup_cols:
+            F = pd.concat((F, load_df_from_R("ca$quali.sup$cos2")))
+        P = self.ca.column_cos2(self.dataset)
+        np.testing.assert_allclose(F, P)
+
+
+class TestMCASupRowsSupCols(TestMCASupRows, TestMCASupCols):
+    ...
