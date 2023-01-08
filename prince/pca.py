@@ -125,7 +125,16 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
                 ]
             )
         self.column_coordinates_.columns.name = "component"
-        self.row_contributions_ = (self.row_coordinates() ** 2 / len(X)).div(
+        row_coords = pd.DataFrame(
+            (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
+            # HACK: there's a circular dependency between row_contributions_
+            # and active_row_coordinates in self.__init__
+            index=self.row_contributions_.index
+            if hasattr(self, "row_contributions_")
+            else None,
+        )
+        row_coords.columns.name = "component"
+        self.row_contributions_ = (row_coords**2 / len(X)).div(
             self.eigenvalues_, axis=1
         )
         self.row_contributions_.index = X.index
@@ -168,7 +177,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
 
     @utils.check_is_fitted
     @select_active_variables
-    def row_coordinates(self, X: pd.DataFrame = None):
+    def row_coordinates(self, X: pd.DataFrame):
         """Returns the row principal coordinates.
 
         The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
@@ -180,19 +189,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         Loadings
 
         """
-
-        # Return coordinates of active rows if X is not passed
-        if X is None:
-            coords = pd.DataFrame(
-                (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
-                # HACK: there's a circular dependency between row_contributions_
-                # and active_row_coordinates in self.__init__
-                index=self.row_contributions_.index
-                if hasattr(self, "row_contributions_")
-                else None,
-            )
-            coords.columns.name = "component"
-            return coords
 
         index = X.index if isinstance(X, pd.DataFrame) else None
         X = self._scale(X)

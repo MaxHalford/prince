@@ -40,7 +40,7 @@ class MFA(pca.PCA, collections.UserDict):
     def fit(self, X, y=None, groups=None):
 
         # Checks groups are provided
-        self.groups_ = self.determine_groups(X, groups)
+        self.groups_ = self._determine_groups(X, groups)
 
         # Check input
         if self.check_input:
@@ -95,7 +95,7 @@ class MFA(pca.PCA, collections.UserDict):
 
         return self
 
-    def determine_groups(self, X, provided_groups):
+    def _determine_groups(self, X, provided_groups):
         if provided_groups is None:
             raise ValueError("Groups have to be specified")
         if isinstance(provided_groups, list):
@@ -191,18 +191,30 @@ class MFA(pca.PCA, collections.UserDict):
     #     """Returns the row principal coordinates."""
     #     return len(X_global) ** 0.5 * super().row_coordinates(X_global)
 
-    # def row_coordinates(self, X):
-    #     """Returns the row principal coordinates."""
-    #     self._check_is_fitted()
+    def row_coordinates(self, X):
+        """Returns the row principal coordinates."""
 
-    #     # Check input
-    #     if self.check_input:
-    #         utils.check_array(X, dtype=[str, np.number])
+        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
 
-    #     # Prepare input
-    #     X = self._prepare_input(X)
+        Z = pd.concat(
+            (
+                X[cols].copy() / self[g].eigenvalues_[0] ** 0.5
+                for g, cols in self.groups_.items()
+            ),
+            axis="columns",
+        )
+        return super().row_coordinates(Z)
 
-    #     return self._row_coordinates_from_global(self._build_X_global(X))
+        # self._check_is_fitted()
+
+        # # Check input
+        # if self.check_input:
+        #     utils.check_array(X, dtype=[str, np.number])
+
+        # # Prepare input
+        # X = self._prepare_input(X)
+
+        # return self._row_coordinates_from_global(self._build_X_global(X))
 
     # def row_contributions(self, X):
     #     """Returns the row contributions towards each principal component."""
