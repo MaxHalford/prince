@@ -86,26 +86,31 @@ def load_burgundy_wines():
     Source: https://personal.utdallas.edu/~herve/Abdi-MCA2007-pretty.pdf
 
     """
-    return pd.DataFrame(
+    wines = pd.DataFrame(
         data=[
-            ["N", "C", "Y", "N", "Y", "C", "Y", "Y", "Y", "Y"],
-            ["Y", "B", "N", "Y", "N", "B", "N", "Y", "N", "N"],
-            ["Y", "A", "N", "Y", "N", "A", "N", "Y", "N", "N"],
-            ["Y", "A", "N", "Y", "N", "A", "N", "N", "N", "N"],
-            ["N", "C", "Y", "N", "Y", "C", "Y", "N", "Y", "Y"],
-            ["N", "B", "Y", "N", "Y", "B", "Y", "N", "Y", "Y"],
+            [1, 6, 7, 2, 5, 7, 6, 3, 6, 7],
+            [5, 3, 2, 4, 4, 4, 2, 4, 4, 3],
+            [6, 1, 1, 5, 2, 1, 1, 7, 1, 1],
+            [7, 1, 2, 7, 2, 1, 2, 2, 2, 2],
+            [2, 5, 4, 3, 5, 6, 5, 2, 6, 6],
+            [3, 4, 4, 3, 5, 4, 5, 1, 7, 5],
         ],
-        columns=[
-            "E1 fruity",
-            "E1 woody",
-            "E1 coffee",
-            "E2 red fruit",
-            "E2 roasted",
-            "E2 vanillin",
-            "E2 woody",
-            "E3 fruity",
-            "E3 butter",
-            "E3 woody",
-        ],
-        index=[1, 2, 3, 4, 5, 6],
+        columns=pd.MultiIndex.from_tuples(
+            [
+                ("Expert 1", "Fruity"),
+                ("Expert 1", "Woody"),
+                ("Expert 1", "Coffee"),
+                ("Expert 2", "Red fruit"),
+                ("Expert 2", "Roasted"),
+                ("Expert 2", "Vanillin"),
+                ("Expert 2", "Woody"),
+                ("Expert 3", "Fruity"),
+                ("Expert 3", "Butter"),
+                ("Expert 3", "Woody"),
+            ],
+            names=("expert", "aspect"),
+        ),
+        index=["Wine {}".format(i + 1) for i in range(6)],
     )
+    wines.insert(0, "Oak type", [1, 2, 2, 2, 1, 1])
+    return wines
