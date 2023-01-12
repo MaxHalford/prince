@@ -74,6 +74,11 @@ class MFATestSuite:
         P = self.mfa.row_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
+    def test_row_contrib(self):
+        F = load_df_from_R("mfa$ind$contrib")
+        P = self.mfa.row_contributions_
+        np.testing.assert_allclose(F, P * 100)
+
 
 class TestMFANoSup(MFATestSuite):
     ...
