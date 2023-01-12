@@ -93,6 +93,9 @@ class MFA(pca.PCA, collections.UserDict):
         super().fit(Z)
         self.total_inertia_ = sum(self.eigenvalues_)
 
+        # column_coordinates_ is not implemented yet
+        delattr(self, "column_coordinates_")
+
         return self
 
     def _determine_groups(self, X, provided_groups):
@@ -136,6 +139,7 @@ class MFA(pca.PCA, collections.UserDict):
         U = self.svd_.U
         s = self.svd_.s
         M = np.full(len(X), 1 / len(X))
+
         return (Z @ Z.T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1)
 
     def group_row_coordinates(self, X):
@@ -169,143 +173,33 @@ class MFA(pca.PCA, collections.UserDict):
             axis="columns",
         )
 
+    def inverse_transform(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
 
-# def row_contributions(self, X):
-#     """Returns the row contributions towards each principal component."""
-#     self._check_is_fitted()
+    def row_standard_coordinates(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
 
-#     # Check input
-#     if self.check_input:
-#         utils.check_array(X, dtype=[str, np.number])
+    def row_cosine_similarities(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
 
-#     # Prepare input
-#     X = self._prepare_input(X)
+    def column_correlations(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
 
-#     return super().row_contributions(self._build_X_global(X))
+    def column_cosine_similarities_(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
 
-# def partial_row_coordinates(self, X):
-#     """Returns the row coordinates for each group."""
-#     self._check_is_fitted()
-
-#     # Check input
-#     if self.check_input:
-#         utils.check_array(X, dtype=[str, np.number])
-
-#     # Prepare input
-#     X = self._prepare_input(X)
-
-#     # Define the projection matrix P
-#     P = len(X) ** 0.5 * self.U_ / self.s_
-
-#     # Get the projections for each group
-#     coords = {}
-#     for name, cols in sorted(self.groups.items()):
-#         X_partial = X.loc[:, cols]
-
-#         if not self.all_nums_[name]:
-#             X_partial = pd.DataFrame(self.enc.transform(X_partial))
-
-#         Z_partial = X_partial / self.partial_factor_analysis_[name].s_[0]
-#         coords[name] = len(self.groups) * (Z_partial @ Z_partial.T) @ P
-
-#     # Convert coords to a MultiIndex DataFrame
-#     coords = pd.DataFrame(
-#         {
-#             (name, i): group_coords.loc[:, i]
-#             for name, group_coords in coords.items()
-#             for i in range(group_coords.shape[1])
-#         }
-#     )
-
-#     return coords
-
-# def column_correlations(self, X):
-#     """Returns the column correlations."""
-#     self._check_is_fitted()
-
-#     X_global = self._build_X_global(X)
-#     row_pc = self._row_coordinates_from_global(X_global)
-
-#     return pd.DataFrame(
-#         {
-#             component: {
-#                 feature: row_pc[component].corr(X_global[feature])
-#                 for feature in X_global.columns
-#             }
-#             for component in row_pc.columns
-#         }
-#     ).sort_index()
-
-# def plot_partial_row_coordinates(
-#     self,
-#     X,
-#     ax=None,
-#     figsize=(6, 6),
-#     x_component=0,
-#     y_component=1,
-#     color_labels=None,
-#     **kwargs
-# ):
-#     """Plot the row principal coordinates."""
-#     self._check_is_fitted()
-
-#     if ax is None:
-#         fig, ax = plt.subplots(figsize=figsize)
-
-#     # Add plotting style
-#     ax = plot.stylize_axis(ax)
-
-#     # Check input
-#     if self.check_input:
-#         utils.check_array(X, dtype=[str, np.number])
-
-#     # Prepare input
-#     X = self._prepare_input(X)
-
-#     # Retrieve partial coordinates
-#     coords = self.partial_row_coordinates(X)
-
-#     # Determine the color of each group if there are group labels
-#     if color_labels is not None:
-#         colors = {
-#             g: ax._get_lines.get_next_color()
-#             for g in sorted(list(set(color_labels)))
-#         }
-
-#     # Get the list of all possible markers
-#     marks = itertools.cycle(list(markers.MarkerStyle.markers.keys()))
-#     next(marks)  # The first marker looks pretty shit so we skip it
-
-#     # Plot points
-#     for name in self.groups:
-
-#         mark = next(marks)
-
-#         x = coords[name][x_component]
-#         y = coords[name][y_component]
-
-#         if color_labels is None:
-#             ax.scatter(x, y, marker=mark, label=name, **kwargs)
-#             continue
-
-#         for color_label, color in sorted(colors.items()):
-#             mask = np.array(color_labels) == color_label
-#             label = "{} - {}".format(name, color_label)
-#             ax.scatter(
-#                 x[mask], y[mask], marker=mark, color=color, label=label, **kwargs
-#             )
-
-#     # Legend
-#     ax.legend()
-
-#     # Text
-#     ax.set_title("Partial row principal coordinates")
-#     ei = self.explained_inertia_
-#     ax.set_xlabel(
-#         "Component {} ({:.2f}% inertia)".format(x_component, 100 * ei[x_component])
-#     )
-#     ax.set_ylabel(
-#         "Component {} ({:.2f}% inertia)".format(y_component, 100 * ei[y_component])
-#     )
-
-#     return ax
+    @property
+    def column_contributions_(self):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
