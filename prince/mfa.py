@@ -85,7 +85,7 @@ class MFA(pca.PCA, collections.UserDict):
         # Fit the global PCA
         Z = pd.concat(
             (
-                X[cols].copy() / self[g].eigenvalues_[0] ** 0.5
+                X[cols] / self[g].eigenvalues_[0] ** 0.5
                 for g, cols in self.groups_.items()
             ),
             axis="columns",
@@ -116,76 +116,6 @@ class MFA(pca.PCA, collections.UserDict):
             groups = provided_groups
         return groups
 
-    # def _prepare_input(self, X):
-
-    #     # Make sure X is a DataFrame for convenience
-    #     if not isinstance(X, pd.DataFrame):
-    #         X = pd.DataFrame(X)
-
-    #     # Copy data
-    #     if self.copy:
-    #         X = X.copy()
-
-    #     # if self.normalize:
-    #     #     # Scale continuous variables to unit variance
-    #     #     num = X.select_dtypes(np.number).columns
-    #     #     # If a column's cardinality is 1 then it's variance is 0 which can
-    #     #     # can cause a division by 0
-    #     #     normalize = lambda x: x / (np.sqrt((x**2).sum()) or 1)
-    #     #     X.loc[:, num] = (X.loc[:, num] - X.loc[:, num].mean()).apply(
-    #     #         normalize, axis="rows"
-    #     #     )
-
-    #     return X
-
-    # def _build_X_global(self, X):
-    #     X_partials = []
-
-    #     for name, cols in sorted(self.groups.items()):
-    #         X_partial = X.loc[:, cols]
-
-    #         # Dummify if there are categorical variable
-    #         if not self.all_nums_[name]:
-
-    #             # From FactoMineR MFA code, needs checking
-    #             try:
-    #                 tmp = pd.DataFrame(self.enc.transform(X_partial))
-    #             except AttributeError:
-    #                 self.enc = OneHotEncoder(handle_unknown="ignore", sparse=False)
-    #                 self.enc.fit(X_partial)
-    #                 tmp = pd.DataFrame(self.enc.transform(X_partial))
-    #             centre_tmp = tmp.mean() / len(tmp)
-    #             tmp2 = tmp / len(tmp)
-    #             poids_bary = tmp2.sum()
-    #             poids_tmp = 1 - tmp2.sum()
-    #             ponderation = poids_tmp**0.5 / (
-    #                 self.partial_factor_analysis_[name].s_[0] * len(cols)
-    #             )
-
-    #             normalize = lambda x: x / (np.sqrt((x**2).sum()) or 1)
-    #             tmp = (tmp - tmp.mean()).apply(normalize, axis="rows")
-
-    #             X_partial = tmp
-    #             X_partial *= ponderation**0.5
-
-    #             X_partials.append(X_partial)
-
-    #         else:
-
-    #             X_partials.append(X_partial / self.partial_factor_analysis_[name].s_[0])
-
-    #     X_global = pd.concat(X_partials, axis="columns")
-    #     X_global.index = X.index
-    #     return X_global
-
-    # def transform(self, X):
-    #     """Returns the row principal coordinates of a dataset."""
-    #     return self.row_coordinates(X)
-
-    # def _row_coordinates_from_global(self, X_global):
-    #     """Returns the row principal coordinates."""
-    #     return len(X_global) ** 0.5 * super().row_coordinates(X_global)
-
     @property
     @utils.check_is_fitted
     def eigenvalues_(self):
@@ -198,7 +128,7 @@ class MFA(pca.PCA, collections.UserDict):
         X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
         Z = pd.concat(
             (
-                X[cols].copy() / self[g].eigenvalues_[0] ** 0.5
+                X[cols] / self[g].eigenvalues_[0] ** 0.5
                 for g, cols in self.groups_.items()
             ),
             axis="columns",
@@ -208,142 +138,174 @@ class MFA(pca.PCA, collections.UserDict):
         M = np.full(len(X), 1 / len(X))
         return (Z @ Z.T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1)
 
-    # def row_contributions(self, X):
-    #     """Returns the row contributions towards each principal component."""
-    #     self._check_is_fitted()
+    def group_row_coordinates(self, X):
+        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
+        Z = pd.concat(
+            (
+                X[cols] / self[g].eigenvalues_[0] ** 0.5
+                for g, cols in self.groups_.items()
+            ),
+            axis="columns",
+        )
+        M = np.full(len(X), 1 / len(X))
+        U = self.svd_.U
+        s = self.svd_.s
 
-    #     # Check input
-    #     if self.check_input:
-    #         utils.check_array(X, dtype=[str, np.number])
+        def add_index(g, group_name):
+            g.columns = pd.MultiIndex.from_tuples(
+                [(group_name, col) for col in g.columns],
+                names=("group", "component"),
+            )
+            return g
 
-    #     # Prepare input
-    #     X = self._prepare_input(X)
+        return len(self.groups_) * pd.concat(
+            [
+                add_index(
+                    g=(Z[g] @ Z[g].T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1),
+                    group_name=g,
+                )
+                for g, cols in self.groups_.items()
+            ],
+            axis="columns",
+        )
 
-    #     return super().row_contributions(self._build_X_global(X))
 
-    # def partial_row_coordinates(self, X):
-    #     """Returns the row coordinates for each group."""
-    #     self._check_is_fitted()
+# def row_contributions(self, X):
+#     """Returns the row contributions towards each principal component."""
+#     self._check_is_fitted()
 
-    #     # Check input
-    #     if self.check_input:
-    #         utils.check_array(X, dtype=[str, np.number])
+#     # Check input
+#     if self.check_input:
+#         utils.check_array(X, dtype=[str, np.number])
 
-    #     # Prepare input
-    #     X = self._prepare_input(X)
+#     # Prepare input
+#     X = self._prepare_input(X)
 
-    #     # Define the projection matrix P
-    #     P = len(X) ** 0.5 * self.U_ / self.s_
+#     return super().row_contributions(self._build_X_global(X))
 
-    #     # Get the projections for each group
-    #     coords = {}
-    #     for name, cols in sorted(self.groups.items()):
-    #         X_partial = X.loc[:, cols]
+# def partial_row_coordinates(self, X):
+#     """Returns the row coordinates for each group."""
+#     self._check_is_fitted()
 
-    #         if not self.all_nums_[name]:
-    #             X_partial = pd.DataFrame(self.enc.transform(X_partial))
+#     # Check input
+#     if self.check_input:
+#         utils.check_array(X, dtype=[str, np.number])
 
-    #         Z_partial = X_partial / self.partial_factor_analysis_[name].s_[0]
-    #         coords[name] = len(self.groups) * (Z_partial @ Z_partial.T) @ P
+#     # Prepare input
+#     X = self._prepare_input(X)
 
-    #     # Convert coords to a MultiIndex DataFrame
-    #     coords = pd.DataFrame(
-    #         {
-    #             (name, i): group_coords.loc[:, i]
-    #             for name, group_coords in coords.items()
-    #             for i in range(group_coords.shape[1])
-    #         }
-    #     )
+#     # Define the projection matrix P
+#     P = len(X) ** 0.5 * self.U_ / self.s_
 
-    #     return coords
+#     # Get the projections for each group
+#     coords = {}
+#     for name, cols in sorted(self.groups.items()):
+#         X_partial = X.loc[:, cols]
 
-    # def column_correlations(self, X):
-    #     """Returns the column correlations."""
-    #     self._check_is_fitted()
+#         if not self.all_nums_[name]:
+#             X_partial = pd.DataFrame(self.enc.transform(X_partial))
 
-    #     X_global = self._build_X_global(X)
-    #     row_pc = self._row_coordinates_from_global(X_global)
+#         Z_partial = X_partial / self.partial_factor_analysis_[name].s_[0]
+#         coords[name] = len(self.groups) * (Z_partial @ Z_partial.T) @ P
 
-    #     return pd.DataFrame(
-    #         {
-    #             component: {
-    #                 feature: row_pc[component].corr(X_global[feature])
-    #                 for feature in X_global.columns
-    #             }
-    #             for component in row_pc.columns
-    #         }
-    #     ).sort_index()
+#     # Convert coords to a MultiIndex DataFrame
+#     coords = pd.DataFrame(
+#         {
+#             (name, i): group_coords.loc[:, i]
+#             for name, group_coords in coords.items()
+#             for i in range(group_coords.shape[1])
+#         }
+#     )
 
-    # def plot_partial_row_coordinates(
-    #     self,
-    #     X,
-    #     ax=None,
-    #     figsize=(6, 6),
-    #     x_component=0,
-    #     y_component=1,
-    #     color_labels=None,
-    #     **kwargs
-    # ):
-    #     """Plot the row principal coordinates."""
-    #     self._check_is_fitted()
+#     return coords
 
-    #     if ax is None:
-    #         fig, ax = plt.subplots(figsize=figsize)
+# def column_correlations(self, X):
+#     """Returns the column correlations."""
+#     self._check_is_fitted()
 
-    #     # Add plotting style
-    #     ax = plot.stylize_axis(ax)
+#     X_global = self._build_X_global(X)
+#     row_pc = self._row_coordinates_from_global(X_global)
 
-    #     # Check input
-    #     if self.check_input:
-    #         utils.check_array(X, dtype=[str, np.number])
+#     return pd.DataFrame(
+#         {
+#             component: {
+#                 feature: row_pc[component].corr(X_global[feature])
+#                 for feature in X_global.columns
+#             }
+#             for component in row_pc.columns
+#         }
+#     ).sort_index()
 
-    #     # Prepare input
-    #     X = self._prepare_input(X)
+# def plot_partial_row_coordinates(
+#     self,
+#     X,
+#     ax=None,
+#     figsize=(6, 6),
+#     x_component=0,
+#     y_component=1,
+#     color_labels=None,
+#     **kwargs
+# ):
+#     """Plot the row principal coordinates."""
+#     self._check_is_fitted()
 
-    #     # Retrieve partial coordinates
-    #     coords = self.partial_row_coordinates(X)
+#     if ax is None:
+#         fig, ax = plt.subplots(figsize=figsize)
 
-    #     # Determine the color of each group if there are group labels
-    #     if color_labels is not None:
-    #         colors = {
-    #             g: ax._get_lines.get_next_color()
-    #             for g in sorted(list(set(color_labels)))
-    #         }
+#     # Add plotting style
+#     ax = plot.stylize_axis(ax)
 
-    #     # Get the list of all possible markers
-    #     marks = itertools.cycle(list(markers.MarkerStyle.markers.keys()))
-    #     next(marks)  # The first marker looks pretty shit so we skip it
+#     # Check input
+#     if self.check_input:
+#         utils.check_array(X, dtype=[str, np.number])
 
-    #     # Plot points
-    #     for name in self.groups:
+#     # Prepare input
+#     X = self._prepare_input(X)
 
-    #         mark = next(marks)
+#     # Retrieve partial coordinates
+#     coords = self.partial_row_coordinates(X)
 
-    #         x = coords[name][x_component]
-    #         y = coords[name][y_component]
+#     # Determine the color of each group if there are group labels
+#     if color_labels is not None:
+#         colors = {
+#             g: ax._get_lines.get_next_color()
+#             for g in sorted(list(set(color_labels)))
+#         }
 
-    #         if color_labels is None:
-    #             ax.scatter(x, y, marker=mark, label=name, **kwargs)
-    #             continue
+#     # Get the list of all possible markers
+#     marks = itertools.cycle(list(markers.MarkerStyle.markers.keys()))
+#     next(marks)  # The first marker looks pretty shit so we skip it
 
-    #         for color_label, color in sorted(colors.items()):
-    #             mask = np.array(color_labels) == color_label
-    #             label = "{} - {}".format(name, color_label)
-    #             ax.scatter(
-    #                 x[mask], y[mask], marker=mark, color=color, label=label, **kwargs
-    #             )
+#     # Plot points
+#     for name in self.groups:
 
-    #     # Legend
-    #     ax.legend()
+#         mark = next(marks)
 
-    #     # Text
-    #     ax.set_title("Partial row principal coordinates")
-    #     ei = self.explained_inertia_
-    #     ax.set_xlabel(
-    #         "Component {} ({:.2f}% inertia)".format(x_component, 100 * ei[x_component])
-    #     )
-    #     ax.set_ylabel(
-    #         "Component {} ({:.2f}% inertia)".format(y_component, 100 * ei[y_component])
-    #     )
+#         x = coords[name][x_component]
+#         y = coords[name][y_component]
 
-    #     return ax
+#         if color_labels is None:
+#             ax.scatter(x, y, marker=mark, label=name, **kwargs)
+#             continue
+
+#         for color_label, color in sorted(colors.items()):
+#             mask = np.array(color_labels) == color_label
+#             label = "{} - {}".format(name, color_label)
+#             ax.scatter(
+#                 x[mask], y[mask], marker=mark, color=color, label=label, **kwargs
+#             )
+
+#     # Legend
+#     ax.legend()
+
+#     # Text
+#     ax.set_title("Partial row principal coordinates")
+#     ei = self.explained_inertia_
+#     ax.set_xlabel(
+#         "Component {} ({:.2f}% inertia)".format(x_component, 100 * ei[x_component])
+#     )
+#     ax.set_ylabel(
+#         "Component {} ({:.2f}% inertia)".format(y_component, 100 * ei[y_component])
+#     )
+
+#     return ax
