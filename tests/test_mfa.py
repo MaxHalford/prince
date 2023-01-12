@@ -69,6 +69,11 @@ class MFATestSuite:
                 F["cumulative percentage of variance"], P["% of variance (cumulative)"]
             )
 
+    def test_row_coords(self):
+        F = load_df_from_R(f"mfa$ind$coord")
+        P = self.mfa.row_coordinates(self.dataset)
+        np.testing.assert_allclose(F.abs(), P.abs())
+
 
 class TestMFANoSup(MFATestSuite):
     ...

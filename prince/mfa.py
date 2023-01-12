@@ -116,11 +116,6 @@ class MFA(pca.PCA, collections.UserDict):
             groups = provided_groups
         return groups
 
-    @property
-    @utils.check_is_fitted
-    def eigenvalues_(self):
-        return np.square(self.svd_.s)
-
     # def _prepare_input(self, X):
 
     #     # Make sure X is a DataFrame for convenience
@@ -191,11 +186,16 @@ class MFA(pca.PCA, collections.UserDict):
     #     """Returns the row principal coordinates."""
     #     return len(X_global) ** 0.5 * super().row_coordinates(X_global)
 
+    @property
+    @utils.check_is_fitted
+    def eigenvalues_(self):
+        """Returns the eigenvalues associated with each principal component."""
+        return np.square(self.svd_.s)
+
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
 
         X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
-
         Z = pd.concat(
             (
                 X[cols].copy() / self[g].eigenvalues_[0] ** 0.5
@@ -203,18 +203,10 @@ class MFA(pca.PCA, collections.UserDict):
             ),
             axis="columns",
         )
-        return super().row_coordinates(Z)
-
-        # self._check_is_fitted()
-
-        # # Check input
-        # if self.check_input:
-        #     utils.check_array(X, dtype=[str, np.number])
-
-        # # Prepare input
-        # X = self._prepare_input(X)
-
-        # return self._row_coordinates_from_global(self._build_X_global(X))
+        U = self.svd_.U
+        s = self.svd_.s
+        M = np.full(len(X), 1 / len(X))
+        return (Z @ Z.T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1)
 
     # def row_contributions(self, X):
     #     """Returns the row contributions towards each principal component."""
