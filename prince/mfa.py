@@ -128,6 +128,9 @@ class MFA(pca.PCA, collections.UserDict):
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
 
+        if (X.index != self.row_contributions_.index).any():
+            raise NotImplementedError("Supplementary rows are not supported yet")
+
         X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
         Z = pd.concat(
             (
@@ -143,6 +146,10 @@ class MFA(pca.PCA, collections.UserDict):
         return (Z @ Z.T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1)
 
     def group_row_coordinates(self, X):
+
+        if (X.index != self.row_contributions_.index).any():
+            raise NotImplementedError("Supplementary rows are not supported yet")
+
         X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
         Z = pd.concat(
             (
