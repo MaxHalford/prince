@@ -114,3 +114,12 @@ def load_burgundy_wines():
     )
     wines.insert(0, "Oak type", [1, 2, 2, 2, 1, 1])
     return wines
+
+
+def load_beers():
+    """Beers dataset.
+
+    The data is taken from https://github.com/philipperemy/beer-dataset.
+
+    """
+    return pd.read_csv(DATASETS_DIR / "beers.csv.zip", index_col="name")
