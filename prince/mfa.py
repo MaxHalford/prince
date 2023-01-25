@@ -5,7 +5,6 @@ import itertools
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
-from sklearn.preprocessing import OneHotEncoder
 
 from prince import mca
 from prince import pca
@@ -73,12 +72,8 @@ class MFA(pca.PCA, collections.UserDict):
                     engine=self.engine,
                 )
             else:
-                fa = mca.MCA(
-                    n_components=self.n_components,
-                    n_iter=self.n_iter,
-                    copy=self.copy,
-                    random_state=self.random_state,
-                    engine=self.engine,
+                raise NotImplementedError(
+                    "Groups of non-numerical variables are not supported yet"
                 )
             self[name] = fa.fit(X.loc[:, cols])
 

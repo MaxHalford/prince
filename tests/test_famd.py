@@ -1,51 +1,91 @@
-# """Tests for factor analysis of mixed data."""
-# import unittest
+import tempfile
+import numpy as np
+import pandas as pd
+import prince
+import rpy2.rinterface_lib
+from rpy2.robjects import r as R
+from scipy import sparse
+import sklearn.utils.estimator_checks
+import sklearn.utils.validation
 
-# import numpy as np
-# import pandas as pd
-
-# import prince
+from tests import load_df_from_R
 
 
-# class TestFAMD(unittest.TestCase):
+class FAMDTestSuite:
+    _row_name = "row"
+    _col_name = "col"
+    sup_rows = False
+    sup_cols = False
 
-#     def setUp(self):
-#         self.X = pd.DataFrame(
-#             data=[
-#                 ['A', 'A', 'A', 2, 5, 7, 0, 3, 6, 7],
-#                 ['A', 'A', 'A', 4, 4, 4, 0, 4, 4, 3],
-#                 ['B', 'A', 'B', 5, 2, 1, 0, 7, 1, 1],
-#                 ['B', 'A', 'B', 7, 2, 1, 0, 2, 2, 2],
-#                 ['B', 'B', 'B', 3, 5, 6, 0, 2, 6, 6],
-#                 ['B', 'B', 'A', 3, 5, 4, 0, 1, 7, 5]
-#             ],
-#             columns=['E1 fruity', 'E1 woody', 'E1 coffee',
-#                      'E2 red fruit', 'E2 roasted', 'E2 vanillin', 'E2 woody',
-#                      'E3 fruity', 'E3 butter', 'E3 woody'],
-#             index=['Wine {}'.format(i + 1) for i in range(6)]
-#         )
+    @classmethod
+    def setup_class(cls):
 
-#     def test_fit_pandas_dataframe(self):
-#         famd = prince.FAMD()
-#         self.assertTrue(isinstance(famd.fit(self.X), prince.FAMD))
+        n_components = 5
 
-#     def test_only_numerical(self):
-#         famd = prince.FAMD()
-#         X = self.X.select_dtypes(np.number)
-#         with self.assertRaises(ValueError):
-#             famd.fit(X)
-#             famd.transform(X)
+        # Fit Prince
+        cls.dataset = prince.datasets.load_beers()
+        active = cls.dataset.copy()
+        # if cls.sup_rows:
+        #     active = active.drop("Île-de-France")
+        # if cls.sup_cols:
+        #     active = active.drop(columns=["Abstention", "Blank"])
+        cls.famd = prince.FAMD(n_components=n_components)
+        cls.famd.fit(active)
 
-#     def test_only_numerical_numpy(self):
-#         famd = prince.FAMD()
-#         X = self.X.select_dtypes(np.number)
-#         with self.assertRaises(ValueError):
-#             famd.fit(X.to_numpy())
-#             famd.transform(X.to_numpy())
+        # Fit FactoMineR
+        R("library('FactoMineR')")
+        with tempfile.NamedTemporaryFile() as fp:
+            cls.dataset.to_csv(fp)
+            R(f"dataset <- read.csv('{fp.name}', row.names=c(1))")
+            R(f"famd <- FAMD(dataset, graph=F)")
 
-#     def test_only_categorical(self):
-#         famd = prince.FAMD()
-#         X = self.X.select_dtypes(exclude=np.number)
-#         with self.assertRaises(ValueError):
-#             famd.fit(X)
-#             famd.transform(X)
+    def test_check_is_fitted(self):
+        assert isinstance(self.famd, prince.FAMD)
+        sklearn.utils.validation.check_is_fitted(self.famd)
+
+    def test_num_cols(self):
+        assert self.famd.num_cols_ == [
+            "alcohol_by_volume",
+            "international_bitterness_units",
+            "standard_reference_method",
+            "final_gravity",
+        ]
+
+    def test_cat_cols(self):
+        assert self.famd.cat_cols_ == ["style", "is_organic"]
+
+    # def test_eigenvalues(self):
+    #     F = load_df_from_R("mfa$eig")[: self.mfa.n_components]
+    #     P = self.mfa._eigenvalues_summary
+    #     np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
+    #     np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
+    #     np.testing.assert_allclose(
+    #         F["cumulative percentage of variance"], P["% of variance (cumulative)"]
+    #     )
+
+    # def test_group_eigenvalues(self):
+
+    #     for i, group in enumerate(self.groups, start=1):
+    #         F = load_df_from_R(f"mfa$separate.analyses$Gr{i}$eig")[
+    #             : self.mfa.n_components
+    #         ]
+    #         P = self.mfa[group]._eigenvalues_summary
+    #         np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
+    #         np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
+    #         np.testing.assert_allclose(
+    #             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
+    #         )
+
+    # def test_row_coords(self):
+    #     F = load_df_from_R(f"mfa$ind$coord")
+    #     P = self.mfa.row_coordinates(self.dataset)
+    #     np.testing.assert_allclose(F.abs(), P.abs())
+
+    # def test_row_contrib(self):
+    #     F = load_df_from_R("mfa$ind$contrib")
+    #     P = self.mfa.row_contributions_
+    #     np.testing.assert_allclose(F, P * 100)
+
+
+class TestFAMDNoSup(FAMDTestSuite):
+    ...
