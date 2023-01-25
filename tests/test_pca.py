@@ -5,6 +5,9 @@ import rpy2.rinterface_lib
 import rpy2.robjects as robjects
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
+from sklearn import pipeline
+from sklearn import decomposition
+from sklearn import preprocessing
 
 from tests import load_df_from_R
 
@@ -27,6 +30,13 @@ class PCATestSuite:
         cls.pca.fit(
             active, supplementary_columns=["rank", "points"] if cls.sup_cols else None
         )
+
+        # scikit-learn
+        cls.sk_pca = pipeline.make_pipeline(
+            preprocessing.StandardScaler(),
+            decomposition.PCA(n_components=n_components),
+        )
+        cls.sk_pca.fit(active[cls.pca.feature_names_in_])
 
         # Fit FactoMineR
         robjects.r(
@@ -52,6 +62,11 @@ class PCATestSuite:
     def test_check_is_fitted(self):
         assert isinstance(self.pca, prince.PCA)
         sklearn.utils.validation.check_is_fitted(self.pca)
+
+    def test_svd_s(self):
+        S = self.sk_pca[-1].singular_values_
+        P = self.pca.svd_.s
+        np.testing.assert_allclose(S, P)
 
     def test_eigenvalues(self):
         F = load_df_from_R("pca$eig")[: self.pca.n_components]
