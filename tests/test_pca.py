@@ -23,12 +23,13 @@ class PCATestSuite:
 
         # Fit Prince
         cls.dataset = prince.datasets.load_decathlon()
-        active = cls.dataset.copy()
+        cls.active = cls.dataset.copy()
         if cls.sup_rows:
-            active = active.query('competition == "Decastar"')
+            cls.active = cls.active.query('competition == "Decastar"')
         cls.pca = prince.PCA(n_components=n_components)
         cls.pca.fit(
-            active, supplementary_columns=["rank", "points"] if cls.sup_cols else None
+            cls.active,
+            supplementary_columns=["rank", "points"] if cls.sup_cols else None,
         )
 
         # scikit-learn
@@ -36,7 +37,7 @@ class PCATestSuite:
             preprocessing.StandardScaler(),
             decomposition.PCA(n_components=n_components),
         )
-        cls.sk_pca.fit(active[cls.pca.feature_names_in_])
+        cls.sk_pca.fit(cls.active[cls.pca.feature_names_in_])
 
         # Fit FactoMineR
         robjects.r(
@@ -69,20 +70,32 @@ class PCATestSuite:
         np.testing.assert_allclose(S, P)
 
     def test_eigenvalues(self):
-        F = load_df_from_R("pca$eig")[: self.pca.n_components]
         P = self.pca._eigenvalues_summary
+        # Test againt FactoMineR
+        F = load_df_from_R("pca$eig")[: self.pca.n_components]
         np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
         np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
         np.testing.assert_allclose(
             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
+        # Test against scikit-learn
+        n = len(self.active)
+        S = self.sk_pca[-1].explained_variance_ * (n - 1) / n
+        np.testing.assert_allclose(P["eigenvalue"], S)
+        np.testing.assert_allclose(
+            P["% of variance"], self.sk_pca[-1].explained_variance_ratio_ * 100
+        )
 
     def test_row_coords(self):
+        P = self.pca.row_coordinates(self.dataset)
+        # Test againt FactoMineR
         F = load_df_from_R("pca$ind$coord")
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$coord")))
-        P = self.pca.row_coordinates(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
+        # Test against scikit-learn
+        S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
+        np.testing.assert_allclose(np.abs(S), P.abs())
 
     def test_row_cos2(self):
         F = load_df_from_R("pca$ind$cos2")
