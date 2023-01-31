@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import pandas as pd
 import prince
@@ -12,32 +13,59 @@ from sklearn import preprocessing
 from tests import load_df_from_R
 
 
-class PCATestSuite:
-    sup_rows = False
-    sup_cols = False
+@pytest.mark.parametrize(
+    "sup_rows, sup_cols, scale",
+    [
+        pytest.param(
+            sup_rows,
+            sup_cols,
+            scale,
+            id=":".join(
+                [
+                    "sup_rows" if sup_rows else "",
+                    "sup_cols" if sup_cols else "",
+                    "scale" if scale else "",
+                ]
+            ).strip(":"),
+        )
+        for sup_rows in [False, True]
+        for sup_cols in [False, True]
+        for scale in [False, True]
+    ],
+)
+class TestPCA:
+    @pytest.fixture(autouse=True)
+    def _prepare(self, sup_rows, sup_cols, scale):
 
-    @classmethod
-    def setup_class(cls):
+        self.sup_rows = sup_rows
+        self.sup_cols = sup_cols
+        self.scale = scale
 
         n_components = 5
 
         # Fit Prince
-        cls.dataset = prince.datasets.load_decathlon()
-        cls.active = cls.dataset.copy()
-        if cls.sup_rows:
-            cls.active = cls.active.query('competition == "Decastar"')
-        cls.pca = prince.PCA(n_components=n_components)
-        cls.pca.fit(
-            cls.active,
-            supplementary_columns=["rank", "points"] if cls.sup_cols else None,
+        self.dataset = prince.datasets.load_decathlon()
+        self.dataset = pd.read_csv("~/Downloads/beers.csv")
+        self.active = self.dataset.copy()
+        if self.sup_rows:
+            self.active = self.active.query('competition == "Decastar"')
+        self.pca = prince.PCA(n_components=n_components, rescale_with_std=self.scale)
+        self.pca.fit(
+            self.active,
+            supplementary_columns=["rank", "points"] if self.sup_cols else None,
         )
 
         # scikit-learn
-        cls.sk_pca = pipeline.make_pipeline(
-            preprocessing.StandardScaler(),
-            decomposition.PCA(n_components=n_components),
-        )
-        cls.sk_pca.fit(cls.active[cls.pca.feature_names_in_])
+        if self.scale:
+            self.sk_pca = pipeline.make_pipeline(
+                preprocessing.StandardScaler(),
+                decomposition.PCA(n_components=n_components),
+            )
+        else:
+            self.sk_pca = pipeline.make_pipeline(
+                decomposition.PCA(n_components=n_components),
+            )
+        self.sk_pca.fit(self.active[self.pca.feature_names_in_])
 
         # Fit FactoMineR
         robjects.r(
@@ -49,13 +77,15 @@ class PCATestSuite:
         """
         )
         args = f"decathlon, ncp={n_components}, graph=F"
-        if cls.sup_cols:
-            if cls.sup_rows:
+        if not self.scale:
+            args += ", scale.unit=F"
+        if self.sup_cols:
+            if self.sup_rows:
                 robjects.r(f"pca = PCA({args}, quanti.sup=c(11, 12), ind.sup=c(14:41))")
             else:
                 robjects.r(f"pca = PCA({args}, quanti.sup=c(11, 12))")
         else:
-            if cls.sup_rows:
+            if self.sup_rows:
                 robjects.r(f"pca = PCA({args}, ind.sup=c(14:41))")
             else:
                 robjects.r(f"pca = PCA({args})")
@@ -127,20 +157,3 @@ class PCATestSuite:
         F = load_df_from_R("pca$var$contrib")
         P = self.pca.column_contributions_
         np.testing.assert_allclose(F, P * 100)
-
-
-class TestPCANoSup(PCATestSuite):
-    ...
-
-
-class TestPCASupRows(PCATestSuite):
-    sup_rows = True
-
-
-class TestPCASupCols(PCATestSuite):
-    sup_cols = True
-
-
-class TestPCASupRowsSupCols(PCATestSuite):
-    sup_rows = True
-    sup_cols = True

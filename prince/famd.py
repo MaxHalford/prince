@@ -13,6 +13,28 @@ from prince import utils
 
 
 class FAMD(pca.PCA):
+    def __init__(
+        self,
+        n_components=2,
+        n_iter=3,
+        copy=True,
+        check_input=True,
+        random_state=None,
+        engine="sklearn",
+        as_array=False,
+    ):
+        super().__init__(
+            rescale_with_mean=True,
+            rescale_with_std=False,
+            n_components=n_components,
+            n_iter=n_iter,
+            copy=copy,
+            check_input=check_input,
+            random_state=random_state,
+            engine=engine,
+            as_array=as_array,
+        )
+
     def fit(self, X, y=None):
 
         # Separate numerical columns from categorical columns
@@ -25,19 +47,20 @@ class FAMD(pca.PCA):
 
         # Preprocess numerical columns
         X_num = X[self.num_cols_].copy()
-        self.num_scaler_ = preprocessing.StandardScaler().fit(X_num)
-        X_num[:] = self.num_scaler_.transform(X_num)
+        num_scaler_ = preprocessing.StandardScaler().fit(X_num)
+        X_num[:] = num_scaler_.transform(X_num)
 
         # Preprocess categorical columns
         X_cat = X[self.cat_cols_]
-        self.cat_scaler_ = preprocessing.OneHotEncoder().fit(X_cat)
+        cat_scaler_ = preprocessing.OneHotEncoder().fit(X_cat)
         X_cat = pd.DataFrame.sparse.from_spmatrix(
-            self.cat_scaler_.transform(X_cat),
+            cat_scaler_.transform(X_cat),
             index=X_cat.index,
-            columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
+            columns=cat_scaler_.get_feature_names_out(self.cat_cols_),
         )
         prop = X_cat.sum() / X_cat.sum().sum() * 2
-        # X_cat = X_cat.sub(X_cat.sum(axis=1))
-        print(X_cat)
+        X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
 
-        # return super().fit(X)
+        Z = pd.concat([X_num, X_cat], axis=1)
+
+        return super().fit(Z)

@@ -23,13 +23,9 @@ class FAMDTestSuite:
         n_components = 5
 
         # Fit Prince
-        cls.dataset = prince.datasets.load_beers()
+        cls.dataset = prince.datasets.load_beers().head(1000)
         active = cls.dataset.copy()
-        # if cls.sup_rows:
-        #     active = active.drop("Île-de-France")
-        # if cls.sup_cols:
-        #     active = active.drop(columns=["Abstention", "Blank"])
-        cls.famd = prince.FAMD(n_components=n_components)
+        cls.famd = prince.FAMD(n_components=n_components, engine="scipy")
         cls.famd.fit(active)
 
         # Fit FactoMineR
@@ -54,14 +50,14 @@ class FAMDTestSuite:
     def test_cat_cols(self):
         assert self.famd.cat_cols_ == ["style", "is_organic"]
 
-    # def test_eigenvalues(self):
-    #     F = load_df_from_R("mfa$eig")[: self.mfa.n_components]
-    #     P = self.mfa._eigenvalues_summary
-    #     np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
-    #     np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
-    #     np.testing.assert_allclose(
-    #         F["cumulative percentage of variance"], P["% of variance (cumulative)"]
-    #     )
+    def test_eigenvalues(self):
+        F = load_df_from_R("famd$eig")[: self.famd.n_components]
+        P = self.famd._eigenvalues_summary
+        np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
+        np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
+        np.testing.assert_allclose(
+            F["cumulative percentage of variance"], P["% of variance (cumulative)"]
+        )
 
     # def test_group_eigenvalues(self):
 
