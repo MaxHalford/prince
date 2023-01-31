@@ -45,7 +45,6 @@ class TestPCA:
 
         # Fit Prince
         self.dataset = prince.datasets.load_decathlon()
-        self.dataset = pd.read_csv("~/Downloads/beers.csv")
         self.active = self.dataset.copy()
         if self.sup_rows:
             self.active = self.active.query('competition == "Decastar"')
