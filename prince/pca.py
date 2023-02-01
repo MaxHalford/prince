@@ -100,6 +100,20 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
                     with_std=self.rescale_with_std,
                 ).fit_transform(X_sup)
 
+        self._column_dist = pd.Series(
+            (X_active**2 / len(X_active)).sum(axis=0), index=active_variables
+        )
+        if supplementary_columns:
+            self._column_dist = pd.concat(
+                (
+                    self._column_dist,
+                    pd.Series(
+                        (X_sup**2 / len(X_sup)).sum(axis=0),
+                        index=supplementary_columns,
+                    ),
+                )
+            )
+
         self.svd_ = svd.compute_svd(
             X=X_active,
             n_components=self.n_components,
@@ -287,7 +301,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         variables explained by the components).
 
         """
-        return self.column_coordinates_
+        return self.column_coordinates_.div(self._column_dist**0.5, axis=0)
 
     @property
     @utils.check_is_fitted

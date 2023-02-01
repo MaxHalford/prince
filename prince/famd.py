@@ -86,3 +86,34 @@ class FAMD(pca.PCA):
         Z = pd.concat([X_num, X_cat], axis=1)
 
         return super().row_coordinates(Z)
+
+    def inverse_transform(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
+
+    def row_standard_coordinates(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
+
+    def row_cosine_similarities(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
+
+    def column_correlations(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
+
+    def column_cosine_similarities_(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
+
+    @property
+    def column_contributions_(self):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
+        )
