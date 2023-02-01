@@ -47,16 +47,16 @@ class FAMD(pca.PCA):
 
         # Preprocess numerical columns
         X_num = X[self.num_cols_].copy()
-        num_scaler_ = preprocessing.StandardScaler().fit(X_num)
-        X_num[:] = num_scaler_.transform(X_num)
+        self.num_scaler_ = preprocessing.StandardScaler().fit(X_num)
+        X_num[:] = self.num_scaler_.transform(X_num)
 
         # Preprocess categorical columns
         X_cat = X[self.cat_cols_]
-        cat_scaler_ = preprocessing.OneHotEncoder().fit(X_cat)
+        self.cat_scaler_ = preprocessing.OneHotEncoder().fit(X_cat)
         X_cat = pd.DataFrame.sparse.from_spmatrix(
-            cat_scaler_.transform(X_cat),
+            self.cat_scaler_.transform(X_cat),
             index=X_cat.index,
-            columns=cat_scaler_.get_feature_names_out(self.cat_cols_),
+            columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
         )
         prop = X_cat.sum() / X_cat.sum().sum() * 2
         X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
@@ -64,3 +64,25 @@ class FAMD(pca.PCA):
         Z = pd.concat([X_num, X_cat], axis=1)
 
         return super().fit(Z)
+
+    def row_coordinates(self, X):
+
+        # Separate numerical columns from categorical columns
+        X_num = X[self.num_cols_].copy()
+        X_cat = X[self.cat_cols_]
+
+        # Preprocess numerical columns
+        X_num[:] = self.num_scaler_.transform(X_num)
+
+        # Preprocess categorical columns
+        X_cat = pd.DataFrame.sparse.from_spmatrix(
+            self.cat_scaler_.transform(X_cat),
+            index=X_cat.index,
+            columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
+        )
+        prop = X_cat.sum() / X_cat.sum().sum() * 2
+        X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
+
+        Z = pd.concat([X_num, X_cat], axis=1)
+
+        return super().row_coordinates(Z)

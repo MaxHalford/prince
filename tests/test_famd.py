@@ -59,10 +59,10 @@ class FAMDTestSuite:
             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
 
-    # def test_row_coords(self):
-    #     F = load_df_from_R(f"famd$ind$coord")
-    #     P = self.famd.row_coordinates(self.dataset)
-    #     np.testing.assert_allclose(F.abs(), P.abs())
+    def test_row_coords(self):
+        F = load_df_from_R(f"famd$ind$coord")
+        P = self.famd.row_coordinates(self.dataset)
+        np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_row_contrib(self):
         F = load_df_from_R("famd$ind$contrib")
