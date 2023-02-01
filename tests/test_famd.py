@@ -2,6 +2,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 import prince
+import pytest
 import rpy2.rinterface_lib
 from rpy2.robjects import r as R
 from scipy import sparse
@@ -11,27 +12,42 @@ import sklearn.utils.validation
 from tests import load_df_from_R
 
 
-class FAMDTestSuite:
+@pytest.mark.parametrize(
+    "sup_rows, sup_cols",
+    [
+        pytest.param(
+            sup_rows,
+            sup_cols,
+            id=":".join(
+                ["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]
+            ).strip(":"),
+        )
+        for sup_rows in [False]
+        for sup_cols in [False]
+    ],
+)
+class TestFAMD:
     _row_name = "row"
     _col_name = "col"
-    sup_rows = False
-    sup_cols = False
 
-    @classmethod
-    def setup_class(cls):
+    @pytest.fixture(autouse=True)
+    def _prepare(self, sup_rows, sup_cols):
+
+        self.sup_rows = sup_rows
+        self.sup_cols = sup_cols
 
         n_components = 5
 
         # Fit Prince
-        cls.dataset = prince.datasets.load_beers().head(1000)
-        active = cls.dataset.copy()
-        cls.famd = prince.FAMD(n_components=n_components, engine="scipy")
-        cls.famd.fit(active)
+        self.dataset = prince.datasets.load_beers().head(200)
+        active = self.dataset.copy()
+        self.famd = prince.FAMD(n_components=n_components, engine="scipy")
+        self.famd.fit(active)
 
         # Fit FactoMineR
         R("library('FactoMineR')")
         with tempfile.NamedTemporaryFile() as fp:
-            cls.dataset.to_csv(fp)
+            self.dataset.to_csv(fp)
             R(f"dataset <- read.csv('{fp.name}', row.names=c(1))")
             R(f"famd <- FAMD(dataset, graph=F)")
 
@@ -68,7 +84,3 @@ class FAMDTestSuite:
         F = load_df_from_R("famd$ind$contrib")
         P = self.famd.row_contributions_
         np.testing.assert_allclose(F, P * 100)
-
-
-class TestFAMDNoSup(FAMDTestSuite):
-    ...

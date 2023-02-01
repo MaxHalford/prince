@@ -2,6 +2,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 import prince
+import pytest
 import rpy2.rinterface_lib
 from rpy2.robjects import r as R
 from scipy import sparse
@@ -11,32 +12,47 @@ import sklearn.utils.validation
 from tests import load_df_from_R
 
 
-class MFATestSuite:
+@pytest.mark.parametrize(
+    "sup_rows, sup_cols",
+    [
+        pytest.param(
+            sup_rows,
+            sup_cols,
+            id=":".join(
+                ["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]
+            ).strip(":"),
+        )
+        for sup_rows in [False]
+        for sup_cols in [False]
+    ],
+)
+class TestMFA:
     _row_name = "row"
     _col_name = "col"
-    sup_rows = False
-    sup_cols = False
 
-    @classmethod
-    def setup_class(cls):
+    @pytest.fixture(autouse=True)
+    def _prepare(self, sup_rows, sup_cols):
+
+        self.sup_rows = sup_rows
+        self.sup_cols = sup_cols
 
         n_components = 5
 
         # Fit Prince
-        cls.dataset = prince.datasets.load_burgundy_wines()
-        active = cls.dataset.copy()
-        # if cls.sup_rows:
+        self.dataset = prince.datasets.load_burgundy_wines()
+        active = self.dataset.copy()
+        # if self.sup_rows:
         #     active = active.drop("Île-de-France")
-        # if cls.sup_cols:
+        # if self.sup_cols:
         #     active = active.drop(columns=["Abstention", "Blank"])
-        cls.groups = cls.dataset.columns.levels[0].drop("Oak type").tolist()
-        cls.mfa = prince.MFA(n_components=n_components)
-        cls.mfa.fit(active, groups=cls.groups)
+        self.groups = self.dataset.columns.levels[0].drop("Oak type").tolist()
+        self.mfa = prince.MFA(n_components=n_components)
+        self.mfa.fit(active, groups=self.groups)
 
         # Fit FactoMineR
         R("library('FactoMineR')")
         with tempfile.NamedTemporaryFile() as fp:
-            dataset = cls.dataset.copy()
+            dataset = self.dataset.copy()
             dataset.columns = [" ".join(parts) for parts in dataset.columns]
             dataset.to_csv(fp, index=False)
             R(f"dataset <- read.csv('{fp.name}')")
@@ -78,7 +94,3 @@ class MFATestSuite:
         F = load_df_from_R("mfa$ind$contrib")
         P = self.mfa.row_contributions_
         np.testing.assert_allclose(F, P * 100)
-
-
-class TestMFANoSup(MFATestSuite):
-    ...

@@ -2,6 +2,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 import prince
+import pytest
 import rpy2.rinterface_lib
 from rpy2.robjects import r as R
 from scipy import sparse
@@ -11,41 +12,56 @@ import sklearn.utils.validation
 from tests import load_df_from_R
 
 
-class CATestSuite:
+@pytest.mark.parametrize(
+    "sup_rows, sup_cols",
+    [
+        pytest.param(
+            sup_rows,
+            sup_cols,
+            id=":".join(
+                ["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]
+            ).strip(":"),
+        )
+        for sup_rows in [False, True]
+        for sup_cols in [False, True]
+    ],
+)
+class TestCA:
     _row_name = "row"
     _col_name = "col"
-    sup_rows = False
-    sup_cols = False
 
-    @classmethod
-    def setup_class(cls):
+    @pytest.fixture(autouse=True)
+    def _prepare(self, sup_rows, sup_cols):
+
+        self.sup_rows = sup_rows
+        self.sup_cols = sup_cols
 
         n_components = 5
 
         # Fit Prince
-        cls.dataset = prince.datasets.load_french_elections()
-        active = cls.dataset.copy()
-        if cls.sup_rows:
+        self.dataset = prince.datasets.load_french_elections()
+        active = self.dataset.copy()
+        if sup_rows:
             active = active.drop("Île-de-France")
-        if cls.sup_cols:
+        if self.sup_cols:
             active = active.drop(columns=["Abstention", "Blank"])
-        cls.ca = prince.CA(n_components=n_components)
-        cls.ca.fit(active)
+        self.ca = prince.CA(n_components=n_components)
+        self.ca.fit(active)
 
         # Fit FactoMineR
         R("library('FactoMineR')")
         with tempfile.NamedTemporaryFile() as fp:
-            cls.dataset.to_csv(fp)
+            self.dataset.to_csv(fp)
             R(f"dataset <- read.csv('{fp.name}', row.names=1)")
 
         args = f"dataset, ncp={n_components}, graph=F"
-        if cls.sup_cols:
-            if cls.sup_rows:
+        if self.sup_cols:
+            if sup_rows:
                 R(f"ca <- CA({args}, col.sup=c(13, 14), row.sup=c(18))")
             else:
                 R(f"ca <- CA({args}, col.sup=c(13, 14))")
         else:
-            if cls.sup_rows:
+            if sup_rows:
                 R(f"ca <- CA({args}, row.sup=c(18))")
             else:
                 R(f"ca <- CA({args})")
@@ -110,20 +126,3 @@ class CATestSuite:
             F = pd.concat((F, load_df_from_R(f"ca${self._col_name}.sup$cos2")))
         P = self.ca.column_cos2(self.dataset)
         np.testing.assert_allclose(F, P)
-
-
-class TestCANoSup(CATestSuite):
-    ...
-
-
-class TestCASupRows(CATestSuite):
-    sup_rows = True
-
-
-class TestCASupCols(CATestSuite):
-    sup_cols = True
-
-
-class TestCASupRowsSupCols(CATestSuite):
-    sup_rows = True
-    sup_cols = True
