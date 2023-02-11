@@ -220,8 +220,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin):
 
         # Retrieve principal coordinates
         coordinates = self.row_coordinates(X)
-        x = coordinates[x_component].astype(np.float)
-        y = coordinates[y_component].astype(np.float)
+        x = coordinates[x_component].astype(np.float64)
+        y = coordinates[y_component].astype(np.float64)
 
         # Plot
         if color_labels is None:
