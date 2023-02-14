@@ -1,8 +1,9 @@
 """Principal Component Analysis (PCA)"""
 import functools
+
 import numpy as np
 import pandas as pd
-import plotly.express as px
+import altair as alt
 from sklearn import base
 from sklearn import preprocessing
 from sklearn.utils import check_array
@@ -139,6 +140,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
                 ]
             )
         self.column_coordinates_.columns.name = "component"
+        self.column_coordinates_.index.name = "variable"
         row_coords = pd.DataFrame(
             (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
             # HACK: there's a circular dependency between row_contributions_
@@ -316,149 +318,42 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         )
 
     @utils.check_is_fitted
-    def plot(self, X, x_component=0, y_component=1, **scatter_params):
+    def plot(self, X, x_component=0, y_component=1, color_by=None, **params):
 
-        index_names = X.index.names
-        row_coordinates = self.row_coordinates(X).reset_index(drop=False)
-        fig = px.scatter(
-            row_coordinates,
-            x=x_component,
-            y=y_component,
-            hover_data=index_names,
-            labels={
-                str(
-                    x_component
-                ): f"Component #{x_component} — {self.percentage_of_variance_[x_component]:.2%} inertia",
-                str(
-                    y_component
-                ): f"Component #{y_component} — {self.percentage_of_variance_[y_component]:.2%} inertia",
-            },
-            **scatter_params,
-        )
-        fig.add_scatter(
-            x=self.column_coordinates_[x_component],
-            y=self.column_coordinates_[y_component],
-            mode="markers",
-        )
+        if color_by is not None:
+            params["color"] = color_by
 
-        # x_mean, y_mean, width, height, angle = plot.build_ellipse(
-        #     row_coordinates[0], row_coordinates[1]
-        # )
-        # print(x_mean, y_mean, width, height, angle)
-        # ax.add_patch(
-        #     mpl.patches.Ellipse(
-        #         (x_mean, y_mean),
-        #         width,
-        #         height,
-        #         angle=angle,
-        #         linewidth=2 if ellipse_outline else 0,
-        #         color=color,
-        #         fill=ellipse_fill,
-        #         alpha=0.2 + (0.3 if not show_points else 0)
-        #         if ellipse_fill
-        #         else 1,
-        #     )
-        # )
-        fig.update_yaxes(
-            scaleanchor="x",
-            scaleratio=1,
-        )
-        return fig
+        params["tooltip"] = (
+            X.index.names if isinstance(X.index, pd.MultiIndex) else ["index"]
+        ) + [
+            f"component {x_component}",
+            f"component {y_component}",
+        ]
 
-    @utils.check_is_fitted
-    def plot_row_coordinates(
-        self,
-        X,
-        ax=None,
-        figsize=(6, 6),
-        x_component=0,
-        y_component=1,
-        label_by=None,
-        color_by=None,
-        ellipse_outline=False,
-        ellipse_fill=True,
-        show_points=True,
-        **kwargs,
-    ):
-        """Plot the row principal coordinates."""
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-
-        # Add style
-        ax = plot.stylize_axis(ax)
-
-        # Make sure X is a DataFrame
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-
-        # Retrieve principal coordinates
-        coordinates = self.row_coordinates(X)
-        x = coordinates[x_component].astype(np.float)
-        y = coordinates[y_component].astype(np.float)
-
-        # Plot
-        color_labels = None
-        if color_by:
-            try:
-                color_labels = X.index.get_level_values(color_by)
-            except ValueError:
-                color_labels = X[color_by]
-
-        if color_labels is None:
-            ax.scatter(x, y, **kwargs)
-        else:
-            for color_label in sorted(list(set(color_labels))):
-                mask = np.array(color_labels) == color_label
-                color = ax._get_lines.get_next_color()
-                # Plot points
-                if show_points:
-                    ax.scatter(
-                        x[mask], y[mask], color=color, **kwargs, label=color_label
-                    )
-                # Plot ellipse
-                if ellipse_outline or ellipse_fill:
-                    x_mean, y_mean, width, height, angle = plot.build_ellipse(
-                        x[mask], y[mask]
-                    )
-                    ax.add_patch(
-                        mpl.patches.Ellipse(
-                            (x_mean, y_mean),
-                            width,
-                            height,
-                            angle=angle,
-                            linewidth=2 if ellipse_outline else 0,
-                            color=color,
-                            fill=ellipse_fill,
-                            alpha=0.2 + (0.3 if not show_points else 0)
-                            if ellipse_fill
-                            else 1,
-                        )
-                    )
-
-        # Add labels
-        labels = None
-        if label_by:
-            try:
-                labels = X.index.get_level_values(label_by)
-            except ValueError:
-                labels = X[label_by]
-
-        if labels is not None:
-            for xi, yi, label in zip(x, y, labels):
-                ax.annotate(label, (xi, yi))
-
-        # Legend
-        ax.legend()
-
-        # Text
-        ax.set_title("Row principal coordinates")
-        ei = self.percentage_of_variance_
-        ax.set_xlabel(
-            "Component {} ({:.2f}% inertia)".format(x_component, 100 * ei[x_component])
-        )
-        ax.set_ylabel(
-            "Component {} ({:.2f}% inertia)".format(y_component, 100 * ei[y_component])
+        row_coords = self.row_coordinates(X)
+        row_coords.columns = [f"component {i}" for i in row_coords.columns]
+        row_coords = row_coords.reset_index()
+        row_plot = (
+            alt.Chart(row_coords)
+            .mark_circle()
+            .encode(
+                alt.X(f"component {x_component}"),
+                alt.Y(f"component {y_component}"),
+                **params,
+            )
         )
 
-        return ax
+        col_coords = self.column_coordinates_.copy()
+        col_coords.columns = [f"component {i}" for i in col_coords.columns]
+        col_coords = col_coords.reset_index()
+        col_plot = (
+            alt.Chart(col_coords)
+            .mark_square(color="green")
+            .encode(
+                alt.X(f"component {x_component}"),
+                alt.Y(f"component {y_component}"),
+                tooltip=["variable"],
+            )
+        )
+
+        return (row_plot + col_plot).interactive()

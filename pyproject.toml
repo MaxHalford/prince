@@ -9,10 +9,6 @@ license = "MIT"
 python = "^3.8"
 scikit-learn = "^1.0.2"
 pandas = "^1.4.1"
-fbpca = "^1.0"
-plotly = "^5.8.0"
-nbformat = "^5.4.0"
-rpy2 = "^3.5.6"
 altair = "^4.2.2"
 
 [tool.poetry.dev-dependencies]
