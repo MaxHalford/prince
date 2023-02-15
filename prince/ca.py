@@ -247,16 +247,18 @@ class CA(utils.EigenvaluesMixin):
         row_coords = self.row_coordinates(X)
         row_coords.columns = [f"component {i}" for i in row_coords.columns]
         row_coords = row_coords.assign(
-            variable=row_coords.index.name or "row", value=row_coords.index
+            variable=row_coords.index.name or "row", value=row_coords.index.astype(str)
         )
 
         col_coords = self.column_coordinates(X)
         col_coords.columns = [f"component {i}" for i in col_coords.columns]
         col_coords = col_coords.assign(
-            variable=col_coords.index.name or "column", value=col_coords.index
+            variable=col_coords.index.name or "column",
+            value=col_coords.index.astype(str),
         )
 
         coords = pd.concat([row_coords, col_coords])
+
         return (
             alt.Chart(coords)
             .mark_circle()
