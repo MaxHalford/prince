@@ -2,6 +2,7 @@
 import functools
 import numpy as np
 import pandas as pd
+import altair as alt
 from scipy import sparse
 from sklearn.utils import check_array
 
@@ -131,6 +132,7 @@ class CA(utils.EigenvaluesMixin):
         """The row principal coordinates."""
 
         _, row_names, _, _ = utils.make_labels_and_names(X)
+        index_name = X.index.name
 
         if isinstance(X, pd.DataFrame):
             try:
@@ -149,7 +151,7 @@ class CA(utils.EigenvaluesMixin):
 
         return pd.DataFrame(
             data=X @ sparse.diags(self.col_masses_.to_numpy() ** -0.5) @ self.svd_.V.T,
-            index=row_names,
+            index=pd.Index(row_names, name=index_name),
         )
 
     @select_active_columns
@@ -187,6 +189,7 @@ class CA(utils.EigenvaluesMixin):
         """The column principal coordinates."""
 
         _, _, _, col_names = utils.make_labels_and_names(X)
+        index_name = X.columns.name
 
         if isinstance(X, pd.DataFrame):
             is_sparse = X.dtypes.apply(pd.api.types.is_sparse).all()
@@ -206,7 +209,7 @@ class CA(utils.EigenvaluesMixin):
 
         return pd.DataFrame(
             data=X @ sparse.diags(self.row_masses_.to_numpy() ** -0.5) @ self.svd_.U,
-            index=col_names,
+            index=pd.Index(col_names, name=index_name),
         )
 
     @select_active_rows
@@ -238,65 +241,36 @@ class CA(utils.EigenvaluesMixin):
         dist2_col = pd.concat((dist2_col, dist2_col_sup))
         return (G**2).div(dist2_col, axis=0)
 
-    def plot_coordinates(
-        self,
-        X,
-        ax=None,
-        figsize=(6, 6),
-        x_component=0,
-        y_component=1,
-        show_row_labels=True,
-        show_col_labels=True,
-        **kwargs,
-    ):
-        """Plot the principal coordinates."""
+    @utils.check_is_fitted
+    def plot(self, X, x_component=0, y_component=1, **params):
 
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-
-        # Add style
-        ax = plot.stylize_axis(ax)
-
-        # Get labels and names
-        row_label, row_names, col_label, col_names = utils.make_labels_and_names(X)
-
-        # Plot row principal coordinates
         row_coords = self.row_coordinates(X)
-        ax.scatter(
-            row_coords[x_component], row_coords[y_component], **kwargs, label=row_label
+        row_coords.columns = [f"component {i}" for i in row_coords.columns]
+        row_coords = row_coords.assign(
+            variable=row_coords.index.name or "row", value=row_coords.index
         )
 
-        # Plot column principal coordinates
         col_coords = self.column_coordinates(X)
-        ax.scatter(
-            col_coords[x_component], col_coords[y_component], **kwargs, label=col_label
+        col_coords.columns = [f"component {i}" for i in col_coords.columns]
+        col_coords = col_coords.assign(
+            variable=col_coords.index.name or "column", value=col_coords.index
         )
 
-        # Add row labels
-        if show_row_labels:
-            x = row_coords[x_component]
-            y = row_coords[y_component]
-            for xi, yi, label in zip(x, y, row_names):
-                ax.annotate(label, (xi, yi))
-
-        # Add column labels
-        if show_col_labels:
-            x = col_coords[x_component]
-            y = col_coords[y_component]
-            for xi, yi, label in zip(x, y, col_names):
-                ax.annotate(label, (xi, yi))
-
-        # Legend
-        ax.legend()
-
-        # Text
-        ax.set_title("Principal coordinates")
-        ei = self.explained_inertia_
-        ax.set_xlabel(
-            "Component {} ({:.2f}% inertia)".format(x_component, 100 * ei[x_component])
+        coords = pd.concat([row_coords, col_coords])
+        return (
+            alt.Chart(coords)
+            .mark_circle()
+            .encode(
+                alt.X(f"component {x_component}"),
+                alt.Y(f"component {y_component}"),
+                color="variable",
+                tooltip=[
+                    "variable",
+                    "value",
+                    f"component {x_component}",
+                    f"component {y_component}",
+                ],
+                **params,
+            )
+            .interactive()
         )
-        ax.set_ylabel(
-            "Component {} ({:.2f}% inertia)".format(y_component, 100 * ei[y_component])
-        )
-
-        return ax
