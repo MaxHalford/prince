@@ -1,4 +1,5 @@
 import functools
+import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.utils import validation
@@ -53,7 +54,8 @@ class EigenvaluesMixin:
                 "eigenvalue": self.eigenvalues_,
                 r"% of variance": self.percentage_of_variance_,
                 r"% of variance (cumulative)": self.cumulative_percentage_of_variance_,
-            }
+            },
+            index=pd.RangeIndex(0, len(self.eigenvalues_), name="component"),
         )
 
     @property
@@ -71,3 +73,16 @@ class EigenvaluesMixin:
         )
         pretty.index.name = "component"
         return pretty
+
+    def scree_plot(self):
+        eig = self._eigenvalues_summary.reset_index()
+        eig["component"] = eig["component"].astype(str)
+        return (
+            alt.Chart(
+                self._eigenvalues_summary.reset_index().assign(
+                    component=lambda x: x["component"].astype(str)
+                )
+            )
+            .mark_bar(size=10)
+            .encode(x="component", y="eigenvalue", tooltip=eig.columns.tolist())
+        )

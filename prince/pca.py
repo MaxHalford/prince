@@ -330,28 +330,42 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
             f"component {y_component}",
         ]
 
-        row_coords = self.row_coordinates(X)
+        eig = self._eigenvalues_summary.to_dict(orient="index")
+
+        row_coords = self.row_coordinates(X) + 10
         row_coords.columns = [f"component {i}" for i in row_coords.columns]
         row_coords = row_coords.reset_index()
         row_plot = (
             alt.Chart(row_coords)
             .mark_circle()
             .encode(
-                alt.X(f"component {x_component}"),
-                alt.Y(f"component {y_component}"),
+                alt.X(
+                    f"component {x_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+                alt.Y(
+                    f"component {y_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
                 **params,
             )
         )
 
-        col_coords = self.column_coordinates_.copy()
+        col_coords = self.column_coordinates_.copy() + 10
         col_coords.columns = [f"component {i}" for i in col_coords.columns]
         col_coords = col_coords.reset_index()
         col_plot = (
             alt.Chart(col_coords)
             .mark_square(color="green")
             .encode(
-                alt.X(f"component {x_component}"),
-                alt.Y(f"component {y_component}"),
+                alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
                 tooltip=["variable"],
             )
         )

@@ -263,8 +263,8 @@ class CA(utils.EigenvaluesMixin):
             alt.Chart(coords)
             .mark_circle()
             .encode(
-                alt.X(f"component {x_component}"),
-                alt.Y(f"component {y_component}"),
+                alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
                 color="variable",
                 tooltip=[
                     "variable",
