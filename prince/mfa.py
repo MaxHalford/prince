@@ -2,6 +2,7 @@
 import collections
 import itertools
 
+import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
@@ -88,7 +89,7 @@ class MFA(pca.PCA, collections.UserDict):
         super().fit(Z)
         self.total_inertia_ = sum(self.eigenvalues_)
 
-        # column_coordinates_ is not implemented yet
+        # TODO: column_coordinates_ is not implemented yet
         delattr(self, "column_coordinates_")
 
         return self
@@ -205,3 +206,44 @@ class MFA(pca.PCA, collections.UserDict):
         raise NotImplemented(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
+
+    def plot(self, X, x_component=0, y_component=1, color_by=None, **params):
+
+        if color_by is not None:
+            params["color"] = color_by
+
+        params["tooltip"] = (
+            X.index.names if isinstance(X.index, pd.MultiIndex) else ["index"]
+        ) + [
+            f"component {x_component}",
+            f"component {y_component}",
+        ]
+
+        eig = self._eigenvalues_summary.to_dict(orient="index")
+
+        row_coords = self.row_coordinates(X)
+        row_coords.columns = [f"component {i}" for i in row_coords.columns]
+        row_coords = row_coords.reset_index()
+        row_plot = (
+            alt.Chart(row_coords)
+            .mark_circle()
+            .encode(
+                alt.X(
+                    f"component {x_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+                alt.Y(
+                    f"component {y_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+                **params,
+            )
+        )
+
+        return row_plot.interactive()

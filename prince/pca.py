@@ -324,7 +324,9 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
             params["color"] = color_by
 
         params["tooltip"] = (
-            X.index.names if isinstance(X.index, pd.MultiIndex) else ["index"]
+            X.index.names
+            if isinstance(X.index, pd.MultiIndex)
+            else [X.index.name or "index"]  # index is the default name
         ) + [
             f"component {x_component}",
             f"component {y_component}",
@@ -332,7 +334,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
 
         eig = self._eigenvalues_summary.to_dict(orient="index")
 
-        row_coords = self.row_coordinates(X) + 10
+        row_coords = self.row_coordinates(X)
         row_coords.columns = [f"component {i}" for i in row_coords.columns]
         row_coords = row_coords.reset_index()
         row_plot = (
@@ -357,7 +359,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
             )
         )
 
-        col_coords = self.column_coordinates_.copy() + 10
+        col_coords = self.column_coordinates_.copy()
         col_coords.columns = [f"component {i}" for i in col_coords.columns]
         col_coords = col_coords.reset_index()
         col_plot = (

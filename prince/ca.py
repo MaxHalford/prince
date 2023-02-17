@@ -258,13 +258,26 @@ class CA(utils.EigenvaluesMixin):
         )
 
         coords = pd.concat([row_coords, col_coords])
+        eig = self._eigenvalues_summary.to_dict(orient="index")
 
         return (
             alt.Chart(coords)
             .mark_circle()
             .encode(
-                alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
-                alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
+                alt.X(
+                    f"component {x_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+                alt.Y(
+                    f"component {y_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
                 color="variable",
                 tooltip=[
                     "variable",

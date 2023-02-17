@@ -75,6 +75,13 @@ class EigenvaluesMixin:
         return pretty
 
     def scree_plot(self):
+        """Scree plot.
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Scree_plot
+
+        """
         eig = self._eigenvalues_summary.reset_index()
         eig["component"] = eig["component"].astype(str)
         return (
