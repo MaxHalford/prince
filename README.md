@@ -57,13 +57,12 @@ component
 ```
 
 ```py
->>> plot = pca.plot(dataset)
->>> plot.save('figures/readme.png')
+>>> chart = pca.plot(dataset)
 
 ```
 
 <div align="center">
-  <img src="figures/readme_pca.svg" width="80%" />
+  <img src="figures/readme_pca.svg" width="60%" />
 </div>
 
 ## Installation
@@ -86,16 +85,16 @@ pip install git+https://github.com/MaxHalford/Prince
 
 ```mermaid
 flowchart TD
-    cat?(Categorical data?) --> |Yes| num_too?(Numerical data too?)
-    num_too? --> |Yes| FAMD
-    num_too? --> |No| multiple_cat?(More than two columns?)
-    multiple_cat? --> |Yes| MCA
-    multiple_cat? --> |No| CA
-    cat? --> |No| groups?[Are there groups of columns?]
-    groups? --> |Yes| groups(MFA)
-    groups? --> |No| shapes?(Analysing shapes?)
-    shapes? --> |Yes| GPA
-    shapes? --> |No| PCA
+    cat?(Categorical data?) --> |✅| num_too?(Numerical data too?)
+    num_too? --> |✅| FAMD
+    num_too? --> |❌| multiple_cat?(More than two columns?)
+    multiple_cat? --> |✅| MCA
+    multiple_cat? --> |❌| CA
+    cat? --> |❌| groups?(Are there groups of columns?)
+    groups? --> |✅| groups(MFA)
+    groups? --> |❌| shapes?(Analysing shapes?)
+    shapes? --> |✅| GPA
+    shapes? --> |❌| PCA
 ```
 
 ### [Principal component analysis (PCA)](docs/PCA.md)
