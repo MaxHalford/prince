@@ -87,14 +87,14 @@ pip install git+https://github.com/MaxHalford/Prince
 flowchart TD
     cat?(Categorical data?) --> |"✅"| num_too?(Numerical data too?)
     num_too? --> |"✅"| FAMD
-    num_too? --> |No| multiple_cat?(More than two columns?)
+    num_too? --> |"❌"| multiple_cat?(More than two columns?)
     multiple_cat? --> |"✅"| MCA
-    multiple_cat? --> |No| CA
-    cat? --> |No| groups?(Are there groups of columns?)
+    multiple_cat? --> |"❌"| CA
+    cat? --> |"❌"| groups?(Are there groups of columns?)
     groups? --> |"✅"| groups(MFA)
-    groups? --> |No| shapes?(Analysing shapes?)
+    groups? --> |"❌"| shapes?(Analysing shapes?)
     shapes? --> |"✅"| GPA
-    shapes? --> |No| PCA
+    shapes? --> |"❌"| PCA
 ```
 
 ### [Principal component analysis (PCA)](docs/PCA.md)
