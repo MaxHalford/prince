@@ -339,7 +339,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         row_coords = row_coords.reset_index()
         row_plot = (
             alt.Chart(row_coords)
-            .mark_circle()
+            .mark_circle(size=50)
             .encode(
                 alt.X(
                     f"component {x_component}",
@@ -364,7 +364,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         col_coords = col_coords.reset_index()
         col_plot = (
             alt.Chart(col_coords)
-            .mark_square(color="green")
+            .mark_square(color="green", size=50)
             .encode(
                 alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
                 alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),

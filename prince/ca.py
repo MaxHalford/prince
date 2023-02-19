@@ -262,7 +262,7 @@ class CA(utils.EigenvaluesMixin):
 
         return (
             alt.Chart(coords)
-            .mark_circle()
+            .mark_circle(size=50)
             .encode(
                 alt.X(
                     f"component {x_component}",
