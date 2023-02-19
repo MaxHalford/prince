@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "prince"
 version = "0.7.0"
-description = "PCA, CA, MCA, MFA, FAMD, GPA"
+description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
 authors = ["Max Halford <maxhalford25@gmail.com>"]
 license = "MIT"
 
