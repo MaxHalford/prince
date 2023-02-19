@@ -85,15 +85,15 @@ pip install git+https://github.com/MaxHalford/Prince
 
 ```mermaid
 flowchart TD
-    cat?(Categorical data?) --> |Yes| num_too?(Numerical data too?)
-    num_too? --> |Yes| FAMD
+    cat?(Categorical data?) --> |"✅"| num_too?(Numerical data too?)
+    num_too? --> |"✅"| FAMD
     num_too? --> |No| multiple_cat?(More than two columns?)
-    multiple_cat? --> |Yes| MCA
+    multiple_cat? --> |"✅"| MCA
     multiple_cat? --> |No| CA
     cat? --> |No| groups?(Are there groups of columns?)
-    groups? --> |Yes| groups(MFA)
+    groups? --> |"✅"| groups(MFA)
     groups? --> |No| shapes?(Analysing shapes?)
-    shapes? --> |Yes| GPA
+    shapes? --> |"✅"| GPA
     shapes? --> |No| PCA
 ```
 
