@@ -123,6 +123,19 @@ If you want to use a non-randomized SVD implementation, set the `engine` paramet
 
 ```
 
+## Citation
+
+Please use this citation if you use this software as part of a scientific publication.
+
+```bibtex
+@software{Halford_Prince,
+    author = {Halford, Max},
+    license = {MIT},
+    title = {{Prince}},
+    url = {https://github.com/MaxHalford/prince}
+}
+```
+
 ## License
 
 The MIT License (MIT). Please see the [license file](LICENSE) for more information.
