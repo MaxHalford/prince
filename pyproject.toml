@@ -17,6 +17,9 @@ ipykernel = "^6.13.0"
 rpy2 = "^3.5.2"
 black = {version = "^22.3.0", allow-prereleases = true}
 
+[tool.poetry.group.dev.dependencies]
+altair-saver = "^0.5.0"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

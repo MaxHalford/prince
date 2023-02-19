@@ -64,15 +64,13 @@ class EigenvaluesMixin:
         summary = self._eigenvalues_summary
         summary["% of variance"] /= 100
         summary["% of variance (cumulative)"] /= 100
-        pretty = summary.style.format(
-            {
-                "eigenvalue": "{:,.3f}".format,
-                "% of variance": "{:,.2%}".format,
-                "% of variance (cumulative)": "{:,.2%}".format,
-            }
-        )
-        pretty.index.name = "component"
-        return pretty
+        summary["eigenvalue"] = summary["eigenvalue"].map("{:,.3f}".format)
+        summary["% of variance"] = summary["% of variance"].map("{:.2%}".format)
+        summary["% of variance (cumulative)"] = summary[
+            "% of variance (cumulative)"
+        ].map("{:.2%}".format)
+        summary.index.name = "component"
+        return summary
 
     def scree_plot(self):
         """Scree plot.
