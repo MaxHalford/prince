@@ -252,7 +252,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
 
         """
 
-        X_inv = np.dot(X, self.V_)
+        X_inv = np.dot(X, self.svd_.V)
 
         if hasattr(self, "scaler_"):
             X_inv = self.scaler_.inverse_transform(X_inv)

@@ -19,7 +19,17 @@ black = {version = "^22.3.0", allow-prereleases = true}
 
 [tool.poetry.group.dev.dependencies]
 altair-saver = "^0.5.0"
+nbconvert = "^7.2.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--verbose",
+    "--doctest-modules",
+    "--doctest-glob=*.md",
+    "--ignore checks"
+]
+doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS"

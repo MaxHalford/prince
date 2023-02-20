@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="figures/logo.png" alt="prince_logo" width="80%" />
+  <img src="docs/static/images/logo.png" alt="prince_logo" width="80%" />
 </div>
 
 <br/>
@@ -91,10 +91,16 @@ flowchart TD
     multiple_cat? --> |"✅"| MCA
     multiple_cat? --> |"❌"| CA
     cat? --> |"❌"| groups?(Are there groups of columns?)
-    groups? --> |"✅"| groups(MFA)
+    groups? --> |"✅"| MFA
     groups? --> |"❌"| shapes?(Analysing shapes?)
     shapes? --> |"✅"| GPA
     shapes? --> |"❌"| PCA
+    click PCA "/pca" "Principal component analysis"
+    click CA "/ca" "Correspondence analysis"
+    click MCA "/mca" "Principal component analysis"
+    click MFA "/mfa" "Multiple factor analysis"
+    click FAMD "/famd" "Factor analysis of mixed data"
+    click GPA "/gpa" "Generalized Procrustes analysis"
 ```
 
 ### [Principal component analysis (PCA)](docs/PCA.md)
