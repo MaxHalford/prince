@@ -5,7 +5,7 @@ flowchart TD
     num_too? --> |"❌"| multiple_cat?(More than two columns?)
     multiple_cat? --> |"✅"| MCA
     multiple_cat? --> |"❌"| CA
-    cat? --> |"❌"| groups?(Are there groups of columns?)
+    cat? --> |"❌"| groups?(Groups of columns?)
     groups? --> |"✅"| MFA
     groups? --> |"❌"| shapes?(Analysing shapes?)
     shapes? --> |"✅"| GPA
