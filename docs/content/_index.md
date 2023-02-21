@@ -17,3 +17,5 @@ flowchart TD
     click FAMD "/famd" "Factor analysis of mixed data"
     click GPA "/gpa" "Generalized Procrustes analysis"
 ```
+
+<iframe src="https://github.com/sponsors/MaxHalford/card" title="Sponsor MaxHalford" height="225" width="600" style="border: 0;"></iframe>
