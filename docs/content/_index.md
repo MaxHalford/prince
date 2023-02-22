@@ -1,3 +1,8 @@
+---
+---
+
+<div style="margin-top: 2em;"></div>
+
 ```mermaid
 flowchart TD
     cat?(Categorical data?) --> |"✅"| num_too?(Numerical data too?)
@@ -18,4 +23,6 @@ flowchart TD
     click GPA "/gpa" "Generalized Procrustes analysis"
 ```
 
-<iframe src="https://github.com/sponsors/MaxHalford/card" title="Sponsor MaxHalford" height="225" width="600" style="border: 0;"></iframe>
+<div align="center" style="margin-top: 2em;">
+    <iframe src="https://github.com/sponsors/MaxHalford/card" title="Sponsor MaxHalford" height="225" width="600" style="border: 0;"></iframe>
+</div>
