@@ -5,3 +5,5 @@ tests/*.csv
 *.ipynb
 .venv
 .DS_Store
+docs/content/*.md
+!docs/content/_index.md

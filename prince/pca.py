@@ -55,7 +55,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         check_input=True,
         random_state=None,
         engine="sklearn",
-        as_array=False,
     ):
         self.n_components = n_components
         self.n_iter = n_iter
@@ -65,7 +64,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         self.check_input = check_input
         self.random_state = random_state
         self.engine = engine
-        self.as_array = as_array
 
     def fit(self, X, y=None, supplementary_columns=None):
 
@@ -245,7 +243,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         return rc
 
     @utils.check_is_fitted
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, as_array=False):
         """Transforms row projections back to their original space.
 
         In other words, return a dataset whose transform would be X.
@@ -257,7 +255,7 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         if hasattr(self, "scaler_"):
             X_inv = self.scaler_.inverse_transform(X_inv)
 
-        if self.as_array:
+        if as_array:
             return X_inv
 
         # Extract index
@@ -318,7 +316,16 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         )
 
     @utils.check_is_fitted
-    def plot(self, X, x_component=0, y_component=1, color_by=None, **params):
+    def plot(
+        self,
+        X,
+        x_component=0,
+        y_component=1,
+        color_by=None,
+        show_rows=True,
+        show_columns=True,
+        **params,
+    ):
 
         if color_by is not None:
             params["color"] = color_by
@@ -333,43 +340,48 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         ]
 
         eig = self._eigenvalues_summary.to_dict(orient="index")
+        chart = alt.LayerChart()
 
-        row_coords = self.row_coordinates(X)
-        row_coords.columns = [f"component {i}" for i in row_coords.columns]
-        row_coords = row_coords.reset_index()
-        row_plot = (
-            alt.Chart(row_coords)
-            .mark_circle(size=50)
-            .encode(
-                alt.X(
-                    f"component {x_component}",
-                    scale=alt.Scale(zero=False),
-                    axis=alt.Axis(
-                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+        if show_rows:
+            row_coords = self.row_coordinates(X)
+            row_coords.columns = [f"component {i}" for i in row_coords.columns]
+            row_coords = row_coords.reset_index()
+            row_chart = (
+                alt.Chart(row_coords)
+                .mark_circle(size=50)
+                .encode(
+                    alt.X(
+                        f"component {x_component}",
+                        scale=alt.Scale(zero=False),
+                        axis=alt.Axis(
+                            title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                        ),
                     ),
-                ),
-                alt.Y(
-                    f"component {y_component}",
-                    scale=alt.Scale(zero=False),
-                    axis=alt.Axis(
-                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    alt.Y(
+                        f"component {y_component}",
+                        scale=alt.Scale(zero=False),
+                        axis=alt.Axis(
+                            title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                        ),
                     ),
-                ),
-                **params,
+                    **params,
+                )
             )
-        )
+            chart += row_chart
 
-        col_coords = self.column_coordinates_.copy()
-        col_coords.columns = [f"component {i}" for i in col_coords.columns]
-        col_coords = col_coords.reset_index()
-        col_plot = (
-            alt.Chart(col_coords)
-            .mark_square(color="green", size=50)
-            .encode(
-                alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
-                alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
-                tooltip=["variable"],
+        if show_columns:
+            col_coords = self.column_coordinates_.copy()
+            col_coords.columns = [f"component {i}" for i in col_coords.columns]
+            col_coords = col_coords.reset_index()
+            col_chart = (
+                alt.Chart(col_coords)
+                .mark_square(color="green", size=50)
+                .encode(
+                    alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                    alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
+                    tooltip=["variable"],
+                )
             )
-        )
+            chart += col_chart
 
-        return (row_plot + col_plot).interactive()
+        return chart

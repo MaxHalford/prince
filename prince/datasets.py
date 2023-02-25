@@ -26,11 +26,11 @@ def load_energy_mix(year=2019, normalize=True):
     df = (
         pd.read_csv(DATASETS_DIR / "per-capita-energy-stacked.csv")
         .query("Year == @year")
+        .query("Entity not in ['Africa', 'Europe', 'North America', 'World']")
         .drop(columns=["Code", "Year"])
         .rename(columns={"Entity": "Country"})
         .rename(columns=lambda x: x.replace(" per capita (kWh)", "").lower())
-        .set_index("country")
-        .drop(index={"Africa", "Europe", "North America", "World"})
+        .set_index(["continent", "country"])
     )
     if normalize:
         return df.div(df.sum(axis="columns"), axis="rows")

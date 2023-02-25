@@ -71,7 +71,7 @@ class TestMCA(_TestCA):
             F = load_df_from_R("ca$var$cos2")
             if self.sup_cols:
                 F = pd.concat((F, load_df_from_R("ca$quali.sup$cos2")))
-            P = self.ca.column_cos2(self.dataset)
+            P = self.ca.column_cosine_similarities(self.dataset)
             np.testing.assert_allclose(F, P)
         else:
             super().test_col_cos2()

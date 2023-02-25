@@ -3,4 +3,4 @@ execute-notebooks:
 
 render-notebooks:
 	jupyter nbconvert --to markdown docs/content/*.ipynb
-	sed -e '/<script/,/<\/script>/{/^$/d;}' docs/content/pca.md
+	$(for f in docs/content/*.md; do sed -e '/<script/,/<\/script>/{/^$/d;}' ${f} > ${f}.tmp; mv ${f}.tmp ${f}; done)$

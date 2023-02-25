@@ -126,7 +126,7 @@ class TestPCA:
         S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
         np.testing.assert_allclose(np.abs(S), P.abs())
 
-    def test_row_cos2(self):
+    def test_row_cosine_similarities(self):
         F = load_df_from_R("pca$ind$cos2")
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$cos2")))

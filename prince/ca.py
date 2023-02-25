@@ -155,7 +155,7 @@ class CA(utils.EigenvaluesMixin):
         )
 
     @select_active_columns
-    def row_cos2(self, X):
+    def row_cosine_similarities(self, X):
         """Return the cos2 for each row against the dimensions.
 
         The cos2 value gives an indicator of the accuracy of the row projection on the dimension.
@@ -213,7 +213,7 @@ class CA(utils.EigenvaluesMixin):
         )
 
     @select_active_rows
-    def column_cos2(self, X):
+    def column_cosine_similarities(self, X):
         """Return the cos2 for each column against the dimensions.
 
         The cos2 value gives an indicator of the accuracy of the column projection on the dimension.

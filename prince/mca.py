@@ -37,14 +37,14 @@ class MCA(ca.CA):
     def row_coordinates(self, X):
         return super().row_coordinates(pd.get_dummies(X))
 
-    def row_cos2(self, X):
-        return super().row_cos2(pd.get_dummies(X))
+    def row_cosine_similarities(self, X):
+        return super().row_cosine_similarities(pd.get_dummies(X))
 
     def column_coordinates(self, X):
         return super().column_coordinates(pd.get_dummies(X))
 
-    def column_cos2(self, X):
-        return super().column_cos2(pd.get_dummies(X))
+    def column_cosine_similarities(self, X):
+        return super().column_cosine_similarities(pd.get_dummies(X))
 
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
