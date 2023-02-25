@@ -1,0 +1,4 @@
+{{ range .Site.Menus.main }}
+<a href="{{ .URL }}">{{ index .Page.Aliases 0 | upper }}</a>
+{{ end }}
+<a href="https://github.com/MaxHalford/prince">GitHub</a>

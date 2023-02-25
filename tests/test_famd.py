@@ -1,51 +1,86 @@
-"""Tests for factor analysis of mixed data."""
-import unittest
-
+import tempfile
 import numpy as np
 import pandas as pd
-
 import prince
+import pytest
+import rpy2.rinterface_lib
+from rpy2.robjects import r as R
+from scipy import sparse
+import sklearn.utils.estimator_checks
+import sklearn.utils.validation
+
+from tests import load_df_from_R
 
 
-class TestFAMD(unittest.TestCase):
+@pytest.mark.parametrize(
+    "sup_rows, sup_cols",
+    [
+        pytest.param(
+            sup_rows,
+            sup_cols,
+            id=":".join(
+                ["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]
+            ).strip(":"),
+        )
+        for sup_rows in [False]
+        for sup_cols in [False]
+    ],
+)
+class TestFAMD:
+    _row_name = "row"
+    _col_name = "col"
 
-    def setUp(self):
-        self.X = pd.DataFrame(
-            data=[
-                ['A', 'A', 'A', 2, 5, 7, 0, 3, 6, 7],
-                ['A', 'A', 'A', 4, 4, 4, 0, 4, 4, 3],
-                ['B', 'A', 'B', 5, 2, 1, 0, 7, 1, 1],
-                ['B', 'A', 'B', 7, 2, 1, 0, 2, 2, 2],
-                ['B', 'B', 'B', 3, 5, 6, 0, 2, 6, 6],
-                ['B', 'B', 'A', 3, 5, 4, 0, 1, 7, 5]
-            ],
-            columns=['E1 fruity', 'E1 woody', 'E1 coffee',
-                     'E2 red fruit', 'E2 roasted', 'E2 vanillin', 'E2 woody',
-                     'E3 fruity', 'E3 butter', 'E3 woody'],
-            index=['Wine {}'.format(i + 1) for i in range(6)]
+    @pytest.fixture(autouse=True)
+    def _prepare(self, sup_rows, sup_cols):
+
+        self.sup_rows = sup_rows
+        self.sup_cols = sup_cols
+
+        n_components = 5
+
+        # Fit Prince
+        self.dataset = prince.datasets.load_beers().head(200)
+        active = self.dataset.copy()
+        self.famd = prince.FAMD(n_components=n_components, engine="scipy")
+        self.famd.fit(active)
+
+        # Fit FactoMineR
+        R("library('FactoMineR')")
+        with tempfile.NamedTemporaryFile() as fp:
+            self.dataset.to_csv(fp)
+            R(f"dataset <- read.csv('{fp.name}', row.names=c(1))")
+            R(f"famd <- FAMD(dataset, graph=F)")
+
+    def test_check_is_fitted(self):
+        assert isinstance(self.famd, prince.FAMD)
+        sklearn.utils.validation.check_is_fitted(self.famd)
+
+    def test_num_cols(self):
+        assert sorted(self.famd.num_cols_) == [
+            "alcohol_by_volume",
+            "final_gravity",
+            "international_bitterness_units",
+            "standard_reference_method",
+        ]
+
+    def test_cat_cols(self):
+        assert sorted(self.famd.cat_cols_) == ["is_organic", "style"]
+
+    def test_eigenvalues(self):
+        F = load_df_from_R("famd$eig")[: self.famd.n_components]
+        P = self.famd._eigenvalues_summary
+        np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
+        np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
+        np.testing.assert_allclose(
+            F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
 
-    def test_fit_pandas_dataframe(self):
-        famd = prince.FAMD()
-        self.assertTrue(isinstance(famd.fit(self.X), prince.FAMD))
+    def test_row_coords(self):
+        F = load_df_from_R(f"famd$ind$coord")
+        P = self.famd.row_coordinates(self.dataset)
+        np.testing.assert_allclose(F.abs(), P.abs())
 
-    def test_only_numerical(self):
-        famd = prince.FAMD()
-        X = self.X.select_dtypes(np.number)
-        with self.assertRaises(ValueError):
-            famd.fit(X)
-            famd.transform(X)
-
-    def test_only_numerical_numpy(self):
-        famd = prince.FAMD()
-        X = self.X.select_dtypes(np.number)
-        with self.assertRaises(ValueError):
-            famd.fit(X.to_numpy())
-            famd.transform(X.to_numpy())
-
-    def test_only_categorical(self):
-        famd = prince.FAMD()
-        X = self.X.select_dtypes(exclude=np.number)
-        with self.assertRaises(ValueError):
-            famd.fit(X)
-            famd.transform(X)
+    def test_row_contrib(self):
+        F = load_df_from_R("famd$ind$contrib")
+        P = self.famd.row_contributions_
+        np.testing.assert_allclose(F, P * 100)
