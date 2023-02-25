@@ -21,7 +21,6 @@ class FAMD(pca.PCA):
         check_input=True,
         random_state=None,
         engine="sklearn",
-        as_array=False,
     ):
         super().__init__(
             rescale_with_mean=True,
@@ -32,7 +31,6 @@ class FAMD(pca.PCA):
             check_input=check_input,
             random_state=random_state,
             engine=engine,
-            as_array=as_array,
         )
 
     def fit(self, X, y=None):
@@ -87,33 +85,38 @@ class FAMD(pca.PCA):
 
         return super().row_coordinates(Z)
 
+    def column_coordinates(self, X):
+        raise NotImplemented(
+            "FAMD inherits from PCA, but this method is not implemented yet"
+        )
+
     def inverse_transform(self, X):
         raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
+            "FAMD inherits from PCA, but this method is not implemented yet"
         )
 
     def row_standard_coordinates(self, X):
         raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
+            "FAMD inherits from PCA, but this method is not implemented yet"
         )
 
     def row_cosine_similarities(self, X):
         raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
+            "FAMD inherits from PCA, but this method is not implemented yet"
         )
 
     def column_correlations(self, X):
         raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
+            "FAMD inherits from PCA, but this method is not implemented yet"
         )
 
     def column_cosine_similarities_(self, X):
         raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
+            "FAMD inherits from PCA, but this method is not implemented yet"
         )
 
     @property
     def column_contributions_(self):
         raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
+            "FAMD inherits from PCA, but this method is not implemented yet"
         )

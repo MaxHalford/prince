@@ -22,7 +22,6 @@ class MFA(pca.PCA, collections.UserDict):
         check_input=True,
         random_state=None,
         engine="sklearn",
-        as_array=False,
     ):
         super().__init__(
             rescale_with_mean=False,
@@ -33,7 +32,6 @@ class MFA(pca.PCA, collections.UserDict):
             check_input=check_input,
             random_state=random_state,
             engine=engine,
-            as_array=as_array,
         )
         collections.UserDict.__init__(self)
 
@@ -174,6 +172,11 @@ class MFA(pca.PCA, collections.UserDict):
                 for g, cols in self.groups_.items()
             ],
             axis="columns",
+        )
+
+    def column_coordinates(self, X):
+        raise NotImplemented(
+            "MFA inherits from PCA, but this method is not implemented yet"
         )
 
     def inverse_transform(self, X):
