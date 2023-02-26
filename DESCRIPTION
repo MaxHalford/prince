@@ -1,3 +1,4 @@
+Package: prince-test
 Title: Test dependencies
 Imports:
     FactoMineR
