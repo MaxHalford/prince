@@ -29,8 +29,9 @@ jobs:
       HUGO_VERSION: 0.108.0
     steps:
       steps:
-        - name: Run notebooks
+        - name: Install environment
           uses: ./.github/actions/install-env
+        - name: Run notebooks
           run: make execute-notebooks && make render-notebooks
         - name: Install Hugo CLI
           run: |

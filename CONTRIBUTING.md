@@ -32,5 +32,5 @@ make render-notebooks
 ## Deploy docs
 
 ```sh
-gh workflow run "Deploy Hugo site to Pages"
+gh workflow run hugo.yml
 ```
