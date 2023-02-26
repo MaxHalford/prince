@@ -36,6 +36,7 @@ runs:
       run: poetry install --no-interaction --no-root --with api
 
     - name: Install R dependencies
+      shell: bash
       run: Rscript -e 'install.packages("FactoMineR", repos="https://cloud.r-project.org")'
 
     - name: Install project
