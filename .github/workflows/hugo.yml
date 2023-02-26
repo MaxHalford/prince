@@ -28,10 +28,6 @@ jobs:
     env:
       HUGO_VERSION: 0.108.0
     steps:
-      - name: Install environment
-        uses: ./.github/actions/install-env
-      - name: Run notebooks
-        run: make execute-notebooks && make render-notebooks
       - name: Install Hugo CLI
         run: |
           wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
@@ -42,6 +38,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Install environment
+        uses: ./.github/actions/install-env
+      - name: Run notebooks
+        run: make execute-notebooks && make render-notebooks
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
