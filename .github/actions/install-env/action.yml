@@ -35,6 +35,9 @@ runs:
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root --with api
 
+    - name: Install R dependencies
+      run: Rscript -e 'install.packages("FactoMineR", repos="https://cloud.r-project.org")'
+
     - name: Install project
       shell: bash
       run: poetry install --no-interaction
