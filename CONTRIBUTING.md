@@ -28,3 +28,9 @@ make execute-notebooks
 make render-notebooks
 (cd docs && hugo serve)
 ```
+
+## Deploy docs
+
+```sh
+gh workflow run "Deploy Hugo site to Pages"
+```
