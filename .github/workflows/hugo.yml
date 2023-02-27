@@ -41,7 +41,10 @@ jobs:
       - name: Install environment
         uses: ./.github/actions/install-env
       - name: Run notebooks
-        run: make execute-notebooks && make render-notebooks
+        run: >-
+          poetry run jupyter nbconvert --execute --to notebook --inplace docs/content/*.ipynb
+          poetry run jupyter nbconvert --to markdown docs/content/*.ipynb
+          (for f in docs/content/*.md; do sed -e '/<script/,/<\/script>/{/^$/d;}' ${f} > ${f}.tmp; mv ${f}.tmp ${f}; done)
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
