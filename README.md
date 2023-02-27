@@ -5,9 +5,9 @@
 <br/>
 
 <div align="center">
-  <!-- Python version -->
-  <a href="https://pypi.python.org/pypi/prince">
-    <img src="https://img.shields.io/badge/python-3.x-blue.svg" alt="PyPI version"/>
+  <!-- Documentation -->
+  <a href="https://maxhalford.github.io/prince">
+    <img src="https://img.shields.io/website?label=docs&style=flat-square&url=https://maxhalford.github.io/prince" alt="documentation">
   </a>
   <!-- PyPi -->
   <a href="https://pypi.org/project/prince/">
