@@ -22,13 +22,13 @@
   your local /layouts/partials-directory -->
   {{- partial "custom_head.html" . -}}
 
-  {{ if not (eq hugo.Environment "development") }}
+  {{- if not (eq hugo.Environment "development") -}}
   <script defer
     src="https://unpkg.com/@tinybirdco/flock.js"
     data-host="https://api.tinybird.co"
     data-token="p.eyJ1IjogImIwYTYyMThjLTRhMzctNDg5Mi04ZDlkLTBiNTY4ZjlmNjBhYiIsICJpZCI6ICJiNWJkZWY0NS0wNTNkLTQ4MTYtOGMwOC0xNmQ4YThjNTA2NDcifQ.yzNOSLbFlpZnFP9wacQwl1_DAf9STVMCo_B7YAXSMFg"
-    />
-  {{ end }}
+    ></script>
+  {{- end -}}
 
 </head>
 
