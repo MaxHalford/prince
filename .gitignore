@@ -9,3 +9,4 @@ docs/content/*.md
 !docs/content/_index.md
 !docs/content/*.ipynb
 dist
+public
