@@ -41,6 +41,7 @@ jobs:
       - name: Install environment
         uses: ./.github/actions/install-env
       - name: Run notebooks
+        shell: bash
         run: make execute-notebooks && make render-notebooks
       - name: Setup Pages
         id: pages
