@@ -19,12 +19,6 @@ flowchart TD
     groups? --> |"❌"| shapes?(Analysing shapes?)
     shapes? --> |"✅"| GPA
     shapes? --> |"❌"| PCA
-    click PCA "/pca" "Principal component analysis"
-    click CA "/ca" "Correspondence analysis"
-    click MCA "/mca" "Principal component analysis"
-    click MFA "/mfa" "Multiple factor analysis"
-    click FAMD "/famd" "Factor analysis of mixed data"
-    click GPA "/gpa" "Generalized Procrustes analysis"
 ```
 
 ## Installation
