@@ -31,7 +31,7 @@ pip install prince
 
 ## Correctness
 
-Prince is tested against scikit-learn and [FactoMineR](http://factominer.free.fr/). For the latter, [rpy2](https://rpy2.github.io/) is used to run code in R, and convert the results to Python, which allows running automated tests. See more in the [`tests`]([/tests/](https://github.com/MaxHalford/prince/tree/master/tests)) directory.
+Prince is tested against scikit-learn and [FactoMineR](http://factominer.free.fr/). For the latter, [rpy2](https://rpy2.github.io/) is used to run code in R, and convert the results to Python, which allows running automated tests. See more in the [`tests`](https://github.com/MaxHalford/prince/tree/master/tests) directory.
 
 ## Citation
 
