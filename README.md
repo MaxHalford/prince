@@ -94,12 +94,12 @@ flowchart TD
     shapes? --> |"❌"| PCA
 ```
 
-### [Principal component analysis (PCA)](docs/PCA.md)
-### [Correspondence analysis (CA)](docs/CA.md)
-### [Multiple correspondence analysis (MCA)](docs/MCA.md)
-### [Multiple factor analysis (MFA)](docs/MFA.md)
-### [Factor analysis of mixed data (FAMD)](docs/FAMD.md)
-### [Generalized procrustes analysis (GPA)](docs/GPA.md)
+### [Principal component analysis (PCA)](https://maxhalford.github.io/prince/pca)
+### [Correspondence analysis (CA)](https://maxhalford.github.io/prince/ca)
+### [Multiple correspondence analysis (MCA)](https://maxhalford.github.io/prince/mca)
+### [Multiple factor analysis (MFA)](https://maxhalford.github.io/prince/mfa)
+### [Factor analysis of mixed data (FAMD)](https://maxhalford.github.io/prince/famd)
+### [Generalized procrustes analysis (GPA)](https://maxhalford.github.io/prince/gpa)
 
 ## Correctness
 
