@@ -18,8 +18,8 @@
     <img src="https://static.pepy.tech/badge/prince" alt="pepy">
   </a>
   <!-- Build status -->
-  <a href="https://travis-ci.org/MaxHalford/prince?branch=master">
-    <img src="https://img.shields.io/travis/MaxHalford/prince/master.svg" alt="Build Status" />
+  <a href="https://github.com/MaxHalford/prince/actions/workflows/unit-tests.yml">
+    <img src="https://github.com/MaxHalford/prince/actions/workflows/unit-tests.yml/badge.svg" alt="Unit tests" />
   </a>
   <!-- License -->
   <a href="https://opensource.org/licenses/MIT">
