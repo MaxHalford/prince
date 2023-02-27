@@ -40,11 +40,12 @@ jobs:
           submodules: recursive
       - name: Install environment
         uses: ./.github/actions/install-env
-      - name: Run notebooks
-        run: |
-          poetry run jupyter nbconvert --execute --to notebook --inplace docs/content/*.ipynb
-          && poetry run jupyter nbconvert --to markdown docs/content/*.ipynb
-          && (for f in docs/content/*.md; do sed -e '/<script/,/<\/script>/{/^$/d;}' ${f} > ${f}.tmp; mv ${f}.tmp ${f}; done)
+      - name: Execute notebooks
+        run: poetry run jupyter nbconvert --execute --to notebook --inplace docs/content/*.ipynb
+      - name: Convert notebooks
+        run: poetry run jupyter nbconvert --to markdown docs/content/*.ipynb
+      - name: Clean MarkDown
+        run: (for f in docs/content/*.md; do sed -e '/<script/,/<\/script>/{/^$/d;}' ${f} > ${f}.tmp; mv ${f}.tmp ${f}; done)
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
