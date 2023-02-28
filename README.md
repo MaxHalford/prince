@@ -68,6 +68,7 @@ OlympicG    Lorenzo      2.070933  1.545461 -1.272104 -0.215067 -0.515746
 
 <div align="center">
   <img src="figures/readme_pca.svg" width="74%" />
+  <i>This chart is interactive, which doesn't show on GitHub.</i>
 </div>
 
 ## Installation
