@@ -94,10 +94,14 @@ class CA(utils.EigenvaluesMixin):
         self.total_inertia_ = np.einsum("ij,ji->", S, S.T)
 
         self.row_contributions_ = pd.DataFrame(
-            np.diag(self.row_masses_)
+            sparse.diags(self.row_masses_.values)
             @ (
                 # Same as row_coordinates(X)
-                (np.diag(self.row_masses_**-0.5) @ self.svd_.U @ np.diag(self.svd_.s))
+                (
+                    sparse.diags(self.row_masses_.values**-0.5)
+                    @ self.svd_.U
+                    @ sparse.diags(self.svd_.s)
+                )
                 ** 2
             )
             / self.eigenvalues_,
@@ -105,13 +109,13 @@ class CA(utils.EigenvaluesMixin):
         )
 
         self.column_contributions_ = pd.DataFrame(
-            np.diag(self.col_masses_)
+            sparse.diags(self.col_masses_.values)
             @ (
                 # Same as col_coordinates(X)
                 (
-                    np.diag(self.col_masses_**-0.5)
+                    sparse.diags(self.col_masses_.values**-0.5)
                     @ self.svd_.V.T
-                    @ np.diag(self.svd_.s)
+                    @ sparse.diags(self.svd_.s)
                 )
                 ** 2
             )
