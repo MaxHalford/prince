@@ -384,4 +384,4 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
             )
             chart += col_chart
 
-        return chart
+        return chart.interactive()
