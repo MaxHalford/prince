@@ -115,8 +115,10 @@ class TestPCA:
             P["% of variance"], self.sk_pca[-1].explained_variance_ratio_ * 100
         )
 
-    def test_row_coords(self):
-        P = self.pca.row_coordinates(self.dataset)
+    @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
+    def test_row_coords(self, method_name):
+        method = getattr(self.pca, method_name)
+        P = method(self.dataset)
         # Test againt FactoMineR
         F = load_df_from_R("pca$ind$coord")
         if self.sup_rows:

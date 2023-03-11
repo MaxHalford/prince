@@ -63,6 +63,10 @@ class FAMD(pca.PCA):
 
         return super().fit(Z)
 
+    def _check_input(self, X):
+        if self.check_input:
+            check_array(X, dtype=[str, np.number])
+
     def row_coordinates(self, X):
 
         # Separate numerical columns from categorical columns

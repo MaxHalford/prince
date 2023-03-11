@@ -75,9 +75,11 @@ class TestFAMD:
             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
 
-    def test_row_coords(self):
+    @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
+    def test_row_coords(self, method_name):
+        method = getattr(self.famd, method_name)
         F = load_df_from_R(f"famd$ind$coord")
-        P = self.famd.row_coordinates(self.dataset)
+        P = method(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_row_contrib(self):
