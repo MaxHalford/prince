@@ -39,7 +39,7 @@ class FAMD(pca.PCA):
         self.num_cols_ = X.select_dtypes(np.number).columns.tolist()
         if not self.num_cols_:
             raise ValueError("All variables are qualitative: MCA should be used")
-        self.cat_cols_ = list(set(X.columns) - set(self.num_cols_))
+        self.cat_cols_ = X.columns.difference(self.num_cols_).tolist()
         if not self.cat_cols_:
             raise ValueError("All variables are quantitative: PCA should be used")
 
@@ -51,17 +51,40 @@ class FAMD(pca.PCA):
         # Preprocess categorical columns
         X_cat = X[self.cat_cols_]
         self.cat_scaler_ = preprocessing.OneHotEncoder().fit(X_cat)
-        X_cat = pd.DataFrame.sparse.from_spmatrix(
+        X_cat_oh = pd.DataFrame.sparse.from_spmatrix(
             self.cat_scaler_.transform(X_cat),
             index=X_cat.index,
             columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
         )
-        prop = X_cat.sum() / X_cat.sum().sum() * 2
-        X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
+        prop = X_cat_oh.sum() / X_cat_oh.sum().sum() * 2
+        X_cat_oh_norm = X_cat_oh.sub(X_cat_oh.mean(axis="rows")).div(
+            prop**0.5, axis="columns"
+        )
 
-        Z = pd.concat([X_num, X_cat], axis=1)
+        Z = pd.concat([X_num, X_cat_oh_norm], axis=1)
+        super().fit(Z)
 
-        return super().fit(Z)
+        # Determine column_coordinates_
+        # This is based on line 184 in FactoMineR's famd.R file
+        rc = self.row_coordinates(X)
+        weights = np.ones(len(X_cat_oh)) / len(X_cat_oh)
+        norm = (rc**2).multiply(weights, axis=0).sum()
+        eta2 = pd.DataFrame(index=rc.columns)
+        for i, col in enumerate(self.cat_cols_):
+            # TODO: there must be a better way to select a subset of the one-hot encoded matrix
+            tt = X_cat_oh[[f"{col}_{i}" for i in self.cat_scaler_.categories_[i]]]
+            ni = (tt / len(tt)).sum()
+            eta2[col] = (
+                rc.apply(
+                    lambda x: (tt.multiply(x * weights, axis=0).sum() ** 2 / ni).sum()
+                )
+                / norm
+            ).values
+        self.column_coordinates_ = pd.concat(
+            [self.column_coordinates_.loc[self.num_cols_] ** 2, eta2.T]
+        )
+
+        return self
 
     def _check_input(self, X):
         if self.check_input:
@@ -88,11 +111,6 @@ class FAMD(pca.PCA):
         Z = pd.concat([X_num, X_cat], axis=1)
 
         return super().row_coordinates(Z)
-
-    def column_coordinates(self, X):
-        raise NotImplemented(
-            "FAMD inherits from PCA, but this method is not implemented yet"
-        )
 
     def inverse_transform(self, X):
         raise NotImplemented(
