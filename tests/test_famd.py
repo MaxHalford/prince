@@ -91,3 +91,8 @@ class TestFAMD:
         F = load_df_from_R("famd$var$coord")
         P = self.famd.column_coordinates_
         np.testing.assert_allclose(F.abs(), P.abs())
+
+    def test_col_contrib(self):
+        F = load_df_from_R("famd$var$contrib")
+        P = self.famd.column_contributions_
+        np.testing.assert_allclose(F, P * 100)

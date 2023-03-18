@@ -79,8 +79,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         X_active = X[active_variables].to_numpy(dtype=np.float64, copy=self.copy)
         if supplementary_columns:
             X_sup = X[supplementary_columns].to_numpy(dtype=np.float64, copy=self.copy)
-        # X = X.to_numpy(dtype=np.float64, copy=self.copy)
-        # self._check_input(X)
 
         # Scale datarow_contributions
         if self.rescale_with_mean or self.rescale_with_std:

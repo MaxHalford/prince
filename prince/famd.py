@@ -83,6 +83,8 @@ class FAMD(pca.PCA):
         self.column_coordinates_ = pd.concat(
             [self.column_coordinates_.loc[self.num_cols_] ** 2, eta2.T]
         )
+        self.column_coordinates_.columns.name = "component"
+        self.column_coordinates_.index.name = "variable"
 
         return self
 
@@ -139,6 +141,4 @@ class FAMD(pca.PCA):
 
     @property
     def column_contributions_(self):
-        raise NotImplemented(
-            "FAMD inherits from PCA, but this method is not implemented yet"
-        )
+        return self.column_coordinates_ / self.eigenvalues_
