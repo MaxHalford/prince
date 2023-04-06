@@ -1,8 +1,10 @@
+import math
 import tempfile
 import numpy as np
 import pandas as pd
 import prince
 import pytest
+import rpy2.robjects as robjects
 import rpy2.rinterface_lib
 from rpy2.robjects import r as R
 from scipy import sparse
@@ -79,6 +81,11 @@ class TestCA:
         F = load_df_from_R("ca$svd$V").to_numpy()
         P = sparse.diags(self.ca.col_masses_.to_numpy() ** -0.5) @ self.ca.svd_.V.T
         np.testing.assert_allclose(np.abs(F), np.abs(P))
+
+    def test_total_inertia(self):
+        F = robjects.r(f"sum(ca$eig[,1])")[0]
+        P = self.ca.total_inertia_
+        assert math.isclose(F, P)
 
     def test_eigenvalues(self):
         F = load_df_from_R("ca$eig")[: self.ca.n_components]
