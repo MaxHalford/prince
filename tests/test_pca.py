@@ -1,3 +1,4 @@
+import math
 import pytest
 import numpy as np
 import pandas as pd
@@ -97,6 +98,11 @@ class TestPCA:
         S = self.sk_pca[-1].singular_values_
         P = self.pca.svd_.s
         np.testing.assert_allclose(S, P)
+
+    def test_total_inertia(self):
+        F = robjects.r(f"sum(pca$eig[,1])")[0]
+        P = self.pca.total_inertia_
+        assert math.isclose(F, P)
 
     def test_eigenvalues(self):
         P = self.pca._eigenvalues_summary
