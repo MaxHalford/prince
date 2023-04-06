@@ -1,8 +1,10 @@
+import math
 import tempfile
 import numpy as np
 import pandas as pd
 import prince
 import pytest
+import rpy2.robjects as robjects
 import rpy2.rinterface_lib
 from rpy2.robjects import r as R
 from scipy import sparse
@@ -62,6 +64,11 @@ class TestMFA:
     def test_check_is_fitted(self):
         assert isinstance(self.mfa, prince.MFA)
         sklearn.utils.validation.check_is_fitted(self.mfa)
+
+    def test_total_inertia(self):
+        F = robjects.r(f"sum(mfa$eig[,1])")[0]
+        P = self.mfa.total_inertia_
+        assert math.isclose(F, P)
 
     def test_eigenvalues(self):
         F = load_df_from_R("mfa$eig")[: self.mfa.n_components]
