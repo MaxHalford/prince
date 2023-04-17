@@ -56,6 +56,10 @@ class TestMCA(_TestCA):
             else:
                 R(f"ca <- MCA({args})")
 
+    @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
+    def test_row_coords(self, method_name):
+        super().test_row_coords(method_name=method_name)
+
     def test_col_coords(self):
         if self.sup_cols:
             F = load_df_from_R("ca$var$coord")

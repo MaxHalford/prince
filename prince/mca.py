@@ -1,8 +1,10 @@
 """Multiple Correspondence Analysis (MCA)"""
 import numpy as np
 import pandas as pd
-from sklearn import utils
+import sklearn.utils
 from sklearn.preprocessing import OneHotEncoder
+
+from prince import utils
 
 from . import ca
 from . import plot
@@ -18,7 +20,7 @@ class MCA(ca.CA):
         """
 
         if self.check_input:
-            utils.check_array(X, dtype=[str, np.number])
+            sklearn.utils.check_array(X, dtype=[str, np.number])
 
         # K is the number of actual variables, to apply the Benzécri correction
         self.K_ = X.shape[1]
@@ -46,9 +48,9 @@ class MCA(ca.CA):
     def column_cosine_similarities(self, X):
         return super().column_cosine_similarities(pd.get_dummies(X))
 
+    @utils.check_is_fitted
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
-        self._check_is_fitted()
         if self.check_input:
-            utils.check_array(X, dtype=[str, np.number])
+            sklearn.utils.check_array(X, dtype=[str, np.number])
         return self.row_coordinates(X)

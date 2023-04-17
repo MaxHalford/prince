@@ -96,11 +96,14 @@ class TestCA:
             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
 
-    def test_row_coords(self):
+    def test_row_coords(self, method_name="row_coordinates"):
         F = load_df_from_R(f"ca${self._row_name}$coord")
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R(f"ca${self._row_name}.sup$coord")))
-        P = self.ca.row_coordinates(self.dataset)
+
+        method = getattr(self.ca, method_name)
+        P = method(self.dataset)
+
         np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_row_contrib(self):
