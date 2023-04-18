@@ -4,7 +4,7 @@ import itertools
 
 import numpy as np
 import pandas as pd
-from sklearn.utils import check_array
+import sklearn.utils
 from sklearn import preprocessing
 
 from prince import pca
@@ -32,6 +32,10 @@ class FAMD(pca.PCA):
             random_state=random_state,
             engine=engine,
         )
+
+    def _check_input(self, X):
+        if self.check_input:
+            sklearn.utils.check_array(X, dtype=[str, np.number])
 
     def fit(self, X, y=None):
 
@@ -87,10 +91,6 @@ class FAMD(pca.PCA):
         self.column_coordinates_.index.name = "variable"
 
         return self
-
-    def _check_input(self, X):
-        if self.check_input:
-            check_array(X, dtype=[str, np.number])
 
     def row_coordinates(self, X):
 

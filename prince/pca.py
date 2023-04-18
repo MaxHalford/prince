@@ -4,9 +4,9 @@ import functools
 import numpy as np
 import pandas as pd
 import altair as alt
-from sklearn import base
+import sklearn.base
 from sklearn import preprocessing
-from sklearn.utils import check_array
+import sklearn.utils
 
 from prince import plot
 from prince import svd
@@ -25,7 +25,9 @@ def select_active_variables(method):
     return _impl
 
 
-class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
+class PCA(
+    sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.EigenvaluesMixin
+):
     """Principal Component Analysis (PCA).
 
     Parameters
@@ -65,7 +67,13 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         self.random_state = random_state
         self.engine = engine
 
+    def _check_input(self, X):
+        if self.check_input:
+            sklearn.utils.check_array(X)
+
     def fit(self, X, y=None, supplementary_columns=None):
+
+        self._check_input(X)
 
         supplementary_columns = supplementary_columns or []
         active_variables = X.columns.difference(
@@ -159,10 +167,6 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         """Returns the eigenvalues associated with each principal component."""
         return np.square(self.svd_.s) / len(self.svd_.U)
 
-    def _check_input(self, X):
-        if self.check_input:
-            check_array(X)
-
     def _scale(self, X):
 
         if not hasattr(self, "scaler_"):
@@ -220,11 +224,8 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         """
         self._check_input(X)
         rc = self.row_coordinates(X)
-        if as_array:
-            return rc.to_numpy()
-        return rc
+        return rc.to_numpy() if as_array else rc
 
-    @utils.check_is_fitted
     def fit_transform(self, X, as_array=False):
         """A faster way to fit/transform.
 
@@ -234,11 +235,10 @@ class PCA(base.BaseEstimator, base.TransformerMixin, utils.EigenvaluesMixin):
         directly from the left eigenvectors.
 
         """
+        self._check_input(X)
         self.fit(X)
-        rc = self.row_coordinates()
-        if as_array:
-            return rc.to_numpy()
-        return rc
+        rc = self.row_coordinates(X)
+        return rc.to_numpy() if as_array else rc
 
     @utils.check_is_fitted
     def inverse_transform(self, X, as_array=False):

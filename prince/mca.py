@@ -1,8 +1,8 @@
 """Multiple Correspondence Analysis (MCA)"""
 import numpy as np
 import pandas as pd
+import sklearn.base
 import sklearn.utils
-from sklearn.preprocessing import OneHotEncoder
 
 from prince import utils
 
@@ -10,7 +10,7 @@ from . import ca
 from . import plot
 
 
-class MCA(ca.CA):
+class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
     def fit(self, X, y=None):
         """Fit the MCA for the dataframe X.
 

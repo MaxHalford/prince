@@ -5,7 +5,7 @@ import itertools
 import altair as alt
 import numpy as np
 import pandas as pd
-from sklearn.utils import check_array
+import sklearn.utils
 
 from prince import mca
 from prince import pca
@@ -35,14 +35,17 @@ class MFA(pca.PCA, collections.UserDict):
         )
         collections.UserDict.__init__(self)
 
+    def _check_input(self, X):
+        if self.check_input:
+            sklearn.utils.check_array(X, dtype=[str, np.number])
+
     def fit(self, X, y=None, groups=None):
 
         # Checks groups are provided
         self.groups_ = self._determine_groups(X, groups)
 
         # Check input
-        if self.check_input:
-            check_array(X, dtype=[str, np.number])
+        self._check_input(X)
 
         # Check group types are consistent
         self.all_nums_ = {}
