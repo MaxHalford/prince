@@ -123,7 +123,7 @@ Please use this citation if you use this software as part of a scientific public
 
 ## Support
 
-I made Prince when I was at university, back in 2016. I've had very little time over the years to maintain this package. I spent a significant of time in 2022 to revamp the entire package. Prince has now been downloaded over [1 million times](https://pepy.tech/project/prince). I would be grateful to anyone willing to [sponsor](https://github.com/sponsors/MaxHalford) me. Sponsorships allow me to spend more time working on open source software, including Prince.
+I made Prince when I was at university, back in 2016. I've had very little time over the years to maintain this package. I spent a significant amount of time in 2022 to revamp the entire package. Prince has now been downloaded over [1 million times](https://pepy.tech/project/prince). I would be grateful to anyone willing to [sponsor](https://github.com/sponsors/MaxHalford) me. Sponsorships allow me to spend more time working on open source software, including Prince.
 
 ## License
 
