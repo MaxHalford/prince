@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+import pandas as pd
 from sklearn import datasets
 from sklearn import decomposition
 from sklearn.utils import estimator_checks
@@ -40,15 +41,15 @@ class TestGPA(unittest.TestCase):
         self.assertIsInstance(gpa.fit(self.shapes), prince.GPA)
 
     def test_fit_random(self):
-        gpa = prince.GPA(init='random')
+        gpa = prince.GPA(init="random")
         self.assertIsInstance(gpa.fit(self.shapes), prince.GPA)
 
     def test_fit_mean(self):
-        gpa = prince.GPA(init='mean')
+        gpa = prince.GPA(init="mean")
         self.assertIsInstance(gpa.fit(self.shapes), prince.GPA)
 
     def test_fit_bad_init(self):
-        gpa = prince.GPA(init='bad init type')
+        gpa = prince.GPA(init="bad init type")
 
         with self.assertRaises(ValueError):
             gpa.fit(self.shapes)
@@ -94,3 +95,29 @@ class TestGPA(unittest.TestCase):
         self.assertRaises(
             AssertionError, np.testing.assert_array_equal, self.shapes, shapes_copy
         )
+
+    def test_xarray(self):
+
+        points = pd.DataFrame(
+            data=[
+                [0, 0, 0, 0],
+                [0, 2, 0, 1],
+                [1, 0, 0, 2],
+                [3, 2, 1, 0],
+                [1, 2, 1, 1],
+                [3, 3, 1, 2],
+                [0, 0, 2, 0],
+                [0, 4, 2, 1],
+                [2, 0, 2, 2],
+            ],
+            columns=["x", "y", "shape", "point"],
+        ).astype({"x": float, "y": float})
+
+        ds = points.set_index(["shape", "point"]).to_xarray()
+        da = ds.to_stacked_array("xy", ["shape", "point"])
+        shapes = da.values
+
+        gpa = prince.GPA()
+        aligned_shapes = gpa.fit_transform(shapes)
+        da.values = aligned_shapes
+        aligned_points = da.to_unstacked_dataset("xy").to_dataframe().reset_index()
