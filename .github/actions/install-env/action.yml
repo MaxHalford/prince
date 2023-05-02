@@ -37,7 +37,7 @@ runs:
 
     - name: Install xarray
       shell: bash
-      run: poetry install xarray
+      run: poetry run pip install xarray
 
     - name: Install R
       uses: r-lib/actions/setup-r@v2
