@@ -32,25 +32,34 @@ jobs:
         run: |
           wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
           && sudo dpkg -i ${{ runner.temp }}/hugo.deb
+
       - name: Install Dart Sass Embedded
         run: sudo snap install dart-sass-embedded
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
           submodules: recursive
+
       - name: Install environment
         uses: ./.github/actions/install-env
+
       - name: Execute notebooks
         run: poetry run jupyter nbconvert --execute --to notebook --inplace docs/content/*.ipynb
+
       - name: Convert notebooks
         run: poetry run jupyter nbconvert --to markdown docs/content/*.ipynb
+
       - name: Clean MarkDown
         run: (for f in docs/content/*.md; do sed -e '/<script/,/<\/script>/{/^$/d;}' ${f} > ${f}.tmp; mv ${f}.tmp ${f}; done)
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
+
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+
       - name: Build with Hugo
         env:
           # For maximum backward compatibility with Hugo modules
@@ -60,6 +69,7 @@ jobs:
           cd docs && hugo \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

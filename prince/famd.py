@@ -21,6 +21,7 @@ class FAMD(pca.PCA):
         check_input=True,
         random_state=None,
         engine="sklearn",
+        handle_unknown="error",
     ):
         super().__init__(
             rescale_with_mean=True,
@@ -32,6 +33,7 @@ class FAMD(pca.PCA):
             random_state=random_state,
             engine=engine,
         )
+        self.handle_unknown = handle_unknown
 
     def _check_input(self, X):
         if self.check_input:
@@ -54,7 +56,9 @@ class FAMD(pca.PCA):
 
         # Preprocess categorical columns
         X_cat = X[self.cat_cols_]
-        self.cat_scaler_ = preprocessing.OneHotEncoder().fit(X_cat)
+        self.cat_scaler_ = preprocessing.OneHotEncoder(
+            handle_unknown=self.handle_unknown
+        ).fit(X_cat)
         X_cat_oh = pd.DataFrame.sparse.from_spmatrix(
             self.cat_scaler_.transform(X_cat),
             index=X_cat.index,
