@@ -33,7 +33,7 @@ runs:
     - name: Install dependencies
       shell: bash
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root --with api
+      run: poetry install --no-interaction --no-root
 
     - name: Install xarray
       shell: bash
