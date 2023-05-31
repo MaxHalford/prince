@@ -18,6 +18,20 @@ pytest = "^7.1.1"
 ipykernel = "^6.13.0"
 rpy2 = "^3.5.2"
 black = {version = "^22.3.0", allow-prereleases = true}
+ruff = "^0.0.270"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.ruff]
+select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/
+line-length = 100
+target-version = 'py310'
+ignore = ["E501"]
+
+[tool.ruff.isort]
+required-imports = ["from __future__ import annotations"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
