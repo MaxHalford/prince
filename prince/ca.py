@@ -239,9 +239,7 @@ class CA(utils.EigenvaluesMixin):
         # Supplementary
         X_sup = X[X.columns.difference(self.active_cols_, sort=False)]
         X_sup = X_sup.div(X_sup.sum(axis=0), axis=1)
-        dist2_col_sup = (
-            ((X_sup.sub(marge_row, axis=0)) ** 2).div(marge_row, axis=0).sum(axis=0)
-        )
+        dist2_col_sup = ((X_sup.sub(marge_row, axis=0)) ** 2).div(marge_row, axis=0).sum(axis=0)
 
         dist2_col = pd.concat((dist2_col, dist2_col_sup))
         return (G**2).div(dist2_col, axis=0)

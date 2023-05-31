@@ -5,10 +5,7 @@ from collections import OrderedDict
 import numpy as np
 from scipy import linalg
 
-GRAY = OrderedDict([
-    ('light', '#bababa'),
-    ('dark', '#404040')
-])
+GRAY = OrderedDict([("light", "#bababa"), ("dark", "#404040")])
 
 
 def stylize_axis(ax, grid=True):
@@ -16,11 +13,11 @@ def stylize_axis(ax, grid=True):
     if grid:
         ax.grid()
 
-    ax.xaxis.set_ticks_position('none')
-    ax.yaxis.set_ticks_position('none')
+    ax.xaxis.set_ticks_position("none")
+    ax.yaxis.set_ticks_position("none")
 
-    ax.axhline(y=0, linestyle='-', linewidth=1.2, color=GRAY['dark'], alpha=0.6)
-    ax.axvline(x=0, linestyle='-', linewidth=1.2, color=GRAY['dark'], alpha=0.6)
+    ax.axhline(y=0, linestyle="-", linewidth=1.2, color=GRAY["dark"], alpha=0.6)
+    ax.axvline(x=0, linestyle="-", linewidth=1.2, color=GRAY["dark"], alpha=0.6)
 
     return ax
 

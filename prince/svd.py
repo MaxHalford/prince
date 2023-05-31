@@ -31,9 +31,7 @@ def compute_svd(X, n_components, n_iter, random_state, engine) -> SVD:
         if FBPCA_INSTALLED:
             U, s, V = fbpca.pca(X, k=n_components, n_iter=n_iter)
         else:
-            raise ValueError(
-                "fbpca is not installed; please install it if you want to use it"
-            )
+            raise ValueError("fbpca is not installed; please install it if you want to use it")
     elif engine == "scipy":
         U, s, V = scipy.linalg.svd(X)
         U = U[:, :n_components]
