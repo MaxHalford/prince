@@ -21,9 +21,13 @@
   <a href="https://pepy.tech/project/prince">
     <img src="https://static.pepy.tech/badge/prince/month" alt="pepy_month">
   </a>
-  <!-- Build status -->
+  <!-- Unit tests -->
   <a href="https://github.com/MaxHalford/prince/actions/workflows/unit-tests.yml">
     <img src="https://github.com/MaxHalford/prince/actions/workflows/unit-tests.yml/badge.svg" alt="Unit tests" />
+  </a>
+  <!-- Code quality -->
+  <a href="https://github.com/MaxHalford/prince/actions/workflows/code-quality.yml">
+    <img src="https://github.com/MaxHalford/prince/actions/workflows/code-quality.yml/badge.svg" alt="Code quality" />
   </a>
   <!-- License -->
   <a href="https://opensource.org/licenses/MIT">
