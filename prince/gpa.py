@@ -1,10 +1,10 @@
 """Generalized Procrustes Analysis (GPA)"""
+from __future__ import annotations
+
 import numpy as np
-import pandas as pd
-from scipy.spatial import procrustes
 from scipy.linalg import orthogonal_procrustes
-from sklearn import base
-from sklearn import utils
+from scipy.spatial import procrustes
+from sklearn import base, utils
 
 
 class GPA(base.BaseEstimator, base.TransformerMixin):
@@ -41,7 +41,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         self,
         max_iter=10,
         tol=1e-4,
-        init='random',
+        init="random",
         scale=True,
         copy=True,
         check_input=True,
@@ -120,11 +120,11 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         self.n_features_in_ = n_dim
 
         # Pick reference shape
-        if self.init == 'random':
+        if self.init == "random":
             random_state = utils.check_random_state(self.random_state)
             ref_shape_idx = random_state.randint(X.shape[0])
             reference_shape = X[ref_shape_idx].copy()
-        elif self.init == 'mean':
+        elif self.init == "mean":
             reference_shape = X.mean(axis=0)
         else:
             raise ValueError("init method must be one of ('random', 'mean')")
@@ -157,12 +157,10 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
     def _check_input(self, X):
         utils.check_array(X, allow_nd=True)
         if X.ndim != 3:
-            raise ValueError(
-                'Expected 3-dimensional input of (n_shapes, n_points, n_dim)'
-            )
+            raise ValueError("Expected 3-dimensional input of (n_shapes, n_points, n_dim)")
 
     def _check_is_fitted(self):
-        utils.validation.check_is_fitted(self, '_reference_shape')
+        utils.validation.check_is_fitted(self, "_reference_shape")
 
     @property
     def reference_shape(self):

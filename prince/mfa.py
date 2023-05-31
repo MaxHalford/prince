@@ -1,16 +1,14 @@
 """Multiple Factor Analysis (MFA)"""
+from __future__ import annotations
+
 import collections
-import itertools
 
 import altair as alt
 import numpy as np
 import pandas as pd
 import sklearn.utils
 
-from prince import mca
-from prince import pca
-from prince import plot
-from prince import utils
+from prince import pca, utils
 
 
 class MFA(pca.PCA, collections.UserDict):
@@ -53,9 +51,7 @@ class MFA(pca.PCA, collections.UserDict):
             all_num = all(pd.api.types.is_numeric_dtype(X[c]) for c in cols)
             all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
             if not (all_num or all_cat):
-                raise ValueError(
-                    'Not all columns in "{}" group are of the same type'.format(name)
-                )
+                raise ValueError(f'Not all columns in "{name}" group are of the same type')
             self.all_nums_[name] = all_num
 
         # Normalize column-wise
@@ -74,17 +70,12 @@ class MFA(pca.PCA, collections.UserDict):
                     engine=self.engine,
                 )
             else:
-                raise NotImplementedError(
-                    "Groups of non-numerical variables are not supported yet"
-                )
+                raise NotImplementedError("Groups of non-numerical variables are not supported yet")
             self[name] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
         Z = pd.concat(
-            (
-                X[cols] / self[g].eigenvalues_[0] ** 0.5
-                for g, cols in self.groups_.items()
-            ),
+            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
             axis="columns",
         )
         super().fit(Z)
@@ -100,15 +91,11 @@ class MFA(pca.PCA, collections.UserDict):
             raise ValueError("Groups have to be specified")
         if isinstance(provided_groups, list):
             if not isinstance(X.columns, pd.MultiIndex):
-                raise ValueError(
-                    "Groups have to be provided as a dict when X is not a MultiIndex"
-                )
+                raise ValueError("Groups have to be provided as a dict when X is not a MultiIndex")
             groups = {
                 g: [
                     (g, c)
-                    for c in X.columns.get_level_values(1)[
-                        X.columns.get_level_values(0) == g
-                    ]
+                    for c in X.columns.get_level_values(1)[X.columns.get_level_values(0) == g]
                 ]
                 for g in provided_groups
             }
@@ -130,10 +117,7 @@ class MFA(pca.PCA, collections.UserDict):
 
         X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
         Z = pd.concat(
-            (
-                X[cols] / self[g].eigenvalues_[0] ** 0.5
-                for g, cols in self.groups_.items()
-            ),
+            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
             axis="columns",
         )
         U = self.svd_.U
@@ -149,10 +133,7 @@ class MFA(pca.PCA, collections.UserDict):
 
         X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
         Z = pd.concat(
-            (
-                X[cols] / self[g].eigenvalues_[0] ** 0.5
-                for g, cols in self.groups_.items()
-            ),
+            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
             axis="columns",
         )
         M = np.full(len(X), 1 / len(X))
@@ -178,49 +159,33 @@ class MFA(pca.PCA, collections.UserDict):
         )
 
     def column_coordinates(self, X):
-        raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
     def inverse_transform(self, X):
-        raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
     def row_standard_coordinates(self, X):
-        raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
     def row_cosine_similarities(self, X):
-        raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
     def column_correlations(self, X):
-        raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
     def column_cosine_similarities_(self, X):
-        raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
     @property
     def column_contributions_(self):
-        raise NotImplemented(
-            "MFA inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
     def plot(self, X, x_component=0, y_component=1, color_by=None, **params):
 
         if color_by is not None:
             params["color"] = color_by
 
-        params["tooltip"] = (
-            X.index.names if isinstance(X.index, pd.MultiIndex) else ["index"]
-        ) + [
+        params["tooltip"] = (X.index.names if isinstance(X.index, pd.MultiIndex) else ["index"]) + [
             f"component {x_component}",
             f"component {y_component}",
         ]

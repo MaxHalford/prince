@@ -1,14 +1,13 @@
+from __future__ import annotations
+
 import tempfile
+
 import numpy as np
 import pandas as pd
-import prince
 import pytest
-import rpy2.rinterface_lib
 from rpy2.robjects import r as R
-from scipy import sparse
-import sklearn.utils.estimator_checks
-import sklearn.utils.validation
 
+import prince
 from tests import load_df_from_R
 from tests.test_ca import TestCA as _TestCA
 

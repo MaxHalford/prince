@@ -1,33 +1,29 @@
 """Principal Component Analysis (PCA)"""
+from __future__ import annotations
+
 import functools
 
+import altair as alt
 import numpy as np
 import pandas as pd
-import altair as alt
 import sklearn.base
-from sklearn import preprocessing
 import sklearn.utils
+from sklearn import preprocessing
 
-from prince import plot
-from prince import svd
-from prince import utils
+from prince import svd, utils
 
 
 def select_active_variables(method):
     @functools.wraps(method)
     def _impl(self, X=None, *method_args, **method_kwargs):
         if hasattr(self, "feature_names_in_") and isinstance(X, pd.DataFrame):
-            return method(
-                self, X[self.feature_names_in_], *method_args, **method_kwargs
-            )
+            return method(self, X[self.feature_names_in_], *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
     return _impl
 
 
-class PCA(
-    sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.EigenvaluesMixin
-):
+class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.EigenvaluesMixin):
     """Principal Component Analysis (PCA).
 
     Parameters
@@ -76,9 +72,7 @@ class PCA(
         self._check_input(X)
 
         supplementary_columns = supplementary_columns or []
-        active_variables = X.columns.difference(
-            supplementary_columns, sort=False
-        ).tolist()
+        active_variables = X.columns.difference(supplementary_columns, sort=False).tolist()
 
         # https://scikit-learn.org/stable/developers/develop.html#universal-attributes
         self.feature_names_in_ = active_variables
@@ -95,9 +89,7 @@ class PCA(
                 with_mean=self.rescale_with_mean,
                 with_std=self.rescale_with_std,
             ).fit(X_active)
-            X_active = self.scaler_.transform(
-                X_active
-            )  # TODO: maybe fit_transform is faster
+            X_active = self.scaler_.transform(X_active)  # TODO: maybe fit_transform is faster
             if supplementary_columns:
                 X_sup = preprocessing.StandardScaler(
                     copy=self.copy,
@@ -149,14 +141,10 @@ class PCA(
             (self.svd_.U * len(self.svd_.U) ** 0.5) * self.eigenvalues_**0.5,
             # HACK: there's a circular dependency between row_contributions_
             # and active_row_coordinates in self.__init__
-            index=self.row_contributions_.index
-            if hasattr(self, "row_contributions_")
-            else None,
+            index=self.row_contributions_.index if hasattr(self, "row_contributions_") else None,
         )
         row_coords.columns.name = "component"
-        self.row_contributions_ = (row_coords**2 / len(X)).div(
-            self.eigenvalues_, axis=1
-        )
+        self.row_contributions_ = (row_coords**2 / len(X)).div(self.eigenvalues_, axis=1)
         self.row_contributions_.index = X.index
 
         return self
@@ -172,9 +160,7 @@ class PCA(
         if not hasattr(self, "scaler_"):
             return X
 
-        if sup_variables := X.columns.difference(
-            self.feature_names_in_, sort=False
-        ).tolist():
+        if sup_variables := X.columns.difference(self.feature_names_in_, sort=False).tolist():
             X = np.concatenate(
                 (
                     self.scaler_.transform(X[self.feature_names_in_].to_numpy()),

@@ -1,0 +1,22 @@
+files: prince
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        language: python
+        types: [python]
+        entry: black
+
+      - id: ruff
+        name: ruff
+        language: python
+        types: [python]
+        entry: ruff

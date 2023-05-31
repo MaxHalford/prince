@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import functools
+
 import altair as alt
 import numpy as np
 import pandas as pd
@@ -66,9 +69,9 @@ class EigenvaluesMixin:
         summary["% of variance (cumulative)"] /= 100
         summary["eigenvalue"] = summary["eigenvalue"].map("{:,.3f}".format)
         summary["% of variance"] = summary["% of variance"].map("{:.2%}".format)
-        summary["% of variance (cumulative)"] = summary[
-            "% of variance (cumulative)"
-        ].map("{:.2%}".format)
+        summary["% of variance (cumulative)"] = summary["% of variance (cumulative)"].map(
+            "{:.2%}".format
+        )
         summary.index.name = "component"
         return summary
 

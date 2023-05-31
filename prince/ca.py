@@ -1,14 +1,15 @@
 """Correspondence Analysis (CA)"""
+from __future__ import annotations
+
 import functools
+
+import altair as alt
 import numpy as np
 import pandas as pd
-import altair as alt
 from scipy import sparse
 from sklearn.utils import check_array
 
-from prince import plot
-from prince import utils
-from prince import svd
+from prince import svd, utils
 
 
 def select_active_columns(method):
@@ -238,9 +239,7 @@ class CA(utils.EigenvaluesMixin):
         # Supplementary
         X_sup = X[X.columns.difference(self.active_cols_, sort=False)]
         X_sup = X_sup.div(X_sup.sum(axis=0), axis=1)
-        dist2_col_sup = (
-            ((X_sup.sub(marge_row, axis=0)) ** 2).div(marge_row, axis=0).sum(axis=0)
-        )
+        dist2_col_sup = ((X_sup.sub(marge_row, axis=0)) ** 2).div(marge_row, axis=0).sum(axis=0)
 
         dist2_col = pd.concat((dist2_col, dist2_col_sup))
         return (G**2).div(dist2_col, axis=0)
