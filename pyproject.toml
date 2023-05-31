@@ -19,6 +19,7 @@ ipykernel = "^6.13.0"
 rpy2 = "^3.5.2"
 black = {version = "^22.3.0", allow-prereleases = true}
 ruff = "^0.0.270"
+pre-commit = "^3.3.2"
 
 [tool.black]
 line-length = 100
