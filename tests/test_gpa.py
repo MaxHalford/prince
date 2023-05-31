@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 import unittest
 
 import numpy as np
 import pandas as pd
-from sklearn import datasets
-from sklearn import decomposition
-from sklearn.utils import estimator_checks
 
 import prince
 
@@ -120,4 +119,4 @@ class TestGPA(unittest.TestCase):
         gpa = prince.GPA()
         aligned_shapes = gpa.fit_transform(shapes)
         da.values = aligned_shapes
-        aligned_points = da.to_unstacked_dataset("xy").to_dataframe().reset_index()
+        da.to_unstacked_dataset("xy").to_dataframe().reset_index()

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import functools
+
 import altair as alt
 import numpy as np
 import pandas as pd

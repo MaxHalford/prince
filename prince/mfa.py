@@ -1,16 +1,14 @@
 """Multiple Factor Analysis (MFA)"""
+from __future__ import annotations
+
 import collections
-import itertools
 
 import altair as alt
 import numpy as np
 import pandas as pd
 import sklearn.utils
 
-from prince import mca
-from prince import pca
-from prince import plot
-from prince import utils
+from prince import pca, utils
 
 
 class MFA(pca.PCA, collections.UserDict):
@@ -54,7 +52,7 @@ class MFA(pca.PCA, collections.UserDict):
             all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
             if not (all_num or all_cat):
                 raise ValueError(
-                    'Not all columns in "{}" group are of the same type'.format(name)
+                    f'Not all columns in "{name}" group are of the same type'
                 )
             self.all_nums_[name] = all_num
 
@@ -178,38 +176,38 @@ class MFA(pca.PCA, collections.UserDict):
         )
 
     def column_coordinates(self, X):
-        raise NotImplemented(
+        raise NotImplementedError(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
 
     def inverse_transform(self, X):
-        raise NotImplemented(
+        raise NotImplementedError(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
 
     def row_standard_coordinates(self, X):
-        raise NotImplemented(
+        raise NotImplementedError(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
 
     def row_cosine_similarities(self, X):
-        raise NotImplemented(
+        raise NotImplementedError(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
 
     def column_correlations(self, X):
-        raise NotImplemented(
+        raise NotImplementedError(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
 
     def column_cosine_similarities_(self, X):
-        raise NotImplemented(
+        raise NotImplementedError(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
 
     @property
     def column_contributions_(self):
-        raise NotImplemented(
+        raise NotImplementedError(
             "MFA inherits from PCA, but this method is not implemented yet"
         )
 

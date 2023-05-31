@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import math
 import tempfile
+
 import numpy as np
 import pandas as pd
-import prince
 import pytest
 import rpy2.robjects as robjects
-import rpy2.rinterface_lib
-from rpy2.robjects import r as R
-from scipy import sparse
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
+from rpy2.robjects import r as R
+from scipy import sparse
 
+import prince
 from tests import load_df_from_R
 
 
@@ -83,7 +85,7 @@ class TestCA:
         np.testing.assert_allclose(np.abs(F), np.abs(P))
 
     def test_total_inertia(self):
-        F = robjects.r(f"sum(ca$eig[,1])")[0]
+        F = robjects.r("sum(ca$eig[,1])")[0]
         P = self.ca.total_inertia_
         assert math.isclose(F, P)
 

@@ -1,6 +1,5 @@
 """Factor Analysis of Mixed Data (FAMD)"""
-import collections
-import itertools
+from __future__ import annotations
 
 import numpy as np
 import pandas as pd
@@ -8,8 +7,6 @@ import sklearn.utils
 from sklearn import preprocessing
 
 from prince import pca
-from prince import plot
-from prince import utils
 
 
 class FAMD(pca.PCA):
@@ -40,7 +37,6 @@ class FAMD(pca.PCA):
             sklearn.utils.check_array(X, dtype=[str, np.number])
 
     def fit(self, X, y=None):
-
         # Separate numerical columns from categorical columns
         self.num_cols_ = X.select_dtypes(np.number).columns.tolist()
         if not self.num_cols_:
@@ -56,22 +52,20 @@ class FAMD(pca.PCA):
 
         # Preprocess categorical columns
         X_cat = X[self.cat_cols_]
-        self.cat_scaler_ = preprocessing.OneHotEncoder(
-            handle_unknown=self.handle_unknown
-        ).fit(X_cat)
+        self.cat_scaler_ = preprocessing.OneHotEncoder(handle_unknown=self.handle_unknown).fit(
+            X_cat
+        )
         X_cat_oh = pd.DataFrame.sparse.from_spmatrix(
             self.cat_scaler_.transform(X_cat),
             index=X_cat.index,
             columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
         )
         prop = X_cat_oh.sum() / X_cat_oh.sum().sum() * 2
-        X_cat_oh_norm = X_cat_oh.sub(X_cat_oh.mean(axis="rows")).div(
-            prop**0.5, axis="columns"
-        )
+        X_cat_oh_norm = X_cat_oh.sub(X_cat_oh.mean(axis="rows")).div(prop**0.5, axis="columns")
 
         # PCA.fit doesn't work with sparse matrices. Well, it accepts them, but it densifies them.
         # We pre-densify them here to avoid a warning.
-        # In the future, PCA should be able to handle sparse matrices.
+        # TODO: In the future, PCA should be able to handle sparse matrices.
         X_cat_oh_norm = X_cat_oh_norm.sparse.to_dense()
 
         Z = pd.concat([X_num, X_cat_oh_norm], axis=1)
@@ -88,10 +82,7 @@ class FAMD(pca.PCA):
             tt = X_cat_oh[[f"{col}_{i}" for i in self.cat_scaler_.categories_[i]]]
             ni = (tt / len(tt)).sum()
             eta2[col] = (
-                rc.apply(
-                    lambda x: (tt.multiply(x * weights, axis=0).sum() ** 2 / ni).sum()
-                )
-                / norm
+                rc.apply(lambda x: (tt.multiply(x * weights, axis=0).sum() ** 2 / ni).sum()) / norm
             ).values
         self.column_coordinates_ = pd.concat(
             [self.column_coordinates_.loc[self.num_cols_] ** 2, eta2.T]
@@ -102,7 +93,6 @@ class FAMD(pca.PCA):
         return self
 
     def row_coordinates(self, X):
-
         # Separate numerical columns from categorical columns
         X_num = X[self.num_cols_].copy()
         X_cat = X[self.cat_cols_]
@@ -124,29 +114,19 @@ class FAMD(pca.PCA):
         return super().row_coordinates(Z)
 
     def inverse_transform(self, X):
-        raise NotImplemented(
-            "FAMD inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     def row_standard_coordinates(self, X):
-        raise NotImplemented(
-            "FAMD inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     def row_cosine_similarities(self, X):
-        raise NotImplemented(
-            "FAMD inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     def column_correlations(self, X):
-        raise NotImplemented(
-            "FAMD inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     def column_cosine_similarities_(self, X):
-        raise NotImplemented(
-            "FAMD inherits from PCA, but this method is not implemented yet"
-        )
+        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @property
     def column_contributions_(self):

@@ -1,10 +1,10 @@
 """Generalized Procrustes Analysis (GPA)"""
+from __future__ import annotations
+
 import numpy as np
-import pandas as pd
-from scipy.spatial import procrustes
 from scipy.linalg import orthogonal_procrustes
-from sklearn import base
-from sklearn import utils
+from scipy.spatial import procrustes
+from sklearn import base, utils
 
 
 class GPA(base.BaseEstimator, base.TransformerMixin):

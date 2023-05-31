@@ -1,14 +1,14 @@
+from __future__ import annotations
+
 import tempfile
+
 import numpy as np
-import pandas as pd
-import prince
 import pytest
-import rpy2.rinterface_lib
-from rpy2.robjects import r as R
-from scipy import sparse
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
+from rpy2.robjects import r as R
 
+import prince
 from tests import load_df_from_R
 
 
@@ -49,7 +49,7 @@ class TestFAMD:
         with tempfile.NamedTemporaryFile() as fp:
             self.dataset.to_csv(fp)
             R(f"dataset <- read.csv('{fp.name}', row.names=c(1))")
-            R(f"famd <- FAMD(dataset, graph=F)")
+            R("famd <- FAMD(dataset, graph=F)")
 
     def test_check_is_fitted(self):
         assert isinstance(self.famd, prince.FAMD)
@@ -78,7 +78,7 @@ class TestFAMD:
     @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
     def test_row_coords(self, method_name):
         method = getattr(self.famd, method_name)
-        F = load_df_from_R(f"famd$ind$coord")
+        F = load_df_from_R("famd$ind$coord")
         P = method(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 

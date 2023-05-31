@@ -1,16 +1,16 @@
 """Principal Component Analysis (PCA)"""
+from __future__ import annotations
+
 import functools
 
+import altair as alt
 import numpy as np
 import pandas as pd
-import altair as alt
 import sklearn.base
-from sklearn import preprocessing
 import sklearn.utils
+from sklearn import preprocessing
 
-from prince import plot
-from prince import svd
-from prince import utils
+from prince import svd, utils
 
 
 def select_active_variables(method):

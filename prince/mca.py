@@ -1,4 +1,6 @@
 """Multiple Correspondence Analysis (MCA)"""
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 import sklearn.base
@@ -7,7 +9,6 @@ import sklearn.utils
 from prince import utils
 
 from . import ca
-from . import plot
 
 
 class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):

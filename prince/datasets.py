@@ -1,6 +1,8 @@
-import pathlib
-import pandas as pd
+from __future__ import annotations
 
+import pathlib
+
+import pandas as pd
 
 DATASETS_DIR = pathlib.Path(__file__).parent / "datasets"
 
@@ -110,7 +112,7 @@ def load_burgundy_wines():
             ],
             names=("expert", "aspect"),
         ),
-        index=["Wine {}".format(i + 1) for i in range(6)],
+        index=[f"Wine {i + 1}" for i in range(6)],
     )
     wines.insert(0, "Oak type", [1, 2, 2, 2, 1, 1])
     return wines

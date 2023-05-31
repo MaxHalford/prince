@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 import math
 import tempfile
+
 import numpy as np
-import pandas as pd
-import prince
 import pytest
 import rpy2.robjects as robjects
-import rpy2.rinterface_lib
-from rpy2.robjects import r as R
-from scipy import sparse
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
+from rpy2.robjects import r as R
 
+import prince
 from tests import load_df_from_R
 
 
@@ -58,15 +58,15 @@ class TestMFA:
             dataset.columns = [" ".join(parts) for parts in dataset.columns]
             dataset.to_csv(fp, index=False)
             R(f"dataset <- read.csv('{fp.name}')")
-            R(f"dataset <- dataset[,-1]")
-            R(f"mfa <- MFA(dataset, group=c(3, 4, 3), graph=F)")
+            R("dataset <- dataset[,-1]")
+            R("mfa <- MFA(dataset, group=c(3, 4, 3), graph=F)")
 
     def test_check_is_fitted(self):
         assert isinstance(self.mfa, prince.MFA)
         sklearn.utils.validation.check_is_fitted(self.mfa)
 
     def test_total_inertia(self):
-        F = robjects.r(f"sum(mfa$eig[,1])")[0]
+        F = robjects.r("sum(mfa$eig[,1])")[0]
         P = self.mfa.total_inertia_
         assert math.isclose(F, P)
 
@@ -95,7 +95,7 @@ class TestMFA:
     @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
     def test_row_coords(self, method_name):
         method = getattr(self.mfa, method_name)
-        F = load_df_from_R(f"mfa$ind$coord")
+        F = load_df_from_R("mfa$ind$coord")
         P = method(self.dataset)
         np.testing.assert_allclose(F.abs(), P.abs())
 

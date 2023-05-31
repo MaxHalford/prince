@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 import math
-import pytest
+
 import numpy as np
 import pandas as pd
-import prince
-import rpy2.rinterface_lib
+import pytest
 import rpy2.robjects as robjects
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
-from sklearn import pipeline
-from sklearn import decomposition
-from sklearn import preprocessing
+from sklearn import decomposition, pipeline, preprocessing
 
+import prince
 from tests import load_df_from_R
 
 
@@ -69,7 +69,7 @@ class TestPCA:
 
         # Fit FactoMineR
         robjects.r(
-            f"""
+            """
         library('FactoMineR')
 
         data(decathlon)
@@ -100,7 +100,7 @@ class TestPCA:
         np.testing.assert_allclose(S, P)
 
     def test_total_inertia(self):
-        F = robjects.r(f"sum(pca$eig[,1])")[0]
+        F = robjects.r("sum(pca$eig[,1])")[0]
         P = self.pca.total_inertia_
         assert math.isclose(F, P)
 
