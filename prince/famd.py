@@ -69,6 +69,11 @@ class FAMD(pca.PCA):
             prop**0.5, axis="columns"
         )
 
+        # PCA.fit doesn't work with sparse matrices. Well, it accepts them, but it densifies them.
+        # We pre-densify them here to avoid a warning.
+        # In the future, PCA should be able to handle sparse matrices.
+        X_cat_oh_norm = X_cat_oh_norm.sparse.to_dense()
+
         Z = pd.concat([X_num, X_cat_oh_norm], axis=1)
         super().fit(Z)
 
