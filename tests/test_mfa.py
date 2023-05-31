@@ -20,9 +20,9 @@ from tests import load_df_from_R
         pytest.param(
             sup_rows,
             sup_cols,
-            id=":".join(
-                ["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]
-            ).strip(":"),
+            id=":".join(["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]).strip(
+                ":"
+            ),
         )
         for sup_rows in [False]
         for sup_cols in [False]
@@ -82,9 +82,7 @@ class TestMFA:
     def test_group_eigenvalues(self):
 
         for i, group in enumerate(self.groups, start=1):
-            F = load_df_from_R(f"mfa$separate.analyses$Gr{i}$eig")[
-                : self.mfa.n_components
-            ]
+            F = load_df_from_R(f"mfa$separate.analyses$Gr{i}$eig")[: self.mfa.n_components]
             P = self.mfa[group]._eigenvalues_summary
             np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
             np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])

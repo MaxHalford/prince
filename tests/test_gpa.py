@@ -24,14 +24,8 @@ class TestGPA(unittest.TestCase):
         angles = base_angles[np.newaxis, :] + shape_angle_offsets[:, np.newaxis]
 
         # Calculate along dimensions
-        x = (
-            np.cos(angles) * shape_sizes[:, np.newaxis]
-            + shape_center_offsets[0][:, np.newaxis]
-        )
-        y = (
-            np.sin(angles) * shape_sizes[:, np.newaxis]
-            + shape_center_offsets[1][:, np.newaxis]
-        )
+        x = np.cos(angles) * shape_sizes[:, np.newaxis] + shape_center_offsets[0][:, np.newaxis]
+        y = np.sin(angles) * shape_sizes[:, np.newaxis] + shape_center_offsets[1][:, np.newaxis]
 
         self.shapes = np.stack([x, y], axis=-1)
 
@@ -78,9 +72,7 @@ class TestGPA(unittest.TestCase):
         gpa = prince.GPA()
         shapes = self.shapes[0:1]
         aligned_shapes = gpa.fit_transform(shapes)
-        np.testing.assert_array_almost_equal(
-            shapes / np.linalg.norm(shapes), aligned_shapes
-        )
+        np.testing.assert_array_almost_equal(shapes / np.linalg.norm(shapes), aligned_shapes)
 
     def test_copy(self):
         shapes_copy = np.copy(self.shapes)
@@ -91,9 +83,7 @@ class TestGPA(unittest.TestCase):
 
         gpa = prince.GPA(copy=False)
         gpa.fit(shapes_copy)
-        self.assertRaises(
-            AssertionError, np.testing.assert_array_equal, self.shapes, shapes_copy
-        )
+        self.assertRaises(AssertionError, np.testing.assert_array_equal, self.shapes, shapes_copy)
 
     def test_xarray(self):
 

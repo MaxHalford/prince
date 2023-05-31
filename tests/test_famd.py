@@ -18,9 +18,9 @@ from tests import load_df_from_R
         pytest.param(
             sup_rows,
             sup_cols,
-            id=":".join(
-                ["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]
-            ).strip(":"),
+            id=":".join(["sup_rows" if sup_rows else "", "sup_cols" if sup_cols else ""]).strip(
+                ":"
+            ),
         )
         for sup_rows in [False]
         for sup_cols in [False]
