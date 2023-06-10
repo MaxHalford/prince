@@ -68,7 +68,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             sklearn.utils.check_array(X)
 
     def fit(self, X, y=None, supplementary_columns=None):
-
         self._check_input(X)
 
         supplementary_columns = supplementary_columns or []
@@ -156,7 +155,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         return np.square(self.svd_.s) / len(self.svd_.U)
 
     def _scale(self, X):
-
         if not hasattr(self, "scaler_"):
             return X
 
@@ -310,7 +308,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         show_columns=True,
         **params,
     ):
-
         if color_by is not None:
             params["color"] = color_by
 
@@ -329,9 +326,9 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if show_rows:
             row_coords = self.row_coordinates(X)
             row_coords.columns = [f"component {i}" for i in row_coords.columns]
-            row_coords = row_coords.reset_index()
+
             row_chart = (
-                alt.Chart(row_coords)
+                alt.Chart(row_coords.reset_index())
                 .mark_circle(size=50)
                 .encode(
                     alt.X(
@@ -356,9 +353,10 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if show_columns:
             col_coords = self.column_coordinates_.copy()
             col_coords.columns = [f"component {i}" for i in col_coords.columns]
-            col_coords = col_coords.reset_index()
+            # Scale the column coordinates to the row coordinates
+            col_coords = col_coords * row_coords.abs().max()
             col_chart = (
-                alt.Chart(col_coords)
+                alt.Chart(col_coords.reset_index())
                 .mark_square(color="green", size=50)
                 .encode(
                     alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
