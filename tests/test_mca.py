@@ -102,3 +102,24 @@ def test_issue_131():
     (2, 8)
 
     """
+
+
+def test_type_doesnt_matter():
+    """
+
+    Checks that the type of the columns doesn't affect the result.
+
+    """
+    outputs = []
+    dataset = prince.datasets.load_hearthstone_cards().head(100)
+    for col in dataset.columns:
+        labels, levels = pd.factorize(dataset[col])
+        dataset[col] = labels
+    for typ in ("int", "float", "str", "category"):
+        dataset = dataset.astype(typ)
+        mca = prince.MCA(n_components=2, engine="scipy")
+        mca = mca.fit(dataset)
+        outputs.append(mca.transform(dataset))
+
+    for i in range(len(outputs) - 1):
+        np.testing.assert_allclose(outputs[i], outputs[i + 1])

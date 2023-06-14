@@ -172,6 +172,7 @@ class CA(utils.EigenvaluesMixin):
         F = self.row_coordinates(X)
         return self._row_cosine_similarities(X, F)
 
+    @select_active_columns
     def _row_cosine_similarities(self, X, F):
         # Active
         X_act = X.loc[self.active_rows_]
@@ -231,6 +232,7 @@ class CA(utils.EigenvaluesMixin):
         G = self.column_coordinates(X)
         return self._column_cosine_similarities(X, G)
 
+    @select_active_rows
     def _column_cosine_similarities(self, X, G):
         # Active
         X_act = X[self.active_cols_]
