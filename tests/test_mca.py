@@ -18,7 +18,6 @@ class TestMCA(_TestCA):
 
     @pytest.fixture(autouse=True)
     def _prepare(self, sup_rows, sup_cols):
-
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
 
@@ -78,3 +77,25 @@ class TestMCA(_TestCA):
             np.testing.assert_allclose(F, P)
         else:
             super().test_col_cos2()
+
+
+def test_issue_131():
+    """
+
+    https://github.com/MaxHalford/prince/issues/131#issuecomment-1591426031
+
+    >>> df = pd.DataFrame({
+    ...     "foo": [1, 2, 3, 4, 5],
+    ...     "bar": ["a", "b", "c", "d", "e"],
+    ... })
+    >>> mca = prince.MCA(engine="scipy")
+    >>> mca = mca.fit(df)
+    >>> mca.transform(df).round(2)
+          0     1
+    0 -0.00  0.00
+    1 -1.55 -0.16
+    2  1.22 -1.46
+    3 -0.56 -0.06
+    4  0.90  1.68
+
+    """
