@@ -85,17 +85,20 @@ def test_issue_131():
     https://github.com/MaxHalford/prince/issues/131#issuecomment-1591426031
 
     >>> df = pd.DataFrame({
-    ...     "foo": [1, 2, 3, 4, 5],
-    ...     "bar": ["a", "b", "c", "d", "e"],
+    ...     "foo": [1, 2, 3, 3, 5],
+    ...     "bar": ["a", "b", "c", "b", "e"],
     ... })
     >>> mca = prince.MCA(engine="scipy")
     >>> mca = mca.fit(df)
     >>> mca.transform(df).round(2)
-          0     1
-    0 -0.00  0.00
-    1 -1.55 -0.16
-    2  1.22 -1.46
-    3 -0.56 -0.06
-    4  0.90  1.68
+          0    1
+    0  0.00  2.0
+    1  0.65 -0.5
+    2  0.65 -0.5
+    3  0.65 -0.5
+    4 -1.94 -0.5
+
+    >>> mca.K_, mca.J_
+    (2, 8)
 
     """
