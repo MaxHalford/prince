@@ -27,7 +27,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         self.K_ = X.shape[1]
 
         # One-hot encode the data
-        one_hot = pd.get_dummies(X)
+        one_hot = pd.get_dummies(X, columns=X.columns)
 
         # We need the number of columns to apply the Greenacre correction
         self.J_ = one_hot.shape[1]
@@ -38,16 +38,18 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         return self
 
     def row_coordinates(self, X):
-        return super().row_coordinates(pd.get_dummies(X))
+        return super().row_coordinates(pd.get_dummies(X, columns=X.columns))
 
     def row_cosine_similarities(self, X):
-        return super().row_cosine_similarities(pd.get_dummies(X))
+        oh = pd.get_dummies(X, columns=X.columns)
+        return super()._row_cosine_similarities(X=oh, F=super().row_coordinates(oh))
 
     def column_coordinates(self, X):
-        return super().column_coordinates(pd.get_dummies(X))
+        return super().column_coordinates(pd.get_dummies(X, columns=X.columns))
 
     def column_cosine_similarities(self, X):
-        return super().column_cosine_similarities(pd.get_dummies(X))
+        oh = pd.get_dummies(X, columns=X.columns)
+        return super()._column_cosine_similarities(X=oh, G=super().column_coordinates(oh))
 
     @utils.check_is_fitted
     def transform(self, X):

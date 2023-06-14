@@ -50,7 +50,6 @@ class CA(utils.EigenvaluesMixin):
         self.engine = engine
 
     def fit(self, X, y=None):
-
         # Check input
         if self.check_input:
             check_array(X)
@@ -171,7 +170,10 @@ class CA(utils.EigenvaluesMixin):
 
         """
         F = self.row_coordinates(X)
+        return self._row_cosine_similarities(X, F)
 
+    @select_active_columns
+    def _row_cosine_similarities(self, X, F):
         # Active
         X_act = X.loc[self.active_rows_]
         X_act = X_act / X_act.sum().sum()
@@ -228,7 +230,10 @@ class CA(utils.EigenvaluesMixin):
         of the variance of the element attributed to a particular factor.
         """
         G = self.column_coordinates(X)
+        return self._column_cosine_similarities(X, G)
 
+    @select_active_rows
+    def _column_cosine_similarities(self, X, G):
         # Active
         X_act = X[self.active_cols_]
         X_act = X_act / X_act.sum().sum()
@@ -246,7 +251,6 @@ class CA(utils.EigenvaluesMixin):
 
     @utils.check_is_fitted
     def plot(self, X, x_component=0, y_component=1, **params):
-
         row_coords = self.row_coordinates(X)
         row_coords.columns = [f"component {i}" for i in row_coords.columns]
         row_coords = row_coords.assign(
