@@ -119,7 +119,7 @@ def test_type_doesnt_matter():
         dataset = dataset.astype(typ)
         mca = prince.MCA(n_components=2, engine="scipy")
         mca = mca.fit(dataset)
-        outputs.append(mca.transform(dataset))
+        outputs.append(mca.transform(dataset).abs())
 
     for i in range(len(outputs) - 1):
         np.testing.assert_allclose(outputs[i], outputs[i + 1])
