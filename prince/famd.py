@@ -38,7 +38,7 @@ class FAMD(pca.PCA):
 
     def fit(self, X, y=None):
         # Separate numerical columns from categorical columns
-        self.num_cols_ = X.select_dtypes(np.number).columns.tolist()
+        self.num_cols_ = X.select_dtypes(include=["float"]).columns.tolist()
         if not self.num_cols_:
             raise ValueError("All variables are qualitative: MCA should be used")
         self.cat_cols_ = X.columns.difference(self.num_cols_).tolist()
