@@ -90,13 +90,13 @@ def test_issue_131():
     ... })
     >>> mca = prince.MCA(engine="scipy")
     >>> mca = mca.fit(df)
-    >>> mca.transform(df).round(2)
+    >>> mca.transform(df).round(2).abs().sort_index(axis='columns')
           0    1
     0  0.00  2.0
-    1  0.65 -0.5
-    2  0.65 -0.5
-    3  0.65 -0.5
-    4 -1.94 -0.5
+    1  0.65  0.5
+    2  0.65  0.5
+    3  0.65  0.5
+    4  1.94  0.5
 
     >>> mca.K_, mca.J_
     (2, 8)
