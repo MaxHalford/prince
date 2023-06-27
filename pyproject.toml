@@ -9,7 +9,7 @@ license = "MIT"
 python = "^3.8"
 scikit-learn = "^1.0.2"
 pandas = "^1.4.1 || ^2.0.0"
-altair = "^4.2.2"
+altair = "^4.2.2 || ^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
 nbconvert = "^7.2.9"
