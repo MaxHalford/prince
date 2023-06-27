@@ -46,3 +46,9 @@ make render-notebooks
 ```sh
 gh workflow run hugo.yml
 ```
+
+## Release
+
+```sh
+poetry publish --build
+```
