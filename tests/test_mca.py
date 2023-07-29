@@ -79,6 +79,37 @@ class TestMCA(_TestCA):
             super().test_col_cos2()
 
 
+def test_with_and_without_one_hot():
+    """
+
+    >>> df = pd.DataFrame({
+    ...     "foo": [1, 2, 3, 3, 5],
+    ...     "bar": ["a", "b", "c", "b", "e"],
+    ... })
+    >>> mca = prince.MCA(n_components=2, one_hot=True, engine="scipy")
+    >>> mca = mca.fit(df)
+    >>> mca.transform(df).round(2).abs().sort_index(axis='columns')
+          0    1
+    0  0.00  2.0
+    1  0.65  0.5
+    2  0.65  0.5
+    3  0.65  0.5
+    4  1.94  0.5
+
+    >>> mca = prince.MCA(n_components=2, one_hot=False, engine="scipy")
+    >>> one_hot = pd.get_dummies(df, columns=['foo', 'bar'])
+    >>> mca = mca.fit(one_hot)
+    >>> mca.transform(one_hot).round(2).abs().sort_index(axis='columns')
+          0    1
+    0  0.00  2.0
+    1  0.65  0.5
+    2  0.65  0.5
+    3  0.65  0.5
+    4  1.94  0.5
+
+    """
+
+
 def test_issue_131():
     """
 

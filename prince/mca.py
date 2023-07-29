@@ -12,6 +12,31 @@ from . import ca
 
 
 class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
+    def __init__(
+        self,
+        n_components=2,
+        n_iter=10,
+        copy=True,
+        check_input=True,
+        random_state=None,
+        engine="sklearn",
+        one_hot=True,
+    ):
+        super().__init__(
+            n_components=n_components,
+            n_iter=n_iter,
+            copy=copy,
+            check_input=check_input,
+            random_state=random_state,
+            engine=engine,
+        )
+        self.one_hot = one_hot
+
+    def _prepare(self, X):
+        if self.one_hot:
+            X = pd.get_dummies(X, columns=X.columns)
+        return X
+
     def fit(self, X, y=None):
         """Fit the MCA for the dataframe X.
 
@@ -27,7 +52,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         self.K_ = X.shape[1]
 
         # One-hot encode the data
-        one_hot = pd.get_dummies(X, columns=X.columns)
+        one_hot = self._prepare(X)
 
         # We need the number of columns to apply the Greenacre correction
         self.J_ = one_hot.shape[1]
@@ -38,17 +63,17 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         return self
 
     def row_coordinates(self, X):
-        return super().row_coordinates(pd.get_dummies(X, columns=X.columns))
+        return super().row_coordinates(self._prepare(X))
 
     def row_cosine_similarities(self, X):
-        oh = pd.get_dummies(X, columns=X.columns)
+        oh = self._prepare(X)
         return super()._row_cosine_similarities(X=oh, F=super().row_coordinates(oh))
 
     def column_coordinates(self, X):
-        return super().column_coordinates(pd.get_dummies(X, columns=X.columns))
+        return super().column_coordinates(self._prepare(X))
 
     def column_cosine_similarities(self, X):
-        oh = pd.get_dummies(X, columns=X.columns)
+        oh = self._prepare(X)
         return super()._column_cosine_similarities(X=oh, G=super().column_coordinates(oh))
 
     @utils.check_is_fitted
