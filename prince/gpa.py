@@ -4,7 +4,8 @@ from __future__ import annotations
 import numpy as np
 from scipy.linalg import orthogonal_procrustes
 from scipy.spatial import procrustes
-from sklearn import base, utils as sk_utils
+from sklearn import base
+from sklearn import utils as sk_utils
 
 from prince import utils
 
