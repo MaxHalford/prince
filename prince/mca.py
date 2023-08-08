@@ -37,6 +37,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             X = pd.get_dummies(X, columns=X.columns)
         return X
 
+    @utils.check_is_dataframe_input
     def fit(self, X, y=None):
         """Fit the MCA for the dataframe X.
 
@@ -62,20 +63,29 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
 
         return self
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def row_coordinates(self, X):
         return super().row_coordinates(self._prepare(X))
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def row_cosine_similarities(self, X):
         oh = self._prepare(X)
         return super()._row_cosine_similarities(X=oh, F=super().row_coordinates(oh))
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def column_coordinates(self, X):
         return super().column_coordinates(self._prepare(X))
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def column_cosine_similarities(self, X):
         oh = self._prepare(X)
         return super()._column_cosine_similarities(X=oh, G=super().column_coordinates(oh))
 
+    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""

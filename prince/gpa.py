@@ -4,7 +4,9 @@ from __future__ import annotations
 import numpy as np
 from scipy.linalg import orthogonal_procrustes
 from scipy.spatial import procrustes
-from sklearn import base, utils
+from sklearn import base, utils as sk_utils
+
+from prince import utils
 
 
 class GPA(base.BaseEstimator, base.TransformerMixin):
@@ -73,6 +75,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
 
         return self
 
+    @utils.check_is_fitted
     def transform(self, X):
         """Align X to the reference shape.
 
@@ -121,7 +124,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
 
         # Pick reference shape
         if self.init == "random":
-            random_state = utils.check_random_state(self.random_state)
+            random_state = sk_utils.check_random_state(self.random_state)
             ref_shape_idx = random_state.randint(X.shape[0])
             reference_shape = X[ref_shape_idx].copy()
         elif self.init == "mean":
@@ -155,12 +158,12 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         return X
 
     def _check_input(self, X):
-        utils.check_array(X, allow_nd=True)
+        sk_utils.check_array(X, allow_nd=True)
         if X.ndim != 3:
             raise ValueError("Expected 3-dimensional input of (n_shapes, n_points, n_dim)")
 
     def _check_is_fitted(self):
-        utils.validation.check_is_fitted(self, "_reference_shape")
+        sk_utils.validation.check_is_fitted(self, "_reference_shape")
 
     @property
     def reference_shape(self):

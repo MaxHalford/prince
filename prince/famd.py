@@ -6,7 +6,7 @@ import pandas as pd
 import sklearn.utils
 from sklearn import preprocessing
 
-from prince import pca
+from prince import pca, utils
 
 
 class FAMD(pca.PCA):
@@ -36,6 +36,7 @@ class FAMD(pca.PCA):
         if self.check_input:
             sklearn.utils.check_array(X, dtype=[str, np.number])
 
+    @utils.check_is_dataframe_input
     def fit(self, X, y=None):
         # Separate numerical columns from categorical columns
         self.num_cols_ = X.select_dtypes(include=["float"]).columns.tolist()
@@ -92,6 +93,8 @@ class FAMD(pca.PCA):
 
         return self
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def row_coordinates(self, X):
         # Separate numerical columns from categorical columns
         X_num = X[self.num_cols_].copy()
@@ -113,18 +116,28 @@ class FAMD(pca.PCA):
 
         return super().row_coordinates(Z)
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def inverse_transform(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def row_standard_coordinates(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def row_cosine_similarities(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def column_correlations(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
     def column_cosine_similarities_(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 

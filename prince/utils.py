@@ -9,8 +9,6 @@ from sklearn.utils import validation
 
 
 def check_is_fitted(method):
-    """Decorator"""
-
     @functools.wraps(method)
     def _impl(self, *method_args, **method_kwargs):
         validation.check_is_fitted(self)
@@ -19,8 +17,20 @@ def check_is_fitted(method):
     return _impl
 
 
-def make_labels_and_names(X):
+def check_is_dataframe_input(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        X = args[1]  # Assuming the first argument is 'self' or an instance
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError(
+                f"The X argument must be a pandas DataFrame, but got {type(X).__name__}"
+            )
+        return func(*args, **kwargs)
 
+    return wrapper
+
+
+def make_labels_and_names(X):
     if isinstance(X, pd.DataFrame):
         row_label = X.index.name if X.index.name else "Rows"
         row_names = X.index.tolist()

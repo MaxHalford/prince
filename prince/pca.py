@@ -67,6 +67,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if self.check_input:
             sklearn.utils.check_array(X)
 
+    @utils.check_is_dataframe_input
     def fit(self, X, y=None, supplementary_columns=None):
         self._check_input(X)
 
@@ -175,6 +176,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         return X
 
+    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     @select_active_variables
     def row_coordinates(self, X: pd.DataFrame):
@@ -198,6 +200,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         coord.columns.name = "component"
         return coord
 
+    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def transform(self, X, as_array=False):
         """Computes the row principal coordinates of a dataset.
@@ -210,6 +213,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         rc = self.row_coordinates(X)
         return rc.to_numpy() if as_array else rc
 
+    @utils.check_is_dataframe_input
     def fit_transform(self, X, as_array=False):
         """A faster way to fit/transform.
 
@@ -224,6 +228,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         rc = self.row_coordinates(X)
         return rc.to_numpy() if as_array else rc
 
+    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def inverse_transform(self, X, as_array=False):
         """Transforms row projections back to their original space.
@@ -244,6 +249,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         index = X.index if isinstance(X, pd.DataFrame) else None
         return pd.DataFrame(data=X_inv, index=index)
 
+    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_standard_coordinates(self, X: pd.DataFrame = None):
         """Returns the row standard coordinates.
@@ -254,6 +260,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         """
         return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
 
+    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     @select_active_variables
     def row_cosine_similarities(self, X):
@@ -297,6 +304,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             self.eigenvalues_, axis=1
         )
 
+    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def plot(
         self,
