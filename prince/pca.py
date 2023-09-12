@@ -214,7 +214,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         return rc.to_numpy() if as_array else rc
 
     @utils.check_is_dataframe_input
-    def fit_transform(self, X, as_array=False):
+    def fit_transform(self, X, y=None, as_array=False):
         """A faster way to fit/transform.
 
         This methods produces exactly the same result as calling `fit(X)` followed

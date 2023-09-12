@@ -44,6 +44,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         The MCA is computed on the indicator matrix (i.e. `X.get_dummies()`). If some of the columns are already
         in indicator matrix format, you'll want to pass in `K` as the number of "real" variables that it represents.
         (That's used for correcting the inertia linked to each dimension.)
+
         """
 
         if self.check_input:

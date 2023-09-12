@@ -21,22 +21,27 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
     3. Compute the mean shape of the superimposed shapes.
     4. Repeat steps 2 and 3 until convergence.
 
-    Parameters:
-        max_iter (int): The maximum number of Procrustes analysis iterations.
-        tol (float): The tolerance for the optimization; stops if the
-            procrustes distance decreases by less or equal to ``tol`` between
-            iterations.
-        init ({'random', 'mean'}): Method for initializing reference shape.
-            'random' : choose reference shape from shape list
-            'mean' : initialize reference shape as mean of shape list
-        scale (bool): Whether to compute transformations with a scale component
-        copy (bool): Whether to copy data or perform the computations inplace.
-            If False, data passed to fit are overwritten and running
-            fit(X).transform(X) will not yield the expected results,
-            use fit_transform(X) instead.
-        check_input (bool): Whether to check the consistency of the inputs.
-        random_state (int, RandomState instance or None): Determines random
-            number generation for initialization when ``init=='random'``
+    Parameters
+    ----------
+    max_iter
+        The maximum number of Procrustes analysis iterations.
+    tol
+        The tolerance for the optimization; stops if the Procrustes distance decreases by less or
+        equal to `tol` between iterations.
+    init
+        Method for initializing reference shape.
+        - 'random' : choose reference shape from shape list
+        - 'mean' : initialize reference shape as mean of shape list
+    scale
+        Whether to compute transformations with a scale component.
+    copy
+        Whether to copy data or perform the computations inplace. If False, data passed to fit are
+        overwritten and running fit(X).transform(X) will not yield the expected results,
+        use fit_transform(X) instead.
+    check_input
+        Whether to check the consistency of the inputs.
+    random_state
+        Determines random number generation for initialization when `init=='random'`.
 
     """
 
