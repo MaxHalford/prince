@@ -265,32 +265,7 @@ class CA(utils.EigenvaluesMixin):
         show_column_markers=True,
         show_row_labels=False,
         show_column_labels=False,
-        **params,
     ):
-        coords = []
-        labels = []
-
-        if show_row_markers or show_row_labels:
-            row_coords = self.row_coordinates(X)
-            row_coords.columns = [f"component {i}" for i in row_coords.columns]
-            row_coords = row_coords.assign(
-                variable=row_coords.index.name or "row", value=row_coords.index.astype(str)
-            )
-            row_labels = pd.Series(
-                row_coords.index if show_row_labels else "", index=row_coords.index
-            )
-
-        if show_column_markers or show_column_labels:
-            column_coords = self.column_coordinates(X)
-            column_coords.columns = [f"component {i}" for i in column_coords.columns]
-            column_coords = column_coords.assign(
-                variable=column_coords.index.name or "column",
-                value=column_coords.index.astype(str),
-            )
-            column_labels = pd.Series(
-                column_coords.index if show_column_labels else "", index=column_coords.index
-            )
-
         eig = self._eigenvalues_summary.to_dict(orient="index")
 
         row_chart_markers = None
@@ -299,6 +274,12 @@ class CA(utils.EigenvaluesMixin):
         column_chart_labels = None
 
         if show_row_markers or show_row_labels:
+            row_coords = self.row_coordinates(X)
+            row_coords.columns = [f"component {i}" for i in row_coords.columns]
+            row_coords = row_coords.assign(
+                variable=row_coords.index.name or "row", value=row_coords.index.astype(str)
+            )
+            row_labels = pd.Series(row_coords.index, index=row_coords.index)
             row_chart = alt.Chart(row_coords.assign(label=row_labels)).encode(
                 x=alt.X(
                     f"component {x_component}",
@@ -323,11 +304,18 @@ class CA(utils.EigenvaluesMixin):
                     f"component {x_component}",
                     f"component {y_component}",
                 ],
-                **params,
             )
-            row_chart_labels = row_chart.mark_text().encode(text="label:N")
+            if show_row_labels:
+                row_chart_labels = row_chart.mark_text().encode(text="label:N")
 
         if show_column_markers or show_column_labels:
+            column_coords = self.column_coordinates(X)
+            column_coords.columns = [f"component {i}" for i in column_coords.columns]
+            column_coords = column_coords.assign(
+                variable=column_coords.index.name or "column",
+                value=column_coords.index.astype(str),
+            )
+            column_labels = pd.Series(column_coords.index, index=column_coords.index)
             column_chart = alt.Chart(column_coords.assign(label=column_labels)).encode(
                 x=alt.X(
                     f"component {x_component}",
@@ -354,10 +342,9 @@ class CA(utils.EigenvaluesMixin):
                     f"component {x_component}",
                     f"component {y_component}",
                 ],
-                **params,
             )
-            column_chart_labels = column_chart.mark_text().encode(text="label:N")
-            print(column_chart_labels)
+            if show_column_labels:
+                column_chart_labels = column_chart.mark_text().encode(text="label:N")
 
         charts = filter(
             None,

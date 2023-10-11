@@ -81,6 +81,21 @@ OlympicG    Lorenzo      2.070933  1.545461 -1.272104 -0.215067 -0.515746
   <p>
 </div>
 
+```py
+>>> chart = pca.plot(
+...     dataset,
+...     show_row_labels=True,
+...     show_row_markers=False,
+...     row_labels_column='athlete',
+...     color_rows_by='competition'
+... )
+
+```
+
+<div align="center">
+  <img src="figures/decastar_bis.svg" width="74%" />
+</div>
+
 ## Installation
 
 ```sh
@@ -106,10 +121,15 @@ flowchart TD
 ```
 
 ### [Principal component analysis (PCA)](https://maxhalford.github.io/prince/pca)
+
 ### [Correspondence analysis (CA)](https://maxhalford.github.io/prince/ca)
+
 ### [Multiple correspondence analysis (MCA)](https://maxhalford.github.io/prince/mca)
+
 ### [Multiple factor analysis (MFA)](https://maxhalford.github.io/prince/mfa)
+
 ### [Factor analysis of mixed data (FAMD)](https://maxhalford.github.io/prince/famd)
+
 ### [Generalized procrustes analysis (GPA)](https://maxhalford.github.io/prince/gpa)
 
 ## Correctness

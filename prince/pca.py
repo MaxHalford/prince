@@ -311,67 +311,97 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         X,
         x_component=0,
         y_component=1,
-        color_by=None,
-        show_rows=True,
-        show_columns=True,
-        **params,
+        color_rows_by=None,
+        show_row_markers=True,
+        show_column_markers=True,
+        show_row_labels=False,
+        show_column_labels=False,
+        row_labels_column=None,
     ):
-        if color_by is not None:
-            params["color"] = color_by
-
-        params["tooltip"] = (
-            X.index.names
-            if isinstance(X.index, pd.MultiIndex)
-            else [X.index.name or "index"]  # index is the default name
-        ) + [
-            f"component {x_component}",
-            f"component {y_component}",
-        ]
+        row_params = {
+            "tooltip": (
+                X.index.names
+                if isinstance(X.index, pd.MultiIndex)
+                else [X.index.name or "index"]  # index is the default name
+            )
+            + [
+                f"component {x_component}",
+                f"component {y_component}",
+            ]
+        }
+        if color_rows_by:
+            row_params["color"] = color_rows_by
 
         eig = self._eigenvalues_summary.to_dict(orient="index")
-        chart = alt.LayerChart()
 
-        if show_rows:
+        row_chart_markers = None
+        row_chart_labels = None
+        column_chart_markers = None
+        column_chart_labels = None
+
+        if show_row_markers or show_row_labels:
             row_coords = self.row_coordinates(X)
             row_coords.columns = [f"component {i}" for i in row_coords.columns]
-
-            row_chart = (
-                alt.Chart(row_coords.reset_index())
-                .mark_circle(size=50)
-                .encode(
-                    alt.X(
-                        f"component {x_component}",
-                        scale=alt.Scale(zero=False),
-                        axis=alt.Axis(
-                            title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
-                        ),
+            row_labels = (
+                pd.Series(
+                    row_coords.index.get_level_values(
+                        row_labels_column or row_coords.index.names[0]
                     ),
-                    alt.Y(
-                        f"component {y_component}",
-                        scale=alt.Scale(zero=False),
-                        axis=alt.Axis(
-                            title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
-                        ),
-                    ),
-                    **params,
+                    index=row_coords.index,
                 )
+                if isinstance(row_coords.index, pd.MultiIndex)
+                else pd.Series(row_coords.index, index=row_coords.index)
             )
-            chart += row_chart
 
-        if show_columns:
-            col_coords = self.column_coordinates_.copy()
-            col_coords.columns = [f"component {i}" for i in col_coords.columns]
+            row_chart = alt.Chart(row_coords.assign(label=row_labels).reset_index()).encode(
+                alt.X(
+                    f"component {x_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+                alt.Y(
+                    f"component {y_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+                **row_params,
+            )
+            row_chart_markers = row_chart.mark_circle(size=50 if show_row_markers else 0)
+            if show_row_labels:
+                row_chart_labels = row_chart.mark_text().encode(text="label:N")
+
+        if show_column_markers or show_column_labels:
+            column_coords = self.column_coordinates_.copy()
+            column_coords.columns = [f"component {i}" for i in column_coords.columns]
             # Scale the column coordinates to the row coordinates
-            col_coords = col_coords * row_coords.abs().max()
-            col_chart = (
-                alt.Chart(col_coords.reset_index())
-                .mark_square(color="green", size=50)
-                .encode(
-                    alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
-                    alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
-                    tooltip=["variable"],
-                )
-            )
-            chart += col_chart
+            column_coords = column_coords * row_coords.abs().max()
+            column_labels = pd.Series(column_coords.index, index=column_coords.index)
 
-        return chart.interactive()
+            column_chart = alt.Chart(
+                column_coords.assign(label=column_labels).reset_index()
+            ).encode(
+                alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
+                tooltip=["variable"],
+            )
+            column_chart_markers = column_chart.mark_square(
+                color="green", size=50 if show_column_markers else 0
+            )
+            if show_column_labels:
+                column_chart_labels = column_chart.mark_text().encode(text="label:N")
+
+        charts = filter(
+            None,
+            (
+                row_chart_markers,
+                row_chart_labels,
+                column_chart_markers,
+                column_chart_labels,
+            ),
+        )
+
+        return alt.layer(*charts).interactive()
