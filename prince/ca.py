@@ -256,21 +256,27 @@ class CA(utils.EigenvaluesMixin):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def plot(self, X, x_component=0, y_component=1, **params):
-        row_coords = self.row_coordinates(X)
-        row_coords.columns = [f"component {i}" for i in row_coords.columns]
-        row_coords = row_coords.assign(
-            variable=row_coords.index.name or "row", value=row_coords.index.astype(str)
-        )
+    def plot(self, X, x_component=0, y_component=1, show_rows=True, show_columns=True, **params):
+        coords = []
 
-        col_coords = self.column_coordinates(X)
-        col_coords.columns = [f"component {i}" for i in col_coords.columns]
-        col_coords = col_coords.assign(
-            variable=col_coords.index.name or "column",
-            value=col_coords.index.astype(str),
-        )
+        if show_rows:
+            row_coords = self.row_coordinates(X)
+            row_coords.columns = [f"component {i}" for i in row_coords.columns]
+            row_coords = row_coords.assign(
+                variable=row_coords.index.name or "row", value=row_coords.index.astype(str)
+            )
+            coords.append(row_coords)
 
-        coords = pd.concat([row_coords, col_coords])
+        if show_columns:
+            col_coords = self.column_coordinates(X)
+            col_coords.columns = [f"component {i}" for i in col_coords.columns]
+            col_coords = col_coords.assign(
+                variable=col_coords.index.name or "column",
+                value=col_coords.index.astype(str),
+            )
+            coords.append(col_coords)
+
+        coords = pd.concat(coords)
         eig = self._eigenvalues_summary.to_dict(orient="index")
 
         return (
