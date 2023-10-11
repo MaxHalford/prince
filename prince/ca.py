@@ -203,7 +203,7 @@ class CA(utils.EigenvaluesMixin):
         index_name = X.columns.name
 
         if isinstance(X, pd.DataFrame):
-            is_sparse = X.dtypes.apply(pd.api.types.is_sparse).all()
+            is_sparse = X.dtypes.apply(lambda dtype: isinstance(dtype, pd.SparseDtype)).all()
             if is_sparse:
                 X = X.sparse.to_coo()
             else:
@@ -256,47 +256,66 @@ class CA(utils.EigenvaluesMixin):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def plot(self, X, x_component=0, y_component=1, show_rows=True, show_columns=True, **params):
+    def plot(
+        self,
+        X,
+        x_component=0,
+        y_component=1,
+        show_row_markers=True,
+        show_column_markers=True,
+        show_row_labels=False,
+        show_column_labels=False,
+        **params,
+    ):
         coords = []
+        labels = []
 
-        if show_rows:
+        if show_row_markers or show_row_labels:
             row_coords = self.row_coordinates(X)
             row_coords.columns = [f"component {i}" for i in row_coords.columns]
             row_coords = row_coords.assign(
                 variable=row_coords.index.name or "row", value=row_coords.index.astype(str)
             )
-            coords.append(row_coords)
-
-        if show_columns:
-            col_coords = self.column_coordinates(X)
-            col_coords.columns = [f"component {i}" for i in col_coords.columns]
-            col_coords = col_coords.assign(
-                variable=col_coords.index.name or "column",
-                value=col_coords.index.astype(str),
+            row_labels = pd.Series(
+                row_coords.index if show_row_labels else "", index=row_coords.index
             )
-            coords.append(col_coords)
 
-        coords = pd.concat(coords)
+        if show_column_markers or show_column_labels:
+            column_coords = self.column_coordinates(X)
+            column_coords.columns = [f"component {i}" for i in column_coords.columns]
+            column_coords = column_coords.assign(
+                variable=column_coords.index.name or "column",
+                value=column_coords.index.astype(str),
+            )
+            column_labels = pd.Series(
+                column_coords.index if show_column_labels else "", index=column_coords.index
+            )
+
         eig = self._eigenvalues_summary.to_dict(orient="index")
 
-        return (
-            alt.Chart(coords)
-            .mark_circle(size=50)
-            .encode(
-                alt.X(
+        row_chart_markers = None
+        row_chart_labels = None
+        column_chart_markers = None
+        column_chart_labels = None
+
+        if show_row_markers or show_row_labels:
+            row_chart = alt.Chart(row_coords.assign(label=row_labels)).encode(
+                x=alt.X(
                     f"component {x_component}",
                     scale=alt.Scale(zero=False),
                     axis=alt.Axis(
                         title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
                     ),
                 ),
-                alt.Y(
+                y=alt.Y(
                     f"component {y_component}",
                     scale=alt.Scale(zero=False),
                     axis=alt.Axis(
                         title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
                     ),
                 ),
+            )
+            row_chart_markers = row_chart.mark_circle(size=50 if show_row_markers else 0).encode(
                 color="variable",
                 tooltip=[
                     "variable",
@@ -306,5 +325,48 @@ class CA(utils.EigenvaluesMixin):
                 ],
                 **params,
             )
-            .interactive()
+            row_chart_labels = row_chart.mark_text().encode(text="label:N")
+
+        if show_column_markers or show_column_labels:
+            column_chart = alt.Chart(column_coords.assign(label=column_labels)).encode(
+                x=alt.X(
+                    f"component {x_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+                y=alt.Y(
+                    f"component {y_component}",
+                    scale=alt.Scale(zero=False),
+                    axis=alt.Axis(
+                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    ),
+                ),
+            )
+            column_chart_markers = column_chart.mark_circle(
+                size=50 if show_column_markers else 0
+            ).encode(
+                color="variable",
+                tooltip=[
+                    "variable",
+                    "value",
+                    f"component {x_component}",
+                    f"component {y_component}",
+                ],
+                **params,
+            )
+            column_chart_labels = column_chart.mark_text().encode(text="label:N")
+            print(column_chart_labels)
+
+        charts = filter(
+            None,
+            (
+                row_chart_markers,
+                row_chart_labels,
+                column_chart_markers,
+                column_chart_labels,
+            ),
         )
+
+        return alt.layer(*charts).interactive()
