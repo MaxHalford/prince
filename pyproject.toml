@@ -6,7 +6,7 @@ authors = ["Max Halford <maxhalford25@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 scikit-learn = "^1.0.2"
 pandas = "^1.4.1 || ^2.0.0"
 altair = "^4.2.2 || ^5.0.0"
@@ -20,6 +20,7 @@ rpy2 = "^3.5.2"
 black = {version = "^22.3.0", allow-prereleases = true}
 ruff = "^0.0.270"
 pre-commit = "^3.3.2"
+xarray = "^2023.11.0"
 
 [tool.black]
 line-length = 100

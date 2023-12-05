@@ -35,10 +35,6 @@ runs:
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
 
-    - name: Install xarray
-      shell: bash
-      run: poetry run pip install xarray
-
     - name: Install R
       uses: r-lib/actions/setup-r@v2
 
