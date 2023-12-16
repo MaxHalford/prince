@@ -14,10 +14,9 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
     """Generalized Procrustes Analysis (GPA).
 
     Algorithm outline:
-        (https://wikipedia.org/wiki/Generalized_Procrustes_analysis)
+    
     1. Choose a reference shape.
-    2. Apply Procrustes Analysis to superimpose all shapes to the reference
-        shape.
+    2. Apply Procrustes Analysis to superimpose all shapes to the reference shape.
     3. Compute the mean shape of the superimposed shapes.
     4. Repeat steps 2 and 3 until convergence.
 
@@ -42,6 +41,11 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         Whether to check the consistency of the inputs.
     random_state
         Determines random number generation for initialization when `init=='random'`.
+
+    References
+    ----------
+    https://wikipedia.org/wiki/Generalized_Procrustes_analysis
+    https://medium.com/@olga_kravchenko/generalized-procrustes-analysis-with-python-numpy-c571e8e8a421
 
     """
 
