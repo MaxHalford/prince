@@ -14,7 +14,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
     """Generalized Procrustes Analysis (GPA).
 
     Algorithm outline:
-    
+
     1. Choose a reference shape.
     2. Apply Procrustes Analysis to superimpose all shapes to the reference shape.
     3. Compute the mean shape of the superimposed shapes.
