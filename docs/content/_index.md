@@ -46,13 +46,9 @@ Please use this citation if you use this software as part of a scientific public
 }
 ```
 
-## Support
+## About
 
-I made Prince when I was at university, back in 2016. I've had very little time over the years to maintain this package. I spent a significant of time in 2022 to revamp the entire package. Prince has now been downloaded over [1 million times](https://pepy.tech/project/prince). I would be grateful to anyone willing to [sponsor](https://github.com/sponsors/MaxHalford) me. Sponsorships allow me to spend more time working on open source software, including Prince.
-
-<div align="center" style="margin-top: 2em;">
-    <iframe src="https://github.com/sponsors/MaxHalford/card" title="Sponsor MaxHalford" height="225" width="600" style="border: 0;"></iframe>
-</div>
+I made Prince when I was at university, back in 2016. We used [FactoMineR](http://factominer.free.fr/) extensively in our labs, and so my initial motivation was to provide the same features for Python. I've had very little time over the years to maintain this package. I spent a significant of time in 2022 to revamp the entire package. Prince has now been downloaded over [2 million times](https://pepy.tech/project/prince).
 
 ## License
 

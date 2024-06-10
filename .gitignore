@@ -10,3 +10,4 @@ docs/content/*.md
 !docs/content/*.ipynb
 dist
 public
+.vscode
