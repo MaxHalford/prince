@@ -61,7 +61,8 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
                     return X_enc
                 else:
                     X_enc = self.one_hot_encoder.transform(X)
-                    X = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
+                    X_enc = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
+                    return X_enc
         return X
 
     @utils.check_is_dataframe_input
