@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import sklearn.base
 import sklearn.utils
+from sklearn.preprocessing import OneHotEncoder
 
 from prince import utils
 
@@ -20,7 +21,9 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         check_input=True,
         random_state=None,
         engine="sklearn",
-        one_hot=True,
+        one_hot = False, #if True, use pd.get_dummies to one-hot encode the data
+        one_hot_encoder=OneHotEncoder(handle_unknown="ignore", sparse_output=False), #OneHotEncoder object to use
+        is_one_hot_fitted = False
     ):
         super().__init__(
             n_components=n_components,
@@ -31,10 +34,21 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             engine=engine,
         )
         self.one_hot = one_hot
+        self.one_hot_encoder = one_hot_encoder
+        self.is_one_hot_fitted = is_one_hot_fitted
+
 
     def _prepare(self, X):
         if self.one_hot:
             X = pd.get_dummies(X, columns=X.columns)
+        else:
+            if self.is_one_hot_fitted == False:
+                X = self.one_hot_encoder.fit_transform(X)
+                X = pd.DataFrame(X)
+                self.is_one_hot_fitted = True
+            else:
+                X = self.one_hot_encoder.transform(X)
+                X = pd.DataFrame(X)
         return X
 
     @utils.check_is_dataframe_input
@@ -54,6 +68,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         self.K_ = X.shape[1]
 
         # One-hot encode the data
+        print(X.shape)
         one_hot = self._prepare(X)
 
         # We need the number of columns to apply the Greenacre correction
