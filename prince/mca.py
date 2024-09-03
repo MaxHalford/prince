@@ -52,14 +52,16 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         if self.one_hot:
             if self.get_dummies:
                 X = pd.get_dummies(X, columns=X.columns)
+                return X
             else:
                 if self.is_one_hot_fitted == False:
-                    X = self.one_hot_encoder.fit_transform(X)
-                    X = pd.DataFrame(X)
+                    X_enc = self.one_hot_encoder.fit_transform(X)
+                    X_enc = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
                     self.is_one_hot_fitted = True
+                    return X_enc
                 else:
-                    X = self.one_hot_encoder.transform(X)
-                    X = pd.DataFrame(X)
+                    X_enc = self.one_hot_encoder.transform(X)
+                    X = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
         return X
 
     @utils.check_is_dataframe_input
