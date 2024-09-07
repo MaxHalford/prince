@@ -135,6 +135,37 @@ def test_issue_131():
     """
 
 
+def test_issue_171():
+    """
+
+    https://github.com/MaxHalford/prince/issues/171
+
+    >>> from sklearn import impute
+    >>> from sklearn import pipeline
+
+    >>> rng = np.random.RandomState(0)
+    >>> test_data = pd.DataFrame(data=rng.random((10, 5)))
+    >>> test = pipeline.Pipeline(steps=[
+    ...     ('impute', impute.SimpleImputer()),  # would break the pipeline since it returns an ndarray
+    ...     ('mca', prince.PCA()),
+    ... ])
+    >>> _ = test[0].set_output(transform='pandas')
+    >>> test.fit_transform(test_data)
+    component         0         1
+    0         -0.392617  0.296831
+    1          0.119661 -1.660653
+    2         -1.541581 -0.826863
+    3          3.105498 -0.538801
+    4         -2.439259 -0.343292
+    5          1.129341 -0.533576
+    6         -1.077436  0.899673
+    7          0.020571 -0.941029
+    8          1.498005  1.566376
+    9         -0.422184  2.081334
+
+    """
+
+
 def test_type_doesnt_matter():
     """
 

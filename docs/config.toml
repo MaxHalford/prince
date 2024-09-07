@@ -8,7 +8,7 @@ theme = 'hugo-bearblog'
 # Basic metadata configuration for your blog.
 title = "Prince"
 author = "Max Halford"
-copyright = "Copyright © 2023, Max Halford."
+copyright = "Copyright © 2024, Max Halford."
 languageCode = "en-US"
 
 # Generate a nice robots.txt for SEO
