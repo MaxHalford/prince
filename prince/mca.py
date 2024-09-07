@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import sklearn.base
 import sklearn.preprocessing
 import sklearn.utils
@@ -37,19 +38,20 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
     def _prepare(self, X):
         if self.one_hot:
             # Create the one-hot encoder if it doesn't exist (usually because we're in the fit method)
-            if not hasattr(self, "one_hot_encoder_"):
-                self.one_hot_encoder_ = (
-                    (
-                        sklearn.preprocessing.OneHotEncoder(
-                            handle_unknown=self.handle_unknown, sparse_output=False
-                        )
-                        .set_output(transform="pandas")
-                        .fit(X)
-                    )
-                    if not hasattr(self, "one_hot_encoder_")
-                    else self.one_hot_encoder_
-                )
-            X = self.one_hot_encoder_.transform(X)
+            # if not hasattr(self, "one_hot_encoder_"):
+            #     self.one_hot_encoder_ = (
+            #         (
+            #             sklearn.preprocessing.OneHotEncoder(
+            #                 handle_unknown=self.handle_unknown, sparse_output=False
+            #             )
+            #             .set_output(transform="pandas")
+            #             .fit(X)
+            #         )
+            #         if not hasattr(self, "one_hot_encoder_")
+            #         else self.one_hot_encoder_
+            #     )
+            # X = self.one_hot_encoder_.transform(X)
+            X = pd.get_dummies(X, columns=X.columns)
         return X
 
     def get_feature_names_out(self, input_features=None):
