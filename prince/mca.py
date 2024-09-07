@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 import sklearn.base
 import sklearn.preprocessing
 import sklearn.utils
@@ -41,7 +40,9 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             if not hasattr(self, "one_hot_encoder_"):
                 self.one_hot_encoder_ = (
                     (
-                        sklearn.preprocessing.OneHotEncoder(handle_unknown=self.handle_unknown, sparse_output=False)
+                        sklearn.preprocessing.OneHotEncoder(
+                            handle_unknown=self.handle_unknown, sparse_output=False
+                        )
                         .set_output(transform="pandas")
                         .fit(X)
                     )
