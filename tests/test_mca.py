@@ -143,24 +143,25 @@ def test_issue_171():
     >>> from sklearn import impute
     >>> from sklearn import pipeline
 
-    >>> test_data = pd.DataFrame(data=np.random.random((10, 5)))
+    >>> rng = np.random.RandomState(0)
+    >>> test_data = pd.DataFrame(data=rng.random((10, 5)))
     >>> test = pipeline.Pipeline(steps=[
     ...     ('impute', impute.SimpleImputer()),  # would break the pipeline since it returns an ndarray
-    ...     ('mca', prince.MCA()),
+    ...     ('mca', prince.PCA()),
     ... ])
     >>> _ = test[0].set_output(transform='pandas')
     >>> test.fit_transform(test_data)
-                  0             1
-    0 -2.384233e-16  1.432250e-16
-    1 -1.296231e+00 -1.146678e+00
-    2 -7.612724e-01 -5.776135e-01
-    3  1.468565e+00  5.043704e-01
-    4  1.618681e+00 -6.557499e-02
-    5 -1.045958e+00  2.636816e+00
-    6  1.127237e+00 -2.579320e-01
-    7 -4.013652e-01  2.714293e-01
-    8 -4.999467e-02 -4.974244e-01
-    9 -6.596616e-01 -8.673923e-01
+    component         0         1
+    0         -0.392617  0.296831
+    1          0.119661 -1.660653
+    2         -1.541581 -0.826863
+    3          3.105498 -0.538801
+    4         -2.439259 -0.343292
+    5          1.129341 -0.533576
+    6         -1.077436  0.899673
+    7          0.020571 -0.941029
+    8          1.498005  1.566376
+    9         -0.422184  2.081334
 
     """
 
