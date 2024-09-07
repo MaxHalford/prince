@@ -135,6 +135,34 @@ def test_issue_131():
     """
 
 
+def test_issue_171():
+    """
+
+    >>> from sklearn import impute
+    >>> from sklearn import pipeline
+
+    >>> test_data = pd.DataFrame(data=np.random.random((10, 5)))
+    >>> test = pipeline.Pipeline(steps=[
+    ...     ('impute', impute.SimpleImputer()),  # would break the pipeline since it returns an ndarray
+    ...     ('mca', prince.MCA()),
+    ... ])
+    >>> _ = test[0].set_output(transform='pandas')
+    >>> test.fit_transform(test_data)
+                  0             1
+    0 -2.384233e-16  1.432250e-16
+    1 -1.296231e+00 -1.146678e+00
+    2 -7.612724e-01 -5.776135e-01
+    3  1.468565e+00  5.043704e-01
+    4  1.618681e+00 -6.557499e-02
+    5 -1.045958e+00  2.636816e+00
+    6  1.127237e+00 -2.579320e-01
+    7 -4.013652e-01  2.714293e-01
+    8 -4.999467e-02 -4.974244e-01
+    9 -6.596616e-01 -8.673923e-01
+
+    """
+
+
 def test_type_doesnt_matter():
     """
 
