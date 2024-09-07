@@ -4,6 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import sklearn.base
+import sklearn.preprocessing
 import sklearn.utils
 
 from prince import utils
@@ -21,6 +22,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         random_state=None,
         engine="sklearn",
         one_hot=True,
+        handle_unknown="error",
     ):
         super().__init__(
             n_components=n_components,
@@ -31,10 +33,22 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             engine=engine,
         )
         self.one_hot = one_hot
+        self.handle_unknown = handle_unknown
 
     def _prepare(self, X):
         if self.one_hot:
-            X = pd.get_dummies(X, columns=X.columns)
+            # Create the one-hot encoder if it doesn't exist (usually because we're in the fit method)
+            if not hasattr(self, "one_hot_encoder_"):
+                self.one_hot_encoder_ = (
+                    (
+                        sklearn.preprocessing.OneHotEncoder(handle_unknown=self.handle_unknown, sparse_output=False)
+                        .set_output(transform="pandas")
+                        .fit(X)
+                    )
+                    if not hasattr(self, "one_hot_encoder_")
+                    else self.one_hot_encoder_
+                )
+            X = self.one_hot_encoder_.transform(X)
         return X
 
     def get_feature_names_out(self, input_features=None):
