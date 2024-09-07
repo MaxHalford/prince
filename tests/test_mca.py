@@ -138,6 +138,8 @@ def test_issue_131():
 def test_issue_171():
     """
 
+    https://github.com/MaxHalford/prince/issues/171
+
     >>> from sklearn import impute
     >>> from sklearn import pipeline
 

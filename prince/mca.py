@@ -37,6 +37,9 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             X = pd.get_dummies(X, columns=X.columns)
         return X
 
+    def get_feature_names_out(self, input_features=None):
+        return np.arange(self.n_components_)
+
     @utils.check_is_dataframe_input
     def fit(self, X, y=None):
         """Fit the MCA for the dataframe X.
