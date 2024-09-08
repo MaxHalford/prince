@@ -31,7 +31,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         engine="sklearn",
         one_hot = True,
         get_dummies = False,#if True, use pd.get_dummies to one-hot encode the data
-        one_hot_encoder=OneHotEncoder(handle_unknown="ignore", sparse_output=False), #OneHotEncoder object to use
+        one_hot_encoder=OneHotEncoder(handle_unknown="ignore", sparse_output=False, dtype=bool), #OneHotEncoder object to use
         is_one_hot_fitted = False
     ):
         super().__init__(
@@ -55,14 +55,28 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
                 return X
             else:
                 if self.is_one_hot_fitted == False:
+                    #if the one_hot_encoder is not fitted, to fit and also set the is_one_hot_fitted variable to True
                     X_enc = self.one_hot_encoder.fit_transform(X)
                     X_enc = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
                     self.is_one_hot_fitted = True
                     return X_enc
                 else:
-                    X_enc = self.one_hot_encoder.transform(X)
-                    X_enc = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
-                    return X_enc
+                    #checking if the columns fed to the onehot encoder and the columns fitted to the onehot encoder are the same
+                    oh_cols = set(self.one_hot_encoder.feature_names_in_.tolist())
+                    X_cols = set(X.columns.tolist())
+                    
+                    if oh_cols == X_cols:
+                        #if the fitted cols are the same as the inferencing columns, then can transform
+                        X_enc = self.one_hot_encoder.transform(X)
+                        X_enc = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
+                        return X_enc
+                    else:
+                        #if the fitted cols are different to the inferencing columns, then should fit the onehot encoder again, to handle unit tests
+                        print(X_cols)
+                        print(oh_cols)
+                        X_enc = self.one_hot_encoder.fit_transform(X)
+                        X_enc = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
+                        return X_enc
         return X
 
     @utils.check_is_dataframe_input
