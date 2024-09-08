@@ -72,8 +72,6 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
                         return X_enc
                     else:
                         #if the fitted cols are different to the inferencing columns, then should fit the onehot encoder again, to handle unit tests
-                        print(X_cols)
-                        print(oh_cols)
                         X_enc = self.one_hot_encoder.fit_transform(X)
                         X_enc = pd.DataFrame(X_enc, columns=self.one_hot_encoder.get_feature_names_out(X.columns))
                         return X_enc
