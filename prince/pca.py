@@ -67,6 +67,9 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if self.check_input:
             sklearn.utils.check_array(X)
 
+    def get_feature_names_out(self, input_features=None):
+        return np.arange(self.n_components_)
+
     @utils.check_is_dataframe_input
     def fit(self, X, y=None, supplementary_columns=None):
         self._check_input(X)
