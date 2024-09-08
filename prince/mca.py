@@ -94,7 +94,6 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         self.K_ = X.shape[1]
 
         # One-hot encode the data
-        print(X.shape)
         one_hot = self._prepare(X)
 
         # We need the number of columns to apply the Greenacre correction
