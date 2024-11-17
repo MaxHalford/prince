@@ -207,6 +207,7 @@ def test_issue_161():
 
     https://github.com/MaxHalford/prince/issues/161
 
+    >>> import io
     >>> data = pd.read_csv(io.StringIO(issue_161_data), index_col=0)
 
     >>> mca = prince.MCA(
