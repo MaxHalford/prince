@@ -22,7 +22,6 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         random_state=None,
         engine="sklearn",
         one_hot=True,
-        handle_unknown="error",
     ):
         super().__init__(
             n_components=n_components,
@@ -33,12 +32,12 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             engine=engine,
         )
         self.one_hot = one_hot
-        self.handle_unknown = handle_unknown
 
     def _prepare(self, X):
         if self.one_hot:
-            # Create the one-hot encoder if it doesn't exist (usually because we're in the fit method)
-            X = pd.get_dummies(X, columns=X.columns)
+            X = pd.get_dummies(X, columns=X.columns, prefix_sep="__")
+            if (one_hot_columns_ := getattr(self, "one_hot_columns_", None)) is not None:
+                X = X.reindex(columns=one_hot_columns_.union(X.columns), fill_value=False)
         return X
 
     def get_feature_names_out(self, input_features=None):
@@ -62,6 +61,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
 
         # One-hot encode the data
         one_hot = self._prepare(X)
+        self.one_hot_columns_ = one_hot.columns
 
         # We need the number of columns to apply the Greenacre correction
         self.J_ = one_hot.shape[1]
