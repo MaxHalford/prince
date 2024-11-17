@@ -215,8 +215,7 @@ def test_issue_161():
     ...     copy=True,
     ...     check_input=True,
     ...     engine='sklearn',
-    ...     random_state=42,
-    ...     handle_unknown='ignore'
+    ...     random_state=42
     ... )
     >>> mca = mca.fit(data[:3])
 
