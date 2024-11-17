@@ -112,7 +112,7 @@ class FAMD(pca.PCA):
         prop = X_cat.sum() / X_cat.sum().sum() * 2
         X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
 
-        Z = pd.concat([X_num, X_cat], axis=1)
+        Z = pd.concat([X_num, X_cat.sparse.to_dense()], axis=1).fillna(0.0)
 
         return super().row_coordinates(Z)
 

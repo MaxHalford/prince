@@ -96,3 +96,33 @@ class TestFAMD:
         F = load_df_from_R("famd$var$contrib")
         P = self.famd.column_contributions_
         np.testing.assert_allclose(F, P * 100)
+
+
+def test_issue_169():
+    """
+
+    https://github.com/MaxHalford/prince/issues/169
+
+    >>> import pandas as pd
+    >>> from prince import FAMD
+    >>> df = pd.DataFrame({'var1':['c', 'a', 'b','c'], 'var2':['x','y','y','z'],'var2': [0.,10.,30.4,0.]})
+
+    >>> famd = FAMD(n_components=2, random_state=42)
+    >>> famd = famd.fit(df[:3])
+
+    >>> famd.transform(df[0:3])
+    component         0         1
+    0         -1.303760 -0.658334
+    1         -0.335621  0.981047
+    2          1.639381 -0.322713
+
+    >>> famd.transform(df[0:2])
+    component         0         1
+    0         -1.000920 -0.669274
+    1         -0.092001  0.669274
+
+    >>> famd.transform(df[3:])
+    component         0             1
+    3         -0.869173 -1.215925e-16
+
+    """

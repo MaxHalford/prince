@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import io
 import tempfile
 
 import numpy as np
@@ -194,13 +193,14 @@ def test_type_doesnt_matter():
         np.testing.assert_allclose(outputs[i], outputs[i + 1])
 
 
-issue_161_data = '''
+issue_161_data = """
 ,category,userid,location,applicationname,browser\n
 0,Portal Login,a@b.com,"San Jose, CA, United States",A,Chrome\n
 1,Application Access,b@b.com,"San Jose, CA, United States",B,Other\n
 2,Application Access,a@b.com,"San Jose, CA, United States",C,Other\n
 3,Portal Login,c@b.com,"San Diego, CA, United States",A,Chrome\n
-'''
+"""
+
 
 def test_issue_161():
     """
