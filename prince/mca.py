@@ -22,7 +22,6 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         random_state=None,
         engine="sklearn",
         one_hot=True,
-        handle_unknown="error",
     ):
         super().__init__(
             n_components=n_components,
@@ -33,7 +32,6 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             engine=engine,
         )
         self.one_hot = one_hot
-        self.handle_unknown = handle_unknown
 
     def _prepare(self, X):
         if self.one_hot:
