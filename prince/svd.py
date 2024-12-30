@@ -21,10 +21,25 @@ class SVD:
     V: np.ndarray
 
 
-def compute_svd(X, n_components, n_iter, random_state, engine) -> SVD:
+def compute_svd(
+    X: np.ndarray,
+    n_components: int,
+    n_iter: int,
+    engine: str,
+    random_state: int | None = None,
+    row_weights: np.ndarray | None = None,
+    column_weights: np.ndarray | None = None,
+) -> SVD:
     """Computes an SVD with k components."""
 
-    # TODO: support sample weights
+    if row_weights is None:
+        row_weights = np.full(X.shape[0], 1 / X.shape[0])
+    row_weights = row_weights / row_weights.sum()
+    if column_weights is None:
+        column_weights = np.ones(X.shape[1])
+
+    X = X * np.sqrt(row_weights[:, np.newaxis])  # row-wise scaling
+    X = X * np.sqrt(column_weights)
 
     # Compute the SVD
     if engine == "fbpca":
@@ -44,6 +59,9 @@ def compute_svd(X, n_components, n_iter, random_state, engine) -> SVD:
     else:
         raise ValueError("engine has to be one of ('fbpca', 'scipy', 'sklearn')")
 
-    # U, V = extmath.svd_flip(U, V)
+    #U, V = extmath.svd_flip(U, V)
+
+    U = U / np.sqrt(row_weights)[:, np.newaxis]  # row-wise scaling
+    V = V / np.sqrt(column_weights)
 
     return SVD(U, s, V)
