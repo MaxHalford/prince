@@ -40,6 +40,7 @@ class TestSVD:
 
         self.dataset = np.random.rand(100, 10)
         self.row_weights = np.random.rand(100)
+        self.row_weights /= self.row_weights.sum()
         self.column_weights = np.random.rand(10)
 
         # Fit Prince
@@ -68,14 +69,24 @@ class TestSVD:
         robjects.r(f"svd = svd.triplet({args})")
 
     def test_U(self):
-        P = self.svd.U
-        F = load_df_from_R("svd$U")
-        np.testing.assert_allclose(np.abs(F), np.abs(P))
+        if self.are_rows_weighted:
+            P = self.svd.U
+            F = load_df_from_R("svd$U")
+            np.testing.assert_allclose(np.abs(F), np.abs(P))
+        else:
+            P = self.svd.U
+            F = load_df_from_R("svd$U")
+            n = len(self.svd.U)
+            np.testing.assert_allclose(np.abs(F), np.abs(P) * n ** 0.5)
 
     def test_s(self):
         P = self.svd.s
         F = robjects.r("svd$vs")[:self.n_components]
-        np.testing.assert_allclose(np.abs(F), np.abs(P))
+        if self.are_rows_weighted:
+            np.testing.assert_allclose(np.abs(F), np.abs(P))
+        else:
+            n = len(self.svd.U)
+            np.testing.assert_allclose(np.abs(F), np.abs(P) / n ** 0.5)
 
     def test_V(self):
         P = self.svd.V

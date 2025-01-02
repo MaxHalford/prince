@@ -32,14 +32,10 @@ def compute_svd(
 ) -> SVD:
     """Computes an SVD with k components."""
 
-    if row_weights is None:
-        row_weights = np.full(X.shape[0], 1 / X.shape[0])
-    row_weights = row_weights / row_weights.sum()
-    if column_weights is None:
-        column_weights = np.ones(X.shape[1])
-
-    X = X * np.sqrt(row_weights[:, np.newaxis])  # row-wise scaling
-    X = X * np.sqrt(column_weights)
+    if row_weights is not None:
+        X = X * np.sqrt(row_weights[:, np.newaxis])  # row-wise scaling
+    if column_weights is not None:
+        X = X * np.sqrt(column_weights)
 
     # Compute the SVD
     if engine == "fbpca":
@@ -61,7 +57,9 @@ def compute_svd(
 
     #U, V = extmath.svd_flip(U, V)
 
-    U = U / np.sqrt(row_weights)[:, np.newaxis]  # row-wise scaling
-    V = V / np.sqrt(column_weights)
+    if row_weights is not None:
+        U = U / np.sqrt(row_weights)[:, np.newaxis]  # row-wise scaling
+    if column_weights is not None:
+        V = V / np.sqrt(column_weights)
 
     return SVD(U, s, V)
