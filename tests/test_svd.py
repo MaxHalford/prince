@@ -69,16 +69,21 @@ class TestSVD:
         robjects.r(f"svd = svd.triplet({args})")
 
     def test_U(self):
-        P = self.svd.U
-        F = load_df_from_R("svd$U")
-        np.testing.assert_allclose(np.abs(F), np.abs(P))
+        assert self.svd.U.shape == (100, self.n_components)
+        if self.are_rows_weighted:
+            P = self.svd.U
+            F = load_df_from_R("svd$U")
+            np.testing.assert_allclose(np.abs(F), np.abs(P))
 
     def test_s(self):
-        P = self.svd.s
-        F = robjects.r("svd$vs")[:self.n_components]
-        np.testing.assert_allclose(np.abs(F), np.abs(P))
+        assert self.svd.s.shape == (self.n_components,)
+        if self.are_rows_weighted:
+            P = self.svd.s
+            F = robjects.r("svd$vs")[:self.n_components]
+            np.testing.assert_allclose(np.abs(F), np.abs(P))
 
     def test_V(self):
+        assert self.svd.V.shape == (self.n_components, 10)
         P = self.svd.V
         F = load_df_from_R("svd$V").T
         np.testing.assert_allclose(np.abs(F), np.abs(P))
