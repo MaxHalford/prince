@@ -16,11 +16,11 @@ from tests import load_df_from_R
 
 
 @pytest.mark.parametrize(
-    "sup_rows, sup_cols",
+    "sup_rows, sup_groups",
     [
-        pytest.param(sup_rows, sup_cols, id=f"{sup_rows=}:{sup_cols=}")
+        pytest.param(sup_rows, sup_groups, id=f"{sup_rows=}:{sup_groups=}")
         for sup_rows in [False, True]
-        for sup_cols in [False]
+        for sup_groups in [False, True]
     ],
 )
 class TestMFA:
@@ -28,9 +28,9 @@ class TestMFA:
     _col_name = "col"
 
     @pytest.fixture(autouse=True)
-    def _prepare(self, sup_rows, sup_cols):
+    def _prepare(self, sup_rows, sup_groups):
         self.sup_rows = sup_rows
-        self.sup_cols = sup_cols
+        self.sup_groups = sup_groups
 
         n_components = 3
 
@@ -39,11 +39,10 @@ class TestMFA:
         active = self.dataset.copy()
         if self.sup_rows:
             active = active.drop(index=["Manchester City", "Manchester United"])
-        # if self.sup_cols:
-        #     active = active.drop(columns=["Abstention", "Blank"])
+        supplementary_groups = ["2023-24"] if self.sup_groups else []
         self.groups = self.dataset.columns.levels[0].tolist()
         self.mfa = prince.MFA(n_components=n_components)
-        self.mfa.fit(active, groups=self.groups)
+        self.mfa.fit(active, groups=self.groups, supplementary_groups=supplementary_groups)
 
         # Fit FactoMineR
         R("library('FactoMineR')")
@@ -56,6 +55,8 @@ class TestMFA:
         args = "dataset, group=c(6, 6, 6), graph=F"
         if self.sup_rows:
             args += ", ind.sup=c(9:10)"
+        if self.sup_groups:
+            args += ", num.group.sup=c(3)"
 
         R(f"mfa <- MFA({args})")
 

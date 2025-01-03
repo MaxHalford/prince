@@ -45,16 +45,16 @@ class MFA(pca.PCA, collections.UserDict):
 
         # Check group types are consistent
         self.all_nums_ = {}
-        for name, cols in sorted(self.groups_.items()):
+        for group, cols in sorted(self.groups_.items()):
             all_num = all(pd.api.types.is_numeric_dtype(X[c]) for c in cols)
             all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
             if not (all_num or all_cat):
-                raise ValueError(f'Not all columns in "{name}" group are of the same type')
-            self.all_nums_[name] = all_num
+                raise ValueError(f'Not all columns in "{group}" group are of the same type')
+            self.all_nums_[group] = all_num
 
         # Run a factor analysis in each group
-        for name, cols in sorted(self.groups_.items()):
-            if self.all_nums_[name]:
+        for group, cols in sorted(self.groups_.items()):
+            if self.all_nums_[group]:
                 fa = pca.PCA(
                     rescale_with_mean=True,
                     rescale_with_std=True,
@@ -66,12 +66,17 @@ class MFA(pca.PCA, collections.UserDict):
                 )
             else:
                 raise NotImplementedError("Groups of non-numerical variables are not supported yet")
-            self[name] = fa.fit(X.loc[:, cols])
+            self[group] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
         Z = self._build_Z(X)
         column_weights = np.array(
-            [1 / self[name].eigenvalues_[0] for name, cols in self.groups_.items() for _ in cols]
+            [
+                1 / self[group].eigenvalues_[0]
+                for group, cols in self.groups_.items()
+                for _ in cols
+                if group not in getattr(self, "supplementary_groups_", [])
+            ]
         )
         super().fit(
             Z,
@@ -85,21 +90,27 @@ class MFA(pca.PCA, collections.UserDict):
 
         return self
 
-    def _determine_groups(self, X, provided_groups):
-        if provided_groups is None:
-            raise ValueError("Groups have to be specified")
-        if isinstance(provided_groups, list):
+    def _determine_groups(self, X: pd.DataFrame, groups: dict | list | None) -> dict:
+        if groups is None:
+            if isinstance(X.columns, pd.MultiIndex):
+                groups = X.columns.get_level_values(0).unique().tolist()
+            else:
+                raise ValueError("Groups have to be specified")
+
+        if isinstance(groups, list):
             if not isinstance(X.columns, pd.MultiIndex):
-                raise ValueError("Groups have to be provided as a dict when X is not a MultiIndex")
+                raise ValueError(
+                    "X has to have MultiIndex columns if groups are provided as a list"
+                )
             groups = {
-                g: [
-                    (g, c)
-                    for c in X.columns.get_level_values(1)[X.columns.get_level_values(0) == g]
+                group: [
+                    (group, column)
+                    for column in X.columns.get_level_values(1)[
+                        X.columns.get_level_values(0) == group
+                    ]
                 ]
-                for g in provided_groups
+                for group in groups
             }
-        else:
-            groups = provided_groups
         return groups
 
     def _build_Z(self, X):
@@ -189,7 +200,9 @@ class MFA(pca.PCA, collections.UserDict):
         if color_by is not None:
             params["color"] = color_by
 
-        params["tooltip"] = (X.index.names if isinstance(X.index, pd.MultiIndex) else ["index"]) + [
+        params["tooltip"] = (
+            X.index.names if isinstance(X.index, pd.MultiIndex) else [X.index.name or "index"]
+        ) + [
             f"component {x_component}",
             f"component {y_component}",
         ]
