@@ -1,4 +1,5 @@
 """Multiple Factor Analysis (MFA)"""
+
 from __future__ import annotations
 
 import collections
@@ -6,7 +7,6 @@ import collections
 import altair as alt
 import numpy as np
 import pandas as pd
-import sklearn.utils
 
 from prince import pca, utils
 
@@ -22,8 +22,8 @@ class MFA(pca.PCA, collections.UserDict):
         engine="sklearn",
     ):
         super().__init__(
-            rescale_with_mean=False,
-            rescale_with_std=False,
+            rescale_with_mean=True,
+            rescale_with_std=True,
             n_components=n_components,
             n_iter=n_iter,
             copy=copy,
@@ -33,17 +33,10 @@ class MFA(pca.PCA, collections.UserDict):
         )
         collections.UserDict.__init__(self)
 
-    def _check_input(self, X):
-        if self.check_input:
-            sklearn.utils.check_array(X, dtype=[str, np.number])
-
     @utils.check_is_dataframe_input
     def fit(self, X, y=None, groups=None):
         # Checks groups are provided
         self.groups_ = self._determine_groups(X, groups)
-
-        # Check input
-        self._check_input(X)
 
         # Check group types are consistent
         self.all_nums_ = {}
@@ -71,16 +64,11 @@ class MFA(pca.PCA, collections.UserDict):
             self[name] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
-        X = (X - X.mean()) / (X.std())
-        Z = pd.concat(
-            (X[cols] / self[name].eigenvalues_[0] for name, cols in self.groups_.items()),
-            axis="columns",
+        Z = self._build_Z(X)
+        column_weights = np.array(
+            [1 / self[name].eigenvalues_[0] for name, cols in self.groups_.items() for _ in cols]
         )
-        super().fit(Z)
-        self.total_inertia_ = sum(self.eigenvalues_)
-
-        # TODO: column_coordinates_ is not implemented yet
-        delattr(self, "column_coordinates_")
+        super().fit(Z, column_weight=column_weights)
 
         return self
 
@@ -101,41 +89,17 @@ class MFA(pca.PCA, collections.UserDict):
             groups = provided_groups
         return groups
 
-    @property
-    @utils.check_is_fitted
-    def eigenvalues_(self):
-        """Returns the eigenvalues associated with each principal component."""
-        return np.square(self.svd_.s)
+    def _build_Z(self, X):
+        return pd.concat(
+            (X[cols] for _, cols in self.groups_.items()),
+            axis="columns",
+        )
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
-
-        if (X.index != self.row_contributions_.index).any():
-            raise NotImplementedError("Supplementary rows are not supported yet")
-
-        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
-        Z = pd.concat(
-            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
-            axis="columns",
-        )
-        U = self.svd_.U
-        s = self.svd_.s
-        M = np.full(len(X), 1 / len(X))
-
-        return (Z @ Z.T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1)
-
-    @utils.check_is_dataframe_input
-    @utils.check_is_fitted
-    def row_coordinates_bis(self, X):
-        """Returns the row principal coordinates."""
-
-        X = (X - X.mean()) / X.std()
-        Z = pd.concat(
-            (X[cols]  / self[name].eigenvalues_[0] for name, cols in self.groups_.items()),
-            axis="columns",
-        )
+        Z = self._build_Z(X)
         return super().row_coordinates(Z)
 
     @utils.check_is_dataframe_input
@@ -174,7 +138,8 @@ class MFA(pca.PCA, collections.UserDict):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_coordinates(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().column_coordinates(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
@@ -184,27 +149,26 @@ class MFA(pca.PCA, collections.UserDict):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().row_standard_coordinates(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().row_cosine_similarities(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_correlations(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().column_correlations(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_cosine_similarities_(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
-
-    @property
-    @utils.check_is_fitted
-    def column_contributions_(self):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().column_cosine_similarities_(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted

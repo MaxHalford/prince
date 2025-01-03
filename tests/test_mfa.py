@@ -34,7 +34,6 @@ class TestMFA:
 
     @pytest.fixture(autouse=True)
     def _prepare(self, sup_rows, sup_cols):
-
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
 
@@ -80,7 +79,6 @@ class TestMFA:
         )
 
     def test_group_eigenvalues(self):
-
         for i, group in enumerate(self.groups, start=1):
             F = load_df_from_R(f"mfa$separate.analyses$Gr{i}$eig")[: self.mfa.n_components]
             P = self.mfa[group]._eigenvalues_summary
