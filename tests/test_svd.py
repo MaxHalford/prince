@@ -1,18 +1,11 @@
 from __future__ import annotations
 
-import math
-
 import numpy as np
-import pandas as pd
 import pytest
 import rpy2.robjects as robjects
 from rpy2.robjects import numpy2ri
-import sklearn.utils.estimator_checks
-import sklearn.utils.validation
-from sklearn import decomposition, pipeline, preprocessing
 
-import prince
-from prince import svd, utils
+from prince import svd
 from tests import load_df_from_R
 
 
@@ -23,7 +16,7 @@ from tests import load_df_from_R
             n_components,
             are_rows_weighted,
             are_columns_weighted,
-            id=f"{n_components=}:{are_rows_weighted=}:{are_columns_weighted=}"
+            id=f"{n_components=}:{are_rows_weighted=}:{are_columns_weighted=}",
         )
         for n_components in [1, 3, 10]
         for are_rows_weighted in [False, True]
@@ -33,7 +26,6 @@ from tests import load_df_from_R
 class TestSVD:
     @pytest.fixture(autouse=True)
     def _prepare(self, n_components, are_rows_weighted, are_columns_weighted):
-
         self.n_components = n_components
         self.are_rows_weighted = are_rows_weighted
         self.are_columns_weighted = are_columns_weighted
@@ -51,7 +43,7 @@ class TestSVD:
             n_components=n_components,
             n_iter=3,
             random_state=42,
-            engine="scipy"
+            engine="scipy",
         )
 
         # Fit FactoMineR
@@ -79,7 +71,7 @@ class TestSVD:
         assert self.svd.s.shape == (self.n_components,)
         if self.are_rows_weighted:
             P = self.svd.s
-            F = robjects.r("svd$vs")[:self.n_components]
+            F = robjects.r("svd$vs")[: self.n_components]
             np.testing.assert_allclose(np.abs(F), np.abs(P))
 
     def test_V(self):

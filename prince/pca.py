@@ -1,4 +1,5 @@
 """Principal Component Analysis (PCA)"""
+
 from __future__ import annotations
 
 import functools
@@ -71,7 +72,14 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         return np.arange(self.n_components_)
 
     @utils.check_is_dataframe_input
-    def fit(self, X, y=None, sample_weight=None, column_weight=None, supplementary_columns=None):
+    def fit(
+        self,
+        X,
+        y=None,
+        sample_weight=None,
+        column_weight=None,
+        supplementary_columns=None,
+    ):
         self._check_input(X)
 
         # Massage input
@@ -106,7 +114,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
                 ).fit_transform(X_sup)
 
         self._column_dist = pd.Series(
-            (X_active**2 * sample_weight[:, np.newaxis]).sum(axis=0), index=active_variables
+            (X_active**2 * sample_weight[:, np.newaxis]).sum(axis=0),
+            index=active_variables,
         )
         if supplementary_columns:
             self._column_dist = pd.concat(
@@ -126,10 +135,12 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             random_state=self.random_state,
             engine=self.engine,
             row_weights=sample_weight,
-            column_weights=column_weight
+            column_weights=column_weight,
         )
 
-        self.total_inertia_ = np.sum(np.square(X_active) * column_weight * sample_weight[:, np.newaxis])
+        self.total_inertia_ = np.sum(
+            np.square(X_active) * column_weight * sample_weight[:, np.newaxis]
+        )
 
         self.column_coordinates_ = pd.DataFrame(
             data=self.svd_.V.T * self.eigenvalues_**0.5,
@@ -154,7 +165,9 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             index=self.row_contributions_.index if hasattr(self, "row_contributions_") else None,
         )
         row_coords.columns.name = "component"
-        self.row_contributions_ = (row_coords**2 * sample_weight[:, np.newaxis]).div(self.eigenvalues_, axis=1)
+        self.row_contributions_ = (row_coords**2 * sample_weight[:, np.newaxis]).div(
+            self.eigenvalues_, axis=1
+        )
         self.row_contributions_.index = X.index
 
         return self
@@ -311,9 +324,10 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
     @property
     @utils.check_is_fitted
     def column_contributions_(self):
-        return (((self.column_coordinates_.loc[self.feature_names_in_]) ** 2) * self.column_weight_[:, np.newaxis]).div(
-            self.eigenvalues_, axis=1
-        )
+        return (
+            ((self.column_coordinates_.loc[self.feature_names_in_]) ** 2)
+            * self.column_weight_[:, np.newaxis]
+        ).div(self.eigenvalues_, axis=1)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted

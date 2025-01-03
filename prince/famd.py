@@ -1,4 +1,5 @@
 """Factor Analysis of Mixed Data (FAMD)"""
+
 from __future__ import annotations
 
 import numpy as np

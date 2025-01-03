@@ -1,4 +1,5 @@
 """Singular Value Decomposition (SVD)"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -55,7 +56,7 @@ def compute_svd(
     else:
         raise ValueError("engine has to be one of ('fbpca', 'scipy', 'sklearn')")
 
-    #U, V = extmath.svd_flip(U, V)
+    # U, V = extmath.svd_flip(U, V)
 
     if row_weights is not None:
         U = U / np.sqrt(row_weights)[:, np.newaxis]  # row-wise scaling

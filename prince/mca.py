@@ -1,4 +1,5 @@
 """Multiple Correspondence Analysis (MCA)"""
+
 from __future__ import annotations
 
 import numpy as np

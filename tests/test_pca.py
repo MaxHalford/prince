@@ -6,10 +6,11 @@ import numpy as np
 import pandas as pd
 import pytest
 import rpy2.robjects as robjects
-from rpy2.robjects import numpy2ri
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
+from rpy2.robjects import numpy2ri
 from sklearn import decomposition, pipeline, preprocessing
+
 import prince
 from tests import load_df_from_R
 
@@ -35,7 +36,6 @@ from tests import load_df_from_R
 class TestPCA:
     @pytest.fixture(autouse=True)
     def _prepare(self, sup_rows, sup_cols, scale, sample_weights, column_weights):
-
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
         self.scale = scale
@@ -48,13 +48,13 @@ class TestPCA:
         if self.sup_rows:
             self.active = self.active.query('competition == "Decastar"')
         self.sample_weights = (
-            np.random.default_rng().dirichlet([1] * len(self.active))
-            if sample_weights
-            else None
+            np.random.default_rng().dirichlet([1] * len(self.active)) if sample_weights else None
         )
         supplementary_columns = ["rank", "points"] if self.sup_cols else []
         self.column_weights = (
-            np.random.default_rng().random(len(self.active.columns.difference(supplementary_columns)))
+            np.random.default_rng().random(
+                len(self.active.columns.difference(supplementary_columns))
+            )
             if column_weights
             else None
         )

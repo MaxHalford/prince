@@ -86,7 +86,6 @@ class TestGPA(unittest.TestCase):
         self.assertRaises(AssertionError, np.testing.assert_array_equal, self.shapes, shapes_copy)
 
     def test_xarray(self):
-
         points = pd.DataFrame(
             data=[
                 [0, 0, 0, 0],

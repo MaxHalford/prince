@@ -32,7 +32,6 @@ class TestFAMD:
 
     @pytest.fixture(autouse=True)
     def _prepare(self, sup_rows, sup_cols):
-
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
 
