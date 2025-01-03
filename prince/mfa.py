@@ -54,9 +54,6 @@ class MFA(pca.PCA, collections.UserDict):
                 raise ValueError(f'Not all columns in "{name}" group are of the same type')
             self.all_nums_[name] = all_num
 
-        # Normalize column-wise
-        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
-
         # Run a factor analysis in each group
         for name, cols in sorted(self.groups_.items()):
             if self.all_nums_[name]:
@@ -74,8 +71,9 @@ class MFA(pca.PCA, collections.UserDict):
             self[name] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
+        X = (X - X.mean()) / (X.std())
         Z = pd.concat(
-            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
+            (X[cols] / self[name].eigenvalues_[0] for name, cols in self.groups_.items()),
             axis="columns",
         )
         super().fit(Z)
@@ -127,6 +125,18 @@ class MFA(pca.PCA, collections.UserDict):
         M = np.full(len(X), 1 / len(X))
 
         return (Z @ Z.T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1)
+
+    @utils.check_is_dataframe_input
+    @utils.check_is_fitted
+    def row_coordinates_bis(self, X):
+        """Returns the row principal coordinates."""
+
+        X = (X - X.mean()) / X.std()
+        Z = pd.concat(
+            (X[cols]  / self[name].eigenvalues_[0] for name, cols in self.groups_.items()),
+            axis="columns",
+        )
+        return super().row_coordinates(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted

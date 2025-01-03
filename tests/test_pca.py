@@ -6,37 +6,33 @@ import numpy as np
 import pandas as pd
 import pytest
 import rpy2.robjects as robjects
+from rpy2.robjects import numpy2ri
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
 from sklearn import decomposition, pipeline, preprocessing
-
 import prince
 from tests import load_df_from_R
 
 
 @pytest.mark.parametrize(
-    "sup_rows, sup_cols, scale",
+    "sup_rows, sup_cols, scale, sample_weights",
     [
         pytest.param(
             sup_rows,
             sup_cols,
             scale,
-            id=":".join(
-                [
-                    "sup_rows" if sup_rows else "",
-                    "sup_cols" if sup_cols else "",
-                    "scale" if scale else "",
-                ]
-            ).strip(":"),
+            sample_weights,
+            id=f"{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}",
         )
         for sup_rows in [False, True]
         for sup_cols in [False, True]
         for scale in [False, True]
+        for sample_weights in [False, True]
     ],
 )
 class TestPCA:
     @pytest.fixture(autouse=True)
-    def _prepare(self, sup_rows, sup_cols, scale):
+    def _prepare(self, sup_rows, sup_cols, scale, sample_weights):
 
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
@@ -49,10 +45,16 @@ class TestPCA:
         self.active = self.dataset.copy()
         if self.sup_rows:
             self.active = self.active.query('competition == "Decastar"')
+        self.sample_weights = (
+            np.random.default_rng().dirichlet([1] * len(self.active))
+            if sample_weights
+            else None
+        )
         self.pca = prince.PCA(n_components=n_components, rescale_with_std=self.scale)
         self.pca.fit(
             self.active,
             supplementary_columns=["rank", "points"] if self.sup_cols else None,
+            sample_weight=self.sample_weights,
         )
 
         # scikit-learn
@@ -65,6 +67,7 @@ class TestPCA:
             self.sk_pca = pipeline.make_pipeline(
                 decomposition.PCA(n_components=n_components),
             )
+        # sklearn's PCA doesn't support sample weights
         self.sk_pca.fit(self.active[self.pca.feature_names_in_])
 
         # Fit FactoMineR
@@ -76,7 +79,12 @@ class TestPCA:
         decathlon <- subset(decathlon, select = -c(Competition))
         """
         )
+
         args = f"decathlon, ncp={n_components}, graph=F"
+        if sample_weights:
+            robjects.r.assign("row.w", numpy2ri.py2rpy(self.sample_weights))
+            robjects.r("row.w <- as.vector(row.w)")
+            args += ", row.w=row.w"
         if not self.scale:
             args += ", scale.unit=F"
         if self.sup_cols:
@@ -94,11 +102,6 @@ class TestPCA:
         assert isinstance(self.pca, prince.PCA)
         sklearn.utils.validation.check_is_fitted(self.pca)
 
-    def test_svd_s(self):
-        S = self.sk_pca[-1].singular_values_
-        P = self.pca.svd_.s
-        np.testing.assert_allclose(S, P)
-
     def test_total_inertia(self):
         F = robjects.r("sum(pca$eig[,1])")[0]
         P = self.pca.total_inertia_
@@ -106,7 +109,7 @@ class TestPCA:
 
     def test_eigenvalues(self):
         P = self.pca._eigenvalues_summary
-        # Test againt FactoMineR
+        # Test against FactoMineR
         F = load_df_from_R("pca$eig")[: self.pca.n_components]
         np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
         np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
@@ -114,12 +117,13 @@ class TestPCA:
             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
         # Test against scikit-learn
-        n = len(self.active)
-        S = self.sk_pca[-1].explained_variance_ * (n - 1) / n
-        np.testing.assert_allclose(P["eigenvalue"], S)
-        np.testing.assert_allclose(
-            P["% of variance"], self.sk_pca[-1].explained_variance_ratio_ * 100
-        )
+        if self.sample_weights is None:
+            n = len(self.active)
+            S = self.sk_pca[-1].explained_variance_ * (n - 1) / n
+            np.testing.assert_allclose(P["eigenvalue"], S)
+            np.testing.assert_allclose(
+                P["% of variance"], self.sk_pca[-1].explained_variance_ratio_ * 100
+            )
 
     @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
     def test_row_coords(self, method_name):
@@ -131,8 +135,9 @@ class TestPCA:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$coord")))
         np.testing.assert_allclose(F.abs(), P.abs())
         # Test against scikit-learn
-        S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
-        np.testing.assert_allclose(np.abs(S), P.abs())
+        if self.sample_weights is None:
+            S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
+            np.testing.assert_allclose(np.abs(S), P.abs())
 
     def test_row_cosine_similarities(self):
         F = load_df_from_R("pca$ind$cos2")

@@ -32,6 +32,10 @@ def compute_svd(
 ) -> SVD:
     """Computes an SVD with k components."""
 
+    if row_weights is None:
+        row_weights = np.ones(X.shape[0])
+    row_weights = row_weights / row_weights.sum()
+
     if row_weights is not None:
         X = X * np.sqrt(row_weights[:, np.newaxis])  # row-wise scaling
     if column_weights is not None:

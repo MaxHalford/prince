@@ -123,6 +123,6 @@ def test_issue_169():
 
     >>> famd.transform(df[3:])
     component         0             1
-    3         -0.869173 -1.215925e-16
+    3         -0.869173 -8.050546e-17
 
     """
