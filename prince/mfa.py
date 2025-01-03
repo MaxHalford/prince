@@ -34,9 +34,14 @@ class MFA(pca.PCA, collections.UserDict):
         collections.UserDict.__init__(self)
 
     @utils.check_is_dataframe_input
-    def fit(self, X, y=None, groups=None):
+    def fit(self, X, y=None, groups=None, supplementary_groups=None):
         # Checks groups are provided
         self.groups_ = self._determine_groups(X, groups)
+        if supplementary_groups is not None:
+            for group in supplementary_groups:
+                if group not in self.groups_:
+                    raise ValueError(f"Supplementary group '{group}' is not in the groups")
+            self.supplementary_groups_ = supplementary_groups
 
         # Check group types are consistent
         self.all_nums_ = {}
@@ -68,7 +73,15 @@ class MFA(pca.PCA, collections.UserDict):
         column_weights = np.array(
             [1 / self[name].eigenvalues_[0] for name, cols in self.groups_.items() for _ in cols]
         )
-        super().fit(Z, column_weight=column_weights)
+        super().fit(
+            Z,
+            column_weight=column_weights,
+            supplementary_columns=[
+                column
+                for group in getattr(self, "supplementary_groups_", [])
+                for column in self.groups_[group]
+            ],
+        )
 
         return self
 
