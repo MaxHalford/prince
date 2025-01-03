@@ -71,7 +71,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         return np.arange(self.n_components_)
 
     @utils.check_is_dataframe_input
-    def fit(self, X, y=None, sample_weight=None, supplementary_columns=None):
+    def fit(self, X, y=None, sample_weight=None, column_weight=None, supplementary_columns=None):
         self._check_input(X)
 
         # Massage input
@@ -79,6 +79,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         active_variables = X.columns.difference(supplementary_columns, sort=False).tolist()
         sample_weight = np.ones(len(X)) if sample_weight is None else sample_weight
         sample_weight = sample_weight / sample_weight.sum()
+        column_weight = np.ones(len(active_variables)) if column_weight is None else column_weight
+        self.column_weight_ = column_weight
 
         # https://scikit-learn.org/stable/developers/develop.html#universal-attributes
         self.feature_names_in_ = active_variables
@@ -117,7 +119,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
                 )
             )
 
-        #column_weights = np.ones(len(active_variables))
         self.svd_ = svd.compute_svd(
             X=X_active,
             n_components=self.n_components,
@@ -125,10 +126,10 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             random_state=self.random_state,
             engine=self.engine,
             row_weights=sample_weight,
-            #column_weights=column_weights
+            column_weights=column_weight
         )
 
-        self.total_inertia_ = np.sum(np.square(X_active) * sample_weight[:, np.newaxis])
+        self.total_inertia_ = np.sum(np.square(X_active) * column_weight * sample_weight[:, np.newaxis])
 
         self.column_coordinates_ = pd.DataFrame(
             data=self.svd_.V.T * self.eigenvalues_**0.5,
@@ -204,6 +205,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         index = X.index if isinstance(X, pd.DataFrame) else None
         X = self._scale(X)
         X = np.array(X, copy=self.copy)
+        X *= self.column_weight_
 
         coord = pd.DataFrame(data=X.dot(self.svd_.V.T), index=index)
         coord.columns.name = "component"
@@ -282,7 +284,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         the squared cosine.
 
         """
-        squared_coordinates = np.square(self._scale(X)).sum(axis=1)
+        squared_coordinates = (np.square(self._scale(X)) * self.column_weight_).sum(axis=1)
         return (self.row_coordinates(X) ** 2).div(squared_coordinates, axis=0)
 
     @property
@@ -309,7 +311,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
     @property
     @utils.check_is_fitted
     def column_contributions_(self):
-        return (self.column_coordinates_.loc[self.feature_names_in_] ** 2).div(
+        return (((self.column_coordinates_.loc[self.feature_names_in_]) ** 2) * self.column_weight_[:, np.newaxis]).div(
             self.eigenvalues_, axis=1
         )
 

@@ -15,24 +15,26 @@ from tests import load_df_from_R
 
 
 @pytest.mark.parametrize(
-    "sup_rows, sup_cols, scale, sample_weights",
+    "sup_rows, sup_cols, scale, sample_weights, column_weights",
     [
         pytest.param(
             sup_rows,
             sup_cols,
             scale,
             sample_weights,
-            id=f"{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}",
+            column_weights,
+            id=f"{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}:{column_weights=}",
         )
         for sup_rows in [False, True]
         for sup_cols in [False, True]
         for scale in [False, True]
         for sample_weights in [False, True]
+        for column_weights in [False, True]
     ],
 )
 class TestPCA:
     @pytest.fixture(autouse=True)
-    def _prepare(self, sup_rows, sup_cols, scale, sample_weights):
+    def _prepare(self, sup_rows, sup_cols, scale, sample_weights, column_weights):
 
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
@@ -50,11 +52,18 @@ class TestPCA:
             if sample_weights
             else None
         )
+        supplementary_columns = ["rank", "points"] if self.sup_cols else []
+        self.column_weights = (
+            np.random.default_rng().random(len(self.active.columns.difference(supplementary_columns)))
+            if column_weights
+            else None
+        )
         self.pca = prince.PCA(n_components=n_components, rescale_with_std=self.scale)
         self.pca.fit(
             self.active,
-            supplementary_columns=["rank", "points"] if self.sup_cols else None,
             sample_weight=self.sample_weights,
+            column_weight=self.column_weights,
+            supplementary_columns=supplementary_columns,
         )
 
         # scikit-learn
@@ -85,6 +94,10 @@ class TestPCA:
             robjects.r.assign("row.w", numpy2ri.py2rpy(self.sample_weights))
             robjects.r("row.w <- as.vector(row.w)")
             args += ", row.w=row.w"
+        if column_weights:
+            robjects.r.assign("col.w", numpy2ri.py2rpy(self.column_weights))
+            robjects.r("col.w <- as.vector(col.w)")
+            args += ", col.w=col.w"
         if not self.scale:
             args += ", scale.unit=F"
         if self.sup_cols:
@@ -117,7 +130,7 @@ class TestPCA:
             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
         # Test against scikit-learn
-        if self.sample_weights is None:
+        if self.sample_weights is None and self.column_weights is None:
             n = len(self.active)
             S = self.sk_pca[-1].explained_variance_ * (n - 1) / n
             np.testing.assert_allclose(P["eigenvalue"], S)
@@ -135,7 +148,7 @@ class TestPCA:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$coord")))
         np.testing.assert_allclose(F.abs(), P.abs())
         # Test against scikit-learn
-        if self.sample_weights is None:
+        if self.sample_weights is None and self.column_weights is None:
             S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
             np.testing.assert_allclose(np.abs(S), P.abs())
 
