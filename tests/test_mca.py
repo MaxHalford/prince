@@ -92,7 +92,7 @@ def test_with_and_without_one_hot():
     ...     "foo": [1, 2, 3, 3, 5],
     ...     "bar": ["a", "b", "c", "b", "e"],
     ... })
-    >>> mca = prince.MCA(n_components=2, one_hot=True, engine="scipy")
+    >>> mca = prince.MCA(n_components=2, one_hot=True, engine="sklearn")
     >>> mca = mca.fit(df)
     >>> mca.transform(df).round(2).abs().sort_index(axis='columns')
           0    1
@@ -102,7 +102,7 @@ def test_with_and_without_one_hot():
     3  0.65  0.5
     4  1.94  0.5
 
-    >>> mca = prince.MCA(n_components=2, one_hot=False, engine="scipy")
+    >>> mca = prince.MCA(n_components=2, one_hot=False, engine="sklearn")
     >>> one_hot = pd.get_dummies(df, columns=['foo', 'bar'])
     >>> mca = mca.fit(one_hot)
     >>> mca.transform(one_hot).round(2).abs().sort_index(axis='columns')
@@ -125,7 +125,7 @@ def test_issue_131():
     ...     "foo": [1, 2, 3, 3, 5],
     ...     "bar": ["a", "b", "c", "b", "e"],
     ... })
-    >>> mca = prince.MCA(engine="scipy")
+    >>> mca = prince.MCA(engine="sklearn")
     >>> mca = mca.fit(df)
     >>> mca.transform(df).round(2).abs().sort_index(axis='columns')
           0    1
