@@ -125,3 +125,12 @@ def load_beers():
 
     """
     return pd.read_csv(DATASETS_DIR / "beers.csv.zip", index_col="name")
+
+
+def load_premier_league():
+    """Premier League dataset.
+
+    The data is taken from Wikipedia, using pd.read_html.
+
+    """
+    return pd.read_csv(DATASETS_DIR / "premier_league.csv", index_col=0, header=[0, 1])

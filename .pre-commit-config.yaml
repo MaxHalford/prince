@@ -7,16 +7,14 @@ repos:
       - id: trailing-whitespace
       - id: mixed-line-ending
 
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.8.0
     hooks:
-      - id: black
-        name: black
-        language: python
-        types: [python]
-        entry: black
-
+      # Run the linter.
       - id: ruff
-        name: ruff
-        language: python
-        types: [python]
-        entry: ruff
+        types_or: [python, pyi]
+        args: [--fix]
+      # Run the formatter.
+      - id: ruff-format
+        types_or: [python, pyi]

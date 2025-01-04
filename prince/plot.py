@@ -9,7 +9,6 @@ GRAY = OrderedDict([("light", "#bababa"), ("dark", "#404040")])
 
 
 def stylize_axis(ax, grid=True):
-
     if grid:
         ax.grid()
 

@@ -1,4 +1,5 @@
 """Correspondence Analysis (CA)"""
+
 from __future__ import annotations
 
 import functools
@@ -277,7 +278,8 @@ class CA(utils.EigenvaluesMixin):
             row_coords = self.row_coordinates(X)
             row_coords.columns = [f"component {i}" for i in row_coords.columns]
             row_coords = row_coords.assign(
-                variable=row_coords.index.name or "row", value=row_coords.index.astype(str)
+                variable=row_coords.index.name or "row",
+                value=row_coords.index.astype(str),
             )
             row_labels = pd.Series(row_coords.index, index=row_coords.index)
             row_chart = alt.Chart(row_coords.assign(label=row_labels)).encode(

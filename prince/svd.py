@@ -1,4 +1,5 @@
 """Singular Value Decomposition (SVD)"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -21,10 +22,21 @@ class SVD:
     V: np.ndarray
 
 
-def compute_svd(X, n_components, n_iter, random_state, engine) -> SVD:
+def compute_svd(
+    X: np.ndarray,
+    n_components: int,
+    n_iter: int,
+    engine: str,
+    random_state: int | None = None,
+    row_weights: np.ndarray | None = None,
+    column_weights: np.ndarray | None = None,
+) -> SVD:
     """Computes an SVD with k components."""
 
-    # TODO: support sample weights
+    if row_weights is not None:
+        X = X * np.sqrt(row_weights[:, np.newaxis])  # row-wise scaling
+    if column_weights is not None:
+        X = X * np.sqrt(column_weights)
 
     # Compute the SVD
     if engine == "fbpca":
@@ -45,5 +57,10 @@ def compute_svd(X, n_components, n_iter, random_state, engine) -> SVD:
         raise ValueError("engine has to be one of ('fbpca', 'scipy', 'sklearn')")
 
     # U, V = extmath.svd_flip(U, V)
+
+    if row_weights is not None:
+        U = U / np.sqrt(row_weights)[:, np.newaxis]  # row-wise scaling
+    if column_weights is not None:
+        V = V / np.sqrt(column_weights)
 
     return SVD(U, s, V)

@@ -32,7 +32,6 @@ class TestFAMD:
 
     @pytest.fixture(autouse=True)
     def _prepare(self, sup_rows, sup_cols):
-
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
 
@@ -121,8 +120,8 @@ def test_issue_169():
     0         -1.000920 -0.669274
     1         -0.092001  0.669274
 
-    >>> famd.transform(df[3:])
-    component         0             1
-    3         -0.869173 -1.215925e-16
+    >>> famd.transform(df[3:]).round(6)
+    component         0    1
+    3         -0.869173 -0.0
 
     """

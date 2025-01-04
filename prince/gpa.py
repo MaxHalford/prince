@@ -1,4 +1,5 @@
 """Generalized Procrustes Analysis (GPA)"""
+
 from __future__ import annotations
 
 import numpy as np

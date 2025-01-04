@@ -1,38 +1,33 @@
 [tool.poetry]
 name = "prince"
-version = "0.14.0"
+version = "0.15.0"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
 authors = ["Max Halford <maxhalford25@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<4.0"
 scikit-learn = "^1.5.1"
 pandas = "^2.2.0"
 altair = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
-nbconvert = "^7.2.9"
+nbconvert = "^7.16.5"
 fbpca = "^1.0"
-pytest = "^7.1.1"
+pytest = "^8.3.4"
 ipykernel = "^6.13.0"
 rpy2 = "^3.5.2"
-black = {version = "^22.3.0", allow-prereleases = true}
-ruff = "^0.0.270"
-pre-commit = "^3.3.2"
-xarray = "^2023.11.0"
-
-[tool.black]
-line-length = 100
-target-version = ['py310']
+ruff = "^0.8.5"
+pre-commit = "^4.0.1"
+xarray = "^2025.1.0"
 
 [tool.ruff]
-select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/
+lint.select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/
 line-length = 100
 target-version = 'py310'
-ignore = ["E501"]
+lint.ignore = ["E501"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
 
 [build-system]

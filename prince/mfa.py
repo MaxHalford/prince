@@ -1,4 +1,5 @@
 """Multiple Factor Analysis (MFA)"""
+
 from __future__ import annotations
 
 import collections
@@ -6,7 +7,6 @@ import collections
 import altair as alt
 import numpy as np
 import pandas as pd
-import sklearn.utils
 
 from prince import pca, utils
 
@@ -22,8 +22,8 @@ class MFA(pca.PCA, collections.UserDict):
         engine="sklearn",
     ):
         super().__init__(
-            rescale_with_mean=False,
-            rescale_with_std=False,
+            rescale_with_mean=True,
+            rescale_with_std=True,
             n_components=n_components,
             n_iter=n_iter,
             copy=copy,
@@ -33,33 +33,28 @@ class MFA(pca.PCA, collections.UserDict):
         )
         collections.UserDict.__init__(self)
 
-    def _check_input(self, X):
-        if self.check_input:
-            sklearn.utils.check_array(X, dtype=[str, np.number])
-
     @utils.check_is_dataframe_input
-    def fit(self, X, y=None, groups=None):
+    def fit(self, X, y=None, groups=None, supplementary_groups=None):
         # Checks groups are provided
         self.groups_ = self._determine_groups(X, groups)
-
-        # Check input
-        self._check_input(X)
+        if supplementary_groups is not None:
+            for group in supplementary_groups:
+                if group not in self.groups_:
+                    raise ValueError(f"Supplementary group '{group}' is not in the groups")
+            self.supplementary_groups_ = supplementary_groups
 
         # Check group types are consistent
         self.all_nums_ = {}
-        for name, cols in sorted(self.groups_.items()):
+        for group, cols in sorted(self.groups_.items()):
             all_num = all(pd.api.types.is_numeric_dtype(X[c]) for c in cols)
             all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
             if not (all_num or all_cat):
-                raise ValueError(f'Not all columns in "{name}" group are of the same type')
-            self.all_nums_[name] = all_num
-
-        # Normalize column-wise
-        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
+                raise ValueError(f'Not all columns in "{group}" group are of the same type')
+            self.all_nums_[group] = all_num
 
         # Run a factor analysis in each group
-        for name, cols in sorted(self.groups_.items()):
-            if self.all_nums_[name]:
+        for group, cols in sorted(self.groups_.items()):
+            if self.all_nums_[group]:
                 fa = pca.PCA(
                     rescale_with_mean=True,
                     rescale_with_std=True,
@@ -71,100 +66,87 @@ class MFA(pca.PCA, collections.UserDict):
                 )
             else:
                 raise NotImplementedError("Groups of non-numerical variables are not supported yet")
-            self[name] = fa.fit(X.loc[:, cols])
+            self[group] = fa.fit(X.loc[:, cols])
 
         # Fit the global PCA
-        Z = pd.concat(
-            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
-            axis="columns",
+        Z = self._build_Z(X)
+        column_weights = np.array(
+            [
+                1 / self[group].eigenvalues_[0]
+                for group, cols in self.groups_.items()
+                for _ in cols
+                if group not in getattr(self, "supplementary_groups_", [])
+            ]
         )
-        super().fit(Z)
-        self.total_inertia_ = sum(self.eigenvalues_)
-
-        # TODO: column_coordinates_ is not implemented yet
-        delattr(self, "column_coordinates_")
+        super().fit(
+            Z,
+            column_weight=column_weights,
+            supplementary_columns=[
+                column
+                for group in getattr(self, "supplementary_groups_", [])
+                for column in self.groups_[group]
+            ],
+        )
 
         return self
 
-    def _determine_groups(self, X, provided_groups):
-        if provided_groups is None:
-            raise ValueError("Groups have to be specified")
-        if isinstance(provided_groups, list):
+    def _determine_groups(self, X: pd.DataFrame, groups: dict | list | None) -> dict:
+        if groups is None:
+            if isinstance(X.columns, pd.MultiIndex):
+                groups = X.columns.get_level_values(0).unique().tolist()
+            else:
+                raise ValueError("Groups have to be specified")
+
+        if isinstance(groups, list):
             if not isinstance(X.columns, pd.MultiIndex):
-                raise ValueError("Groups have to be provided as a dict when X is not a MultiIndex")
+                raise ValueError(
+                    "X has to have MultiIndex columns if groups are provided as a list"
+                )
             groups = {
-                g: [
-                    (g, c)
-                    for c in X.columns.get_level_values(1)[X.columns.get_level_values(0) == g]
+                group: [
+                    (group, column)
+                    for column in X.columns.get_level_values(1)[
+                        X.columns.get_level_values(0) == group
+                    ]
                 ]
-                for g in provided_groups
+                for group in groups
             }
-        else:
-            groups = provided_groups
         return groups
 
-    @property
-    @utils.check_is_fitted
-    def eigenvalues_(self):
-        """Returns the eigenvalues associated with each principal component."""
-        return np.square(self.svd_.s)
+    def _build_Z(self, X):
+        return pd.concat(
+            (X[cols] for _, cols in self.groups_.items()),
+            axis="columns",
+        )
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
-
-        if (X.index != self.row_contributions_.index).any():
-            raise NotImplementedError("Supplementary rows are not supported yet")
-
-        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
-        Z = pd.concat(
-            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
-            axis="columns",
-        )
-        U = self.svd_.U
-        s = self.svd_.s
-        M = np.full(len(X), 1 / len(X))
-
-        return (Z @ Z.T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1)
+        Z = self._build_Z(X)
+        return super().row_coordinates(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def group_row_coordinates(self, X):
-        if (X.index != self.row_contributions_.index).any():
-            raise NotImplementedError("Supplementary rows are not supported yet")
-
-        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
-        Z = pd.concat(
-            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
-            axis="columns",
-        )
-        M = np.full(len(X), 1 / len(X))
-        U = self.svd_.U
-        s = self.svd_.s
-
-        def add_index(g, group_name):
-            g.columns = pd.MultiIndex.from_tuples(
-                [(group_name, col) for col in g.columns],
-                names=("group", "component"),
-            )
-            return g
-
-        return len(self.groups_) * pd.concat(
-            [
-                add_index(
-                    g=(Z[g] @ Z[g].T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1),
-                    group_name=g,
-                )
-                for g, cols in self.groups_.items()
-            ],
-            axis="columns",
-        )
+    def partial_row_coordinates(self, X):
+        """Returns the partial row principal coordinates."""
+        Z = self._build_Z(X)
+        coords = []
+        for _, names in self.groups_.items():
+            partial_coords = pd.DataFrame(0.0, index=Z.index, columns=Z.columns)
+            partial_coords.loc[:, names] = (Z[names] - Z[names].mean()) / Z[names].std(ddof=0)
+            partial_coords = partial_coords * self.column_weight_
+            partial_coords = (len(self.groups_) * partial_coords).dot(self.svd_.V.T)
+            coords.append(partial_coords)
+        coords = pd.concat(coords, axis=1, keys=self.groups_.keys())
+        coords.columns.name = "component"
+        return coords
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_coordinates(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().column_coordinates(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
@@ -174,47 +156,50 @@ class MFA(pca.PCA, collections.UserDict):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().row_standard_coordinates(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
-
-    @utils.check_is_dataframe_input
-    @utils.check_is_fitted
-    def column_correlations(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().row_cosine_similarities(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_cosine_similarities_(self, X):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
-
-    @property
-    @utils.check_is_fitted
-    def column_contributions_(self):
-        raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
+        Z = self._build_Z(X)
+        return super().column_cosine_similarities_(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def plot(self, X, x_component=0, y_component=1, color_by=None, **params):
-        if color_by is not None:
-            params["color"] = color_by
+    def plot(self, X, x_component=0, y_component=1, show_partial_rows=False, **params):
+        index_name = X.index.name or "index"
 
-        params["tooltip"] = (X.index.names if isinstance(X.index, pd.MultiIndex) else ["index"]) + [
+        params["tooltip"] = (
+            X.index.names if isinstance(X.index, pd.MultiIndex) else [index_name]
+        ) + [
+            "group",
             f"component {x_component}",
             f"component {y_component}",
         ]
 
         eig = self._eigenvalues_summary.to_dict(orient="index")
 
+        row_plot = None
+        partial_row_plot = None
+        edges_plot = None
+
+        # Barycenters
         row_coords = self.row_coordinates(X)
         row_coords.columns = [f"component {i}" for i in row_coords.columns]
         row_coords = row_coords.reset_index()
+        row_coords["group"] = "Global"
+        if show_partial_rows:
+            params["color"] = "group:N"
         row_plot = (
             alt.Chart(row_coords)
-            .mark_circle()
+            .mark_point(filled=True, size=50)
             .encode(
                 alt.X(
                     f"component {x_component}",
@@ -234,4 +219,51 @@ class MFA(pca.PCA, collections.UserDict):
             )
         )
 
-        return row_plot.interactive()
+        # Partial row coordinates
+        if show_partial_rows:
+            partial_row_coords = self.partial_row_coordinates(X).stack(level=0, future_stack=True)
+            partial_row_coords.columns = [f"component {i}" for i in partial_row_coords.columns]
+            partial_row_coords = partial_row_coords.reset_index(names=[index_name, "group"])
+
+            partial_row_plot = (
+                alt.Chart(partial_row_coords)
+                .mark_point(shape="circle")
+                .encode(
+                    alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                    alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
+                    color="group:N",
+                    **params,
+                )
+            )
+
+        # Edges to connect the main markers to the partial markers
+        if show_partial_rows:
+            edges = pd.merge(
+                left=row_coords[
+                    [index_name, f"component {x_component}", f"component {y_component}"]
+                ],
+                right=partial_row_coords[
+                    [index_name, f"component {x_component}", f"component {y_component}", "group"]
+                ],
+                on=index_name,
+                suffixes=("_global", "_partial"),
+            )
+            edges_plot = (
+                alt.Chart(edges)
+                .mark_line(opacity=0.7)
+                .encode(
+                    x=f"component {x_component}_global:Q",
+                    y=f"component {y_component}_global:Q",
+                    x2=f"component {x_component}_partial:Q",
+                    y2=f"component {y_component}_partial:Q",
+                    color="group:N",
+                    strokeDash=alt.value([2, 2]),
+                )
+            )
+
+        charts = filter(
+            None,
+            (row_plot, partial_row_plot, edges_plot),
+        )
+
+        return alt.layer(*charts).interactive()
