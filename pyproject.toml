@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prince"
-version = "0.14.0"
+version = "0.15.0"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
 authors = ["Max Halford <maxhalford25@gmail.com>"]
 license = "MIT"
@@ -19,7 +19,7 @@ ipykernel = "^6.13.0"
 rpy2 = "^3.5.2"
 ruff = "^0.8.5"
 pre-commit = "^4.0.1"
-xarray = "^2023.11.0"
+xarray = "^2025.1.0"
 
 [tool.ruff]
 lint.select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/

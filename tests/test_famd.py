@@ -120,8 +120,8 @@ def test_issue_169():
     0         -1.000920 -0.669274
     1         -0.092001  0.669274
 
-    >>> famd.transform(df[3:])
-    component         0             1
-    3         -0.869173 -8.050546e-17
+    >>> famd.transform(df[3:]).round(6)
+    component         0    1
+    3         -0.869173 -0.0
 
     """

@@ -55,7 +55,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         """
 
         if self.check_input:
-            sklearn.utils.check_array(X, dtype=[str, np.number])
+            sklearn.utils.check_array(X, dtype=[str, "numeric"])
 
         # K is the number of actual variables, to apply the Benzécri correction
         self.K_ = X.shape[1]
@@ -99,5 +99,5 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
     def transform(self, X):
         """Computes the row principal coordinates of a dataset."""
         if self.check_input:
-            sklearn.utils.check_array(X, dtype=[str, np.number])
+            sklearn.utils.check_array(X, dtype=[str, "numeric"])
         return self.row_coordinates(X)

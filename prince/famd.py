@@ -35,7 +35,7 @@ class FAMD(pca.PCA):
 
     def _check_input(self, X):
         if self.check_input:
-            sklearn.utils.check_array(X, dtype=[str, np.number])
+            sklearn.utils.check_array(X, dtype=[str, "numeric"])
 
     @utils.check_is_dataframe_input
     def fit(self, X, y=None):
