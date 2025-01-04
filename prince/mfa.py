@@ -231,7 +231,6 @@ class MFA(pca.PCA, collections.UserDict):
                 .encode(
                     alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
                     alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
-                    color="group:N",
                     **params,
                 )
             )
