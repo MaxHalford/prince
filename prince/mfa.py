@@ -128,36 +128,19 @@ class MFA(pca.PCA, collections.UserDict):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def group_row_coordinates(self, X):
-        if (X.index != self.row_contributions_.index).any():
-            raise NotImplementedError("Supplementary rows are not supported yet")
-
-        X = (X - X.mean()) / ((X - X.mean()) ** 2).sum() ** 0.5
-        Z = pd.concat(
-            (X[cols] / self[g].eigenvalues_[0] ** 0.5 for g, cols in self.groups_.items()),
-            axis="columns",
-        )
-        M = np.full(len(X), 1 / len(X))
-        U = self.svd_.U
-        s = self.svd_.s
-
-        def add_index(g, group_name):
-            g.columns = pd.MultiIndex.from_tuples(
-                [(group_name, col) for col in g.columns],
-                names=("group", "component"),
-            )
-            return g
-
-        return len(self.groups_) * pd.concat(
-            [
-                add_index(
-                    g=(Z[g] @ Z[g].T) @ (M[:, np.newaxis] ** (-0.5) * U * s**-1),
-                    group_name=g,
-                )
-                for g, cols in self.groups_.items()
-            ],
-            axis="columns",
-        )
+    def partial_row_coordinates(self, X):
+        """Returns the partial row principal coordinates."""
+        Z = self._build_Z(X)
+        coords = []
+        for _, names in self.groups_.items():
+            partial_coords = pd.DataFrame(0.0, index=Z.index, columns=Z.columns)
+            partial_coords.loc[:, names] = (Z[names] - Z[names].mean()) / Z[names].std(ddof=0)
+            partial_coords = partial_coords * self.column_weight_
+            partial_coords = (len(self.groups_) * partial_coords).dot(self.svd_.V.T)
+            coords.append(partial_coords)
+        coords = pd.concat(coords, axis=1, keys=self.groups_.keys())
+        coords.columns.name = "component"
+        return coords
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
@@ -184,37 +167,39 @@ class MFA(pca.PCA, collections.UserDict):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def column_correlations(self, X):
-        Z = self._build_Z(X)
-        return super().column_correlations(Z)
-
-    @utils.check_is_dataframe_input
-    @utils.check_is_fitted
     def column_cosine_similarities_(self, X):
         Z = self._build_Z(X)
         return super().column_cosine_similarities_(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def plot(self, X, x_component=0, y_component=1, color_by=None, **params):
-        if color_by is not None:
-            params["color"] = color_by
+    def plot(self, X, x_component=0, y_component=1, show_partial_rows=False, **params):
+        index_name = X.index.name or "index"
 
         params["tooltip"] = (
-            X.index.names if isinstance(X.index, pd.MultiIndex) else [X.index.name or "index"]
+            X.index.names if isinstance(X.index, pd.MultiIndex) else [index_name]
         ) + [
+            "group",
             f"component {x_component}",
             f"component {y_component}",
         ]
 
         eig = self._eigenvalues_summary.to_dict(orient="index")
 
+        row_plot = None
+        partial_row_plot = None
+        edges_plot = None
+
+        # Barycenters
         row_coords = self.row_coordinates(X)
         row_coords.columns = [f"component {i}" for i in row_coords.columns]
         row_coords = row_coords.reset_index()
+        row_coords["group"] = "Global"
+        if show_partial_rows:
+            params["color"] = "group:N"
         row_plot = (
             alt.Chart(row_coords)
-            .mark_circle()
+            .mark_point(filled=True, size=50)
             .encode(
                 alt.X(
                     f"component {x_component}",
@@ -234,4 +219,51 @@ class MFA(pca.PCA, collections.UserDict):
             )
         )
 
-        return row_plot.interactive()
+        # Partial row coordinates
+        if show_partial_rows:
+            partial_row_coords = self.partial_row_coordinates(X).stack(level=0, future_stack=True)
+            partial_row_coords.columns = [f"component {i}" for i in partial_row_coords.columns]
+            partial_row_coords = partial_row_coords.reset_index(names=[index_name, "group"])
+
+            partial_row_plot = (
+                alt.Chart(partial_row_coords)
+                .mark_point(shape="circle")
+                .encode(
+                    alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                    alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
+                    color="group:N",
+                    **params,
+                )
+            )
+
+        # Edges to connect the main markers to the partial markers
+        if show_partial_rows:
+            edges = pd.merge(
+                left=row_coords[
+                    [index_name, f"component {x_component}", f"component {y_component}"]
+                ],
+                right=partial_row_coords[
+                    [index_name, f"component {x_component}", f"component {y_component}", "group"]
+                ],
+                on=index_name,
+                suffixes=("_global", "_partial"),
+            )
+            edges_plot = (
+                alt.Chart(edges)
+                .mark_line(opacity=0.7)
+                .encode(
+                    x=f"component {x_component}_global:Q",
+                    y=f"component {y_component}_global:Q",
+                    x2=f"component {x_component}_partial:Q",
+                    y2=f"component {y_component}_partial:Q",
+                    color="group:N",
+                    strokeDash=alt.value([2, 2]),
+                )
+            )
+
+        charts = filter(
+            None,
+            (row_plot, partial_row_plot, edges_plot),
+        )
+
+        return alt.layer(*charts).interactive()
