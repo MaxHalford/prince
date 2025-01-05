@@ -18,8 +18,8 @@ pytest = "^8.3.4"
 ipykernel = "^6.13.0"
 rpy2 = "^3.5.2"
 ruff = "^0.8.5"
-pre-commit = "^4.0.1"
 xarray = "^2025.1.0"
+pre-commit = "^4.0.1"
 
 [tool.ruff]
 lint.select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/
