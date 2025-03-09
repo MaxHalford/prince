@@ -5,7 +5,16 @@ runs:
     - name: Check out repository
       uses: actions/checkout@v3
 
-    - name: Set up python
+    - name: Install R
+      uses: r-lib/actions/setup-r@v2
+
+    - name: Install R packages
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        cache-version: 1
+        working-directory: tests
+
+    - name: Set up Python
       id: set-up-python
       uses: actions/setup-python@v4
       with:
@@ -34,15 +43,6 @@ runs:
       shell: bash
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
-
-    - name: Install R
-      uses: r-lib/actions/setup-r@v2
-
-    - name: Install R packages
-      uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        cache-version: 1
-        working-directory: tests
 
     - name: Install project
       shell: bash
