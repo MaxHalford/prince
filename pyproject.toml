@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prince"
-version = "0.15.0"
+version = "0.16.0"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
 authors = ["Max Halford <maxhalford25@gmail.com>"]
 license = "MIT"
