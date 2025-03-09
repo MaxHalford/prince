@@ -90,12 +90,12 @@ def load_burgundy_wines():
     """
     wines = pd.DataFrame(
         data=[
-            [1, 6, 7, 2, 5, 7, 6, 3, 6, 7],
-            [5, 3, 2, 4, 4, 4, 2, 4, 4, 3],
-            [6, 1, 1, 5, 2, 1, 1, 7, 1, 1],
-            [7, 1, 2, 7, 2, 1, 2, 2, 2, 2],
-            [2, 5, 4, 3, 5, 6, 5, 2, 6, 6],
-            [3, 4, 4, 3, 5, 4, 5, 1, 7, 5],
+            ["Yes", "No", "No", "Yes", "No", "No", "No", "No", "No", "No"],
+            ["No", "Maybe", "Yes", "No", "Yes", "Maybe", "Yes", "No", "Yes", "Yes"],
+            ["No", "Yes", "Yes", "No", "Yes", "Yes", "Yes", "No", "Yes", "Yes"],
+            ["No", "Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"],
+            ["Yes", "No", "No", "Yes", "No", "No", "No", "Yes", "No", "No"],
+            ["Yes", "Maybe", "No", "Yes", "No", "Maybe", "No", "Yes", "No", "No"],
         ],
         columns=pd.MultiIndex.from_tuples(
             [

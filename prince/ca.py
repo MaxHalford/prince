@@ -97,31 +97,35 @@ class CA(utils.EigenvaluesMixin):
 
         self.row_contributions_ = pd.DataFrame(
             sparse.diags(self.row_masses_.values)
-            @ (
+            @ np.divide(
                 # Same as row_coordinates(X)
                 (
                     sparse.diags(self.row_masses_.values**-0.5)
                     @ self.svd_.U
                     @ sparse.diags(self.svd_.s)
                 )
-                ** 2
-            )
-            / self.eigenvalues_,
+                ** 2,
+                self.eigenvalues_,
+                out=np.zeros((len(self.row_masses_), len(self.eigenvalues_))),
+                where=self.eigenvalues_ > 0,
+            ),
             index=self.row_masses_.index,
         )
 
         self.column_contributions_ = pd.DataFrame(
             sparse.diags(self.col_masses_.values)
-            @ (
+            @ np.divide(
                 # Same as col_coordinates(X)
                 (
                     sparse.diags(self.col_masses_.values**-0.5)
                     @ self.svd_.V.T
                     @ sparse.diags(self.svd_.s)
                 )
-                ** 2
-            )
-            / self.eigenvalues_,
+                ** 2,
+                self.eigenvalues_,
+                out=np.zeros((len(self.col_masses_), len(self.eigenvalues_))),
+                where=self.eigenvalues_ > 0,
+            ),
             index=self.col_masses_.index,
         )
 
