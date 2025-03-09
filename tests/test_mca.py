@@ -243,3 +243,33 @@ def test_issue_161():
     3  1.664888 -0.640285
 
     """
+
+
+def test_abdi_2007_correction():
+    """
+
+    >>> wines = prince.datasets.load_burgundy_wines()
+    >>> wines = wines.drop(columns=["Oak type"], level=0)
+
+    >>> mca = prince.MCA(n_components=4, correction=None)
+    >>> mca = mca.fit(wines)
+    >>> mca.eigenvalues_.round(4).tolist()
+    [0.8532, 0.2, 0.1151, 0.0317]
+    >>> mca.percentage_of_variance_.round(3).tolist()
+    [71.101, 16.667, 9.593, 2.64]
+
+    >>> mca = prince.MCA(n_components=4, correction="benzecri")
+    >>> mca = mca.fit(wines)
+    >>> mca.eigenvalues_.round(4).tolist()
+    [0.7004, 0.0123, 0.0003, 0.0]
+    >>> mca.percentage_of_variance_.round(3).tolist()
+    [98.229, 1.731, 0.04, 0.0]
+
+    >>> mca = prince.MCA(n_components=4, correction="greenacre")
+    >>> mca = mca.fit(wines)
+    >>> mca.eigenvalues_.round(4).tolist()
+    [0.7004, 0.0123, 0.0003, 0.0]
+    >>> mca.percentage_of_variance_.round(3).tolist()
+    [95.189, 1.678, 0.038, 0.0]
+
+    """

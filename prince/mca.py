@@ -23,7 +23,17 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         random_state=None,
         engine="sklearn",
         one_hot=True,
+        correction=None,
     ):
+        if correction is not None:
+            if correction not in {"benzecri", "greenacre"}:
+                raise ValueError("correction must be either 'benzecri' or 'greenacre' if provided.")
+            if not one_hot:
+                raise ValueError(
+                    "correction can only be applied when one_hot is True. This is because the "
+                    "number of original variables is needed to apply the correction."
+                )
+
         super().__init__(
             n_components=n_components,
             n_iter=n_iter,
@@ -33,6 +43,7 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             engine=engine,
         )
         self.one_hot = one_hot
+        self.correction = correction
 
     def _prepare(self, X):
         if self.one_hot:
@@ -43,6 +54,36 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
 
     def get_feature_names_out(self, input_features=None):
         return np.arange(self.n_components_)
+
+    @property
+    def eigenvalues_(self):
+        """Returns the eigenvalues associated with each principal component."""
+        eigenvalues = super().eigenvalues_
+        # Benzécri and Greenacre corrections
+        if self.correction in {"benzecri", "greenacre"}:
+            K = self.K_
+            return np.array(
+                [(K / (K - 1) * (eig - 1 / K)) ** 2 if eig > 1 / K else 0 for eig in eigenvalues]
+            )
+        return eigenvalues
+
+    @property
+    @utils.check_is_fitted
+    def percentage_of_variance_(self):
+        """Returns the percentage of explained inertia per principal component."""
+        # Benzécri correction
+        if self.correction == "benzecri":
+            eigenvalues = self.eigenvalues_
+            return 100 * eigenvalues / eigenvalues.sum()
+        # Greenacre correction
+        if self.correction == "greenacre":
+            eigenvalues = super().eigenvalues_
+            benzecris = self.eigenvalues_
+            K, J = (self.K_, self.J_)
+            average_inertia = (K / (K - 1)) * ((eigenvalues**2).sum() - (J - K) / K**2)
+            return 100 * benzecris / average_inertia
+        # No correction
+        return super().percentage_of_variance_
 
     @utils.check_is_dataframe_input
     def fit(self, X, y=None):
