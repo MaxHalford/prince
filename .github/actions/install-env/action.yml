@@ -3,7 +3,7 @@ runs:
   using: "composite"
   steps:
     - name: Check out repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install R
       uses: r-lib/actions/setup-r@v2
@@ -14,40 +14,13 @@ runs:
         cache-version: 1
         working-directory: tests
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
     - name: Set up Python
-      id: set-up-python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version-file: "pyproject.toml"
 
-    - name: Load cached Poetry installation
-      uses: actions/cache@v3
-      with:
-        path: ~/.local
-        key: poetry-0
-
-    - name: Install poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
-
-    - name: Load cached virtual env
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.set-up-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies
-      shell: bash
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    - name: Install project
-      shell: bash
-      run: poetry install --no-interaction
-
-    - name: Activate environment
-      shell: bash
-      run: source $VENV
+    - name: Install the project
+      run: uv sync --locked --all-extras --dev
