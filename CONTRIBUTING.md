@@ -49,5 +49,6 @@ gh workflow run hugo.yml
 ## Release
 
 ```sh
-uv publish --build
+uv build
+uv publish
 ```
