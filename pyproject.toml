@@ -1,25 +1,38 @@
-[tool.poetry]
+[project]
+authors = [
+    {name = "Max Halford", email = "maxhalford25@gmail.com"},
+]
+license = {text = "MIT"}
+requires-python = "<4.0,>=3.10"
+readme = "README.md"
+dependencies = [
+    "scikit-learn<2.0.0,>=1.5.1",
+    "pandas<3.0.0,>=2.2.0",
+    "altair<6.0.0,>=5.0.0",
+]
 name = "prince"
 version = "0.16.0"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
-authors = ["Max Halford <maxhalford25@gmail.com>"]
-license = "MIT"
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-scikit-learn = "^1.5.1"
-pandas = "^2.2.0"
-altair = "^5.0.0"
+[dependency-groups]
+dev = [
+    "nbconvert<8.0.0,>=7.16.5",
+    "fbpca<2.0,>=1.0",
+    "pytest<9.0.0,>=8.3.4",
+    "ipykernel<7.0.0,>=6.13.0",
+    "rpy2<4.0.0,>=3.5.2",
+    "ruff<1.0.0,>=0.8.5",
+    "xarray<2026.0.0,>=2025.1.0",
+    "pre-commit<5.0.0,>=4.0.1",
+]
 
-[tool.poetry.group.dev.dependencies]
-nbconvert = "^7.16.5"
-fbpca = "^1.0"
-pytest = "^8.3.4"
-ipykernel = "^6.13.0"
-rpy2 = "^3.5.2"
-ruff = "^0.8.5"
-xarray = "^2025.1.0"
-pre-commit = "^4.0.1"
+[tool.pytest.ini_options]
+addopts = [
+    "--verbose",
+    "--doctest-modules",
+    "--doctest-glob=*.md"
+]
+doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS"
 
 [tool.ruff]
 lint.select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/
@@ -29,15 +42,3 @@ lint.ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.pytest.ini_options]
-addopts = [
-    "--verbose",
-    "--doctest-modules",
-    "--doctest-glob=*.md"
-]
-doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS"
