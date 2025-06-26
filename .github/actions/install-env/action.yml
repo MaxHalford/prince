@@ -23,4 +23,5 @@ runs:
         python-version-file: "pyproject.toml"
 
     - name: Install the project
+      shell: bash
       run: uv sync --locked --all-extras --dev
