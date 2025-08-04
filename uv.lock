@@ -884,8 +884,8 @@ wheels = [
 
 [[package]]
 name = "prince"
-version = "0.16.0"
-source = { virtual = "." }
+version = "0.16.1"
+source = { editable = "." }
 dependencies = [
     { name = "altair" },
     { name = "pandas" },

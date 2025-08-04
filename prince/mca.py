@@ -23,6 +23,8 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
         random_state=None,
         engine="sklearn",
         one_hot=True,
+        one_hot_prefix_sep="__",
+        one_hot_columns_to_drop=None,
         correction=None,
     ):
         if correction is not None:
@@ -43,11 +45,15 @@ class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
             engine=engine,
         )
         self.one_hot = one_hot
+        self.one_hot_prefix_sep = one_hot_prefix_sep
+        self.one_hot_columns_to_drop = one_hot_columns_to_drop
         self.correction = correction
 
     def _prepare(self, X):
         if self.one_hot:
-            X = pd.get_dummies(X, columns=X.columns, prefix_sep="__")
+            X = pd.get_dummies(X, columns=X.columns, prefix_sep=self.one_hot_prefix_sep)
+            if self.one_hot_columns_to_drop is not None:
+                X = X.drop(columns=self.one_hot_columns_to_drop, errors="ignore")
             if (one_hot_columns_ := getattr(self, "one_hot_columns_", None)) is not None:
                 X = X.reindex(columns=one_hot_columns_.union(X.columns), fill_value=False)
         return X

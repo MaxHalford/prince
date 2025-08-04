@@ -77,7 +77,7 @@ OlympicG    Lorenzo      2.070933  1.545461 -1.272104 -0.215067 -0.515746
 ```
 
 <div align="center">
-  <img src="figures/decastar.svg" width="74%" />
+  <img src="docs/figures/decastar.svg" width="74%" />
   <p>
     <i>This chart is interactive, which doesn't show on GitHub. The green points are the column loadings.</i>
   <p>
@@ -95,7 +95,7 @@ OlympicG    Lorenzo      2.070933  1.545461 -1.272104 -0.215067 -0.515746
 ```
 
 <div align="center">
-  <img src="figures/decastar_bis.svg" width="74%" />
+  <img src="docs/figures/decastar_bis.svg" width="74%" />
 </div>
 
 ## Installation

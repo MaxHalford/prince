@@ -12,3 +12,4 @@ dist
 public
 .vscode
 .tmp
+prince.egg-info
