@@ -2,7 +2,7 @@
 authors = [
     {name = "Max Halford", email = "maxhalford25@gmail.com"},
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = "<4.0,>=3.10"
 readme = "README.md"
 dependencies = [
@@ -36,9 +36,9 @@ doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS"
 
 [tool.ruff]
 lint.select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/
+lint.ignore = ["E501"]
 line-length = 100
 target-version = 'py310'
-lint.ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
