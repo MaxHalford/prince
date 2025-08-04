@@ -46,10 +46,10 @@ jobs:
         uses: ./.github/actions/install-env
 
       - name: Execute notebooks
-        run: poetry run jupyter nbconvert --execute --to notebook --inplace docs/content/*.ipynb
+        run: make execute-notebooks
 
       - name: Convert notebooks
-        run: poetry run jupyter nbconvert --to markdown docs/content/*.ipynb
+        run: make render-notebooks
 
       - name: Clean MarkDown
         run: (for f in docs/content/*.md; do sed -e '/<script/,/<\/script>/{/^$/d;}' ${f} > ${f}.tmp; mv ${f}.tmp ${f}; done)
