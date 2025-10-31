@@ -93,14 +93,13 @@ class EigenvaluesMixin:
         https://en.wikipedia.org/wiki/Scree_plot
 
         """
-        eig = self._eigenvalues_summary.reset_index()
-        eig["component"] = eig["component"].astype(str)
+        eig = self._eigenvalues_summary.reset_index().astype({"component": str})
         return (
-            alt.Chart(
-                self._eigenvalues_summary.reset_index().assign(
-                    component=lambda x: x["component"].astype(str)
-                )
-            )
+            alt.Chart(eig)
             .mark_bar(size=10)
-            .encode(x="component", y="eigenvalue", tooltip=eig.columns.tolist())
+            .encode(
+                x=alt.X("component", sort=eig["component"]),
+                y="eigenvalue",
+                tooltip=eig.columns.tolist(),
+            )
         )
