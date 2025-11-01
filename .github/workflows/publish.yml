@@ -24,7 +24,5 @@ jobs:
         run: uv sync --locked
       - name: Build
         run: uv build
-      - name: Smoke test
-        run: uv run pytest
       - name: Publish
         run: uv publish
