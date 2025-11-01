@@ -5,7 +5,7 @@
 ```sh
 git clone https://github.com/MaxHalford/prince
 cd prince
-uv sync
+uv sync --extra dev
 ```
 
 Install the [pre-commit](https://pre-commit.com/) push hooks. This will run some code quality checks every time you push to GitHub.

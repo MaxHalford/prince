@@ -14,14 +14,14 @@ name = "prince"
 version = "0.16.2"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "nbconvert<8.0.0,>=7.16.5",
     "fbpca<2.0,>=1.0",
     "pytest<9.0.0,>=8.3.4",
     "ipykernel<7.0.0,>=6.13.0",
     "rpy2<4.0.0,>=3.5.2",
-    "ruff<1.0.0,>=0.8.5",
+    "ruff<1.0.0,>=0.8.8",
     "xarray<2026.0.0,>=2025.1.0",
     "pre-commit<5.0.0,>=4.0.1",
 ]
