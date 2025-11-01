@@ -892,7 +892,7 @@ dependencies = [
     { name = "scikit-learn" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "fbpca" },
     { name = "ipykernel" },
@@ -907,21 +907,18 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "altair", specifier = ">=5.0.0,<6.0.0" },
+    { name = "fbpca", marker = "extra == 'dev'", specifier = ">=1.0,<2.0" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.13.0,<7.0.0" },
+    { name = "nbconvert", marker = "extra == 'dev'", specifier = ">=7.16.5,<8.0.0" },
     { name = "pandas", specifier = ">=2.2.0,<3.0.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1,<5.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4,<9.0.0" },
+    { name = "rpy2", marker = "extra == 'dev'", specifier = ">=3.5.2,<4.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.8,<1.0.0" },
     { name = "scikit-learn", specifier = ">=1.5.1,<2.0.0" },
+    { name = "xarray", marker = "extra == 'dev'", specifier = ">=2025.1.0,<2026.0.0" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "fbpca", specifier = ">=1.0,<2.0" },
-    { name = "ipykernel", specifier = ">=6.13.0,<7.0.0" },
-    { name = "nbconvert", specifier = ">=7.16.5,<8.0.0" },
-    { name = "pre-commit", specifier = ">=4.0.1,<5.0.0" },
-    { name = "pytest", specifier = ">=8.3.4,<9.0.0" },
-    { name = "rpy2", specifier = ">=3.5.2,<4.0.0" },
-    { name = "ruff", specifier = ">=0.8.5,<1.0.0" },
-    { name = "xarray", specifier = ">=2025.1.0,<2026.0.0" },
-]
+provides-extras = ["dev"]
 
 [[package]]
 name = "prompt-toolkit"
