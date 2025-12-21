@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = ">=3.10, <4.0"
+requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
     "python_full_version == '3.11.*'",
@@ -884,7 +884,7 @@ wheels = [
 
 [[package]]
 name = "prince"
-version = "0.16.2"
+version = "0.16.3"
 source = { editable = "." }
 dependencies = [
     { name = "altair" },
@@ -906,17 +906,17 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "altair", specifier = ">=5.0.0,<6.0.0" },
-    { name = "fbpca", marker = "extra == 'dev'", specifier = ">=1.0,<2.0" },
-    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.13.0,<7.0.0" },
-    { name = "nbconvert", marker = "extra == 'dev'", specifier = ">=7.16.5,<8.0.0" },
-    { name = "pandas", specifier = ">=2.2.0,<3.0.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1,<5.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4,<9.0.0" },
-    { name = "rpy2", marker = "extra == 'dev'", specifier = ">=3.5.2,<4.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.8,<1.0.0" },
-    { name = "scikit-learn", specifier = ">=1.5.1,<2.0.0" },
-    { name = "xarray", marker = "extra == 'dev'", specifier = ">=2025.1.0,<2026.0.0" },
+    { name = "altair", specifier = ">=5.0.0" },
+    { name = "fbpca", marker = "extra == 'dev'", specifier = ">=1.0" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.13.0" },
+    { name = "nbconvert", marker = "extra == 'dev'", specifier = ">=7.16.5" },
+    { name = "pandas", specifier = ">=2.2.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
+    { name = "rpy2", marker = "extra == 'dev'", specifier = ">=3.5.2" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.8" },
+    { name = "scikit-learn", specifier = ">=1.5.1" },
+    { name = "xarray", marker = "extra == 'dev'", specifier = ">=2025.1.0" },
 ]
 provides-extras = ["dev"]
 
