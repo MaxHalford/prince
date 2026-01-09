@@ -11,7 +11,7 @@ dependencies = [
     "altair>=5.0.0",
 ]
 name = "prince"
-version = "0.16.3"
+version = "0.16.5"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
 
 [project.optional-dependencies]
