@@ -7,6 +7,7 @@ import functools
 import altair as alt
 import numpy as np
 import pandas as pd
+import sklearn.base
 from scipy import sparse
 from sklearn.utils import check_array
 
@@ -33,7 +34,7 @@ def select_active_rows(method):
     return _impl
 
 
-class CA(utils.EigenvaluesMixin):
+class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
     def __init__(
         self,
         n_components=2,
