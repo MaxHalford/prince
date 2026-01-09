@@ -13,7 +13,7 @@ from prince import utils
 from . import ca
 
 
-class MCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, ca.CA):
+class MCA(ca.CA, sklearn.base.TransformerMixin):
     def __init__(
         self,
         n_components=2,
