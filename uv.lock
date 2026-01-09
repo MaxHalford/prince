@@ -884,7 +884,7 @@ wheels = [
 
 [[package]]
 name = "prince"
-version = "0.16.3"
+version = "0.16.5"
 source = { editable = "." }
 dependencies = [
     { name = "altair" },
