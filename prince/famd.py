@@ -62,13 +62,14 @@ class FAMD(pca.PCA):
             index=X_cat.index,
             columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
         )
-        prop = X_cat_oh.sum() / X_cat_oh.sum().sum() * 2
-        X_cat_oh_norm = X_cat_oh.sub(X_cat_oh.mean(axis="rows")).div(prop**0.5, axis="columns")
+        Xd = X_cat_oh.sparse.to_dense().fillna(0.0)  # ensures true 0/1 matrix
+        prop = Xd.sum() / Xd.to_numpy().sum() * 2
+        X_cat_oh_norm = Xd.sub(Xd.mean(axis="rows")).div(prop**0.5, axis="columns")
 
         # PCA.fit doesn't work with sparse matrices. Well, it accepts them, but it densifies them.
         # We pre-densify them here to avoid a warning.
         # TODO: In the future, PCA should be able to handle sparse matrices.
-        X_cat_oh_norm = X_cat_oh_norm.sparse.to_dense()
+        # X_cat_oh_norm = X_cat_oh_norm.sparse.to_dense() # This should already be dense
 
         Z = pd.concat([X_num, X_cat_oh_norm], axis=1)
         super().fit(Z)
