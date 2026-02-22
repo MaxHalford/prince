@@ -14,6 +14,39 @@ from . import ca
 
 
 class MCA(ca.CA, sklearn.base.TransformerMixin):
+    """Multiple Correspondence Analysis (MCA).
+
+    MCA extends correspondence analysis to more than two categorical variables. It works by
+    one-hot encoding the input, then applying CA to the resulting indicator matrix. This
+    produces a low-dimensional representation of the associations between categories.
+
+    Parameters
+    ----------
+    n_components : int, default=2
+        Number of principal components to compute.
+    n_iter : int, default=10
+        Number of iterations for the SVD solver.
+    copy : bool, default=True
+        Whether to copy the input data before fitting.
+    check_input : bool, default=True
+        Whether to validate the input array.
+    random_state : int or None, default=None
+        Seed for the random number generator (used in the SVD solver).
+    engine : str, default='sklearn'
+        SVD engine to use. Either 'sklearn' or 'scipy'.
+    one_hot : bool, default=True
+        Whether to one-hot encode the input. Set to False if the data is already
+        in indicator matrix format.
+    one_hot_prefix_sep : str, default='__'
+        Separator used between the column name and the category when one-hot encoding.
+    one_hot_columns_to_drop : list of str or None, default=None
+        Columns to drop after one-hot encoding (useful for removing redundant indicators).
+    correction : str or None, default=None
+        Eigenvalue correction method. Either 'benzecri', 'greenacre', or None.
+        Can only be used when ``one_hot=True``.
+
+    """
+
     def __init__(
         self,
         n_components=2,
@@ -50,6 +83,7 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         self.correction = correction
 
     def _prepare(self, X):
+        """One-hot encode the input if needed, and align columns with the fitted indicator matrix."""
         if self.one_hot:
             X = pd.get_dummies(X, columns=X.columns, prefix_sep=self.one_hot_prefix_sep)
             if self.one_hot_columns_to_drop is not None:
@@ -93,11 +127,21 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
 
     @utils.check_is_dataframe_input
     def fit(self, X, y=None):
-        """Fit the MCA for the dataframe X.
+        """Fit the MCA on a categorical dataframe.
 
-        The MCA is computed on the indicator matrix (i.e. `X.get_dummies()`). If some of the columns are already
-        in indicator matrix format, you'll want to pass in `K` as the number of "real" variables that it represents.
-        (That's used for correcting the inertia linked to each dimension.)
+        The input is one-hot encoded into an indicator matrix (unless ``one_hot=False``),
+        then correspondence analysis is applied. The number of original variables in ``X``
+        is stored as ``K_`` and used for the Benzécri/Greenacre eigenvalue corrections.
+
+        Parameters
+        ----------
+        X : DataFrame
+            A dataframe where each column is a categorical variable.
+        y : ignored
+
+        Returns
+        -------
+        self
 
         """
 
@@ -122,22 +166,26 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_coordinates(self, X):
+        """Row principal coordinates in the MCA space."""
         return super().row_coordinates(self._prepare(X))
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
+        """Squared cosine similarities (cos2) of each row on each component."""
         oh = self._prepare(X)
         return super()._row_cosine_similarities(X=oh, F=super().row_coordinates(oh))
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_coordinates(self, X):
+        """Column (category) principal coordinates in the MCA space."""
         return super().column_coordinates(self._prepare(X))
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_cosine_similarities(self, X):
+        """Squared cosine similarities (cos2) of each column on each component."""
         oh = self._prepare(X)
         return super()._column_cosine_similarities(X=oh, G=super().column_coordinates(oh))
 
