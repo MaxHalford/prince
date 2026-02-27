@@ -55,7 +55,7 @@ class FAMD(pca.PCA):
         # Preprocess categorical columns
         X_cat = X[self.cat_cols_]
         X_cat_oh = pd.get_dummies(X_cat.astype(str), dtype=float)
-        self.dummy_columns_ = X_cat_oh.columns.tolist()
+        self.one_hot_columns_ = X_cat_oh.columns.tolist()
         self.categories_ = {col: X_cat[col].astype(str).unique() for col in self.cat_cols_}
         prop = X_cat_oh.sum() / X_cat_oh.sum().sum() * 2
         X_cat_oh_norm = X_cat_oh.sub(X_cat_oh.mean(axis="rows")).div(prop**0.5, axis="columns")
@@ -102,7 +102,7 @@ class FAMD(pca.PCA):
                         f"Found unknown categories {unknown} in column '{col}' during transform."
                     )
         X_cat = pd.get_dummies(X_cat.astype(str), dtype=float).reindex(
-            columns=self.dummy_columns_, fill_value=0
+            columns=self.one_hot_columns_, fill_value=0
         )
         prop = X_cat.sum() / X_cat.sum().sum() * 2
         X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
