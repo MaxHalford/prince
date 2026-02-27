@@ -11,7 +11,12 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pandas-version: ["<3", ">=3,<4"]
+    name: pandas ${{ matrix.pandas-version }}
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/install-env
+      - run: uv pip install 'pandas${{ matrix.pandas-version }}'
       - run: uv run pytest
