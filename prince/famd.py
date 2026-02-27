@@ -54,21 +54,11 @@ class FAMD(pca.PCA):
 
         # Preprocess categorical columns
         X_cat = X[self.cat_cols_]
-        self.cat_scaler_ = preprocessing.OneHotEncoder(handle_unknown=self.handle_unknown).fit(
-            X_cat
-        )
-        X_cat_oh = pd.DataFrame.sparse.from_spmatrix(
-            self.cat_scaler_.transform(X_cat),
-            index=X_cat.index,
-            columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
-        )
+        X_cat_oh = pd.get_dummies(X_cat.astype(str), dtype=float)
+        self.one_hot_columns_ = X_cat_oh.columns.tolist()
+        self.categories_ = {col: X_cat[col].astype(str).unique() for col in self.cat_cols_}
         prop = X_cat_oh.sum() / X_cat_oh.sum().sum() * 2
         X_cat_oh_norm = X_cat_oh.sub(X_cat_oh.mean(axis="rows")).div(prop**0.5, axis="columns")
-
-        # PCA.fit doesn't work with sparse matrices. Well, it accepts them, but it densifies them.
-        # We pre-densify them here to avoid a warning.
-        # TODO: In the future, PCA should be able to handle sparse matrices.
-        X_cat_oh_norm = X_cat_oh_norm.sparse.to_dense()
 
         Z = pd.concat([X_num, X_cat_oh_norm], axis=1)
         super().fit(Z)
@@ -79,9 +69,8 @@ class FAMD(pca.PCA):
         weights = np.ones(len(X_cat_oh)) / len(X_cat_oh)
         norm = (rc**2).multiply(weights, axis=0).sum()
         eta2 = pd.DataFrame(index=rc.columns)
-        for i, col in enumerate(self.cat_cols_):
-            # TODO: there must be a better way to select a subset of the one-hot encoded matrix
-            tt = X_cat_oh[[f"{col}_{i}" for i in self.cat_scaler_.categories_[i]]]
+        for col in self.cat_cols_:
+            tt = X_cat_oh[[f"{col}_{c}" for c in self.categories_[col]]]
             ni = (tt / len(tt)).sum()
             eta2[col] = (
                 rc.apply(lambda x: (tt.multiply(x * weights, axis=0).sum() ** 2 / ni).sum()) / norm
@@ -105,15 +94,20 @@ class FAMD(pca.PCA):
         X_num[:] = self.num_scaler_.transform(X_num)
 
         # Preprocess categorical columns
-        X_cat = pd.DataFrame.sparse.from_spmatrix(
-            self.cat_scaler_.transform(X_cat),
-            index=X_cat.index,
-            columns=self.cat_scaler_.get_feature_names_out(self.cat_cols_),
+        if self.handle_unknown == "error":
+            for col in self.cat_cols_:
+                unknown = set(X_cat[col].astype(str).unique()) - set(self.categories_[col])
+                if unknown:
+                    raise ValueError(
+                        f"Found unknown categories {unknown} in column '{col}' during transform."
+                    )
+        X_cat = pd.get_dummies(X_cat.astype(str), dtype=float).reindex(
+            columns=self.one_hot_columns_, fill_value=0
         )
         prop = X_cat.sum() / X_cat.sum().sum() * 2
         X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
 
-        Z = pd.concat([X_num, X_cat.sparse.to_dense()], axis=1).fillna(0.0)
+        Z = pd.concat([X_num, X_cat], axis=1).fillna(0.0)
 
         return super().row_coordinates(Z)
 
