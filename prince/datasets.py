@@ -127,6 +127,17 @@ def load_beers():
     return pd.read_csv(DATASETS_DIR / "beers.csv.zip", index_col="name")
 
 
+def load_rotations():
+    """Robot IMU quaternion rotations on different surfaces.
+
+    Each row is a unit quaternion (qw, qx, qy, qz) in scalar-first convention
+    representing a 3D rotation measured by an inertial measurement unit. The
+    ``surface`` column indicates the surface type the robot was moving on.
+
+    """
+    return pd.read_csv(DATASETS_DIR / "rotations.csv")
+
+
 def load_premier_league():
     """Premier League dataset.
 

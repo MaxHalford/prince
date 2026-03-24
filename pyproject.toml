@@ -11,13 +11,14 @@ dependencies = [
     "altair>=5.0.0",
 ]
 name = "prince"
-version = "0.16.6"
-description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA"
+version = "0.17.0"
+description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA, PGA"
 
 [project.optional-dependencies]
 dev = [
     "nbconvert>=7.16.5",
     "fbpca>=1.0",
+    "geomstats>=2.8.0",
     "pytest>=8.3.4",
     "ipykernel>=6.13.0",
     "rpy2>=3.5.2",

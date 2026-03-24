@@ -119,7 +119,9 @@ flowchart TD
     groups? --> |"✅"| MFA
     groups? --> |"❌"| shapes?(Analysing shapes?)
     shapes? --> |"✅"| GPA
-    shapes? --> |"❌"| PCA
+    shapes? --> |"❌"| manifold?(Data on a manifold?)
+    manifold? --> |"✅"| PGA
+    manifold? --> |"❌"| PCA
 ```
 
 ### [Principal component analysis (PCA)](https://maxhalford.github.io/prince/pca)
@@ -134,9 +136,11 @@ flowchart TD
 
 ### [Generalized procrustes analysis (GPA)](https://maxhalford.github.io/prince/gpa)
 
+### [Principal geodesic analysis (PGA)](https://maxhalford.github.io/prince/pga)
+
 ## Correctness
 
-Prince is tested against scikit-learn and [FactoMineR](http://factominer.free.fr/). For the latter, [rpy2](https://rpy2.github.io/) is used to run code in R, and convert the results to Python, which allows running automated tests. See more in the [`tests`](/tests/) directory.
+Prince is tested against scikit-learn and [FactoMineR](http://factominer.free.fr/). For the latter, [rpy2](https://rpy2.github.io/) is used to run code in R, and convert the results to Python, which allows running automated tests. PGA is tested against [geomstats](https://geomstats.github.io/). See more in the [`tests`](/tests/) directory.
 
 ## Citation
 
