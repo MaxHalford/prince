@@ -42,13 +42,8 @@ make render-notebooks
 
 ## Deploy docs
 
-```sh
-gh workflow run hugo.yml
-```
+Run the [docs workflow](https://github.com/MaxHalford/prince/actions/workflows/hugo.yml) via the GitHub interface.
 
 ## Release
 
-```sh
-uv build
-uv publish
-```
+Run the [publishing workflow](https://github.com/MaxHalford/prince/actions/workflows/publish.yml) via the GitHub interface.
