@@ -7,5 +7,6 @@ from .gpa import GPA
 from .mca import MCA
 from .mfa import MFA
 from .pca import PCA
+from .pga import PGA
 
-__all__ = ["CA", "FAMD", "MCA", "MFA", "PCA", "GPA", "datasets"]
+__all__ = ["CA", "FAMD", "MCA", "MFA", "PCA", "PGA", "GPA", "datasets"]
