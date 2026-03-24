@@ -8,6 +8,14 @@ from sklearn.utils.validation import check_is_fitted
 
 import prince
 
+try:
+    import geomstats.geometry.special_orthogonal as gso
+    from geomstats.learning.pca import TangentPCA
+
+    _has_geomstats = True
+except ImportError:
+    _has_geomstats = False
+
 
 @pytest.fixture
 def rotations_df():
@@ -152,13 +160,11 @@ class TestFrechetMean:
         assert angle < 0.05
 
 
+@pytest.mark.skipif(not _has_geomstats, reason="geomstats not importable (numpy incompatibility)")
 class TestGeomstatsComparison:
     """Compare PGA results against geomstats TangentPCA as a reference."""
 
     def test_explained_variance_ratio(self, small_quats):
-        import geomstats.geometry.special_orthogonal as gso
-        from geomstats.learning.pca import TangentPCA
-
         so3 = gso.SpecialOrthogonal(n=3, point_type="vector", equip=False)
 
         # Convert quaternions to rotation vectors for geomstats
@@ -181,9 +187,6 @@ class TestGeomstatsComparison:
         )
 
     def test_transformed_coordinates(self, small_quats):
-        import geomstats.geometry.special_orthogonal as gso
-        from geomstats.learning.pca import TangentPCA
-
         so3 = gso.SpecialOrthogonal(n=3, point_type="vector", equip=False)
 
         quats = small_quats[["qw", "qx", "qy", "qz"]].to_numpy()

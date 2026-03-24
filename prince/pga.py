@@ -164,7 +164,7 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         """
         tangent_df = self.pca_.inverse_transform(X)
-        tangent = tangent_df.to_numpy() if isinstance(tangent_df, pd.DataFrame) else tangent_df
+        tangent = np.array(tangent_df, dtype=np.float64)
         quats = self.manifold_.exp(self.frechet_mean_, tangent)
         index = X.index if isinstance(X, pd.DataFrame) else None
         return pd.DataFrame(quats, columns=["qw", "qx", "qy", "qz"], index=index)
