@@ -21,14 +21,14 @@
     <!-- A partial to be overwritten by the user.
   Simply place a custom_head.html into
   your local /layouts/partials-directory -->
-    {{- partial "custom_head.html" . -}} {{- if not (eq hugo.Environment
+    <!-- {{- partial "custom_head.html" . -}} {{- if not (eq hugo.Environment
     "development") -}}
     <script
       defer
       src="https://eu.umami.is/script.js"
       data-website-id="15f89e99-7fd4-4db3-a433-fd2954385d6d"
     ></script>
-    {{- end -}}
+    {{- end -}} -->
   </head>
 
   <body>
