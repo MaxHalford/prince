@@ -7,8 +7,10 @@ runs:
 
     - name: Install R
       uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: '4.5'
+
+    - name: Set LD_LIBRARY_PATH for R
+      shell: bash
+      run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib" >> $GITHUB_ENV
 
     - name: Install R packages
       uses: r-lib/actions/setup-r-dependencies@v2
