@@ -68,13 +68,14 @@ class FAMD(pca.PCA):
         rc = self.row_coordinates(X)
         weights = np.ones(len(X_cat_oh)) / len(X_cat_oh)
         norm = (rc**2).multiply(weights, axis=0).sum()
-        eta2 = pd.DataFrame(index=rc.columns)
+        eta2_dict = {}
         for col in self.cat_cols_:
             tt = X_cat_oh[[f"{col}_{c}" for c in self.categories_[col]]]
             ni = (tt / len(tt)).sum()
-            eta2[col] = (
+            eta2_dict[col] = (
                 rc.apply(lambda x: (tt.multiply(x * weights, axis=0).sum() ** 2 / ni).sum()) / norm
             ).values
+        eta2 = pd.DataFrame(eta2_dict, index=rc.columns)
         self.column_coordinates_ = pd.concat(
             [self.column_coordinates_.loc[self.num_cols_] ** 2, eta2.T]
         )
