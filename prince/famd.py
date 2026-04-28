@@ -13,6 +13,8 @@ from prince import pca, utils
 class FAMD(pca.PCA):
     def __init__(
         self,
+        rescale_with_mean=True,
+        rescale_with_std=False,
         n_components=2,
         n_iter=3,
         copy=True,
@@ -22,8 +24,8 @@ class FAMD(pca.PCA):
         handle_unknown="error",
     ):
         super().__init__(
-            rescale_with_mean=True,
-            rescale_with_std=False,
+            rescale_with_mean=rescale_with_mean,
+            rescale_with_std=rescale_with_std,
             n_components=n_components,
             n_iter=n_iter,
             copy=copy,

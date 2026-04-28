@@ -45,6 +45,8 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
     def __init__(
         self,
         n_components=2,
+        rescale_with_mean=True,
+        rescale_with_std=False,
         manifold="SO3",
         input_format="quaternion",
         mean_max_iter=50,
@@ -54,6 +56,8 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         engine="sklearn",
     ):
         self.n_components = n_components
+        self.rescale_with_mean = rescale_with_mean
+        self.rescale_with_std = rescale_with_std
         self.manifold = manifold
         self.input_format = input_format
         self.mean_max_iter = mean_max_iter
@@ -119,8 +123,8 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         # Delegate to PCA
         self.pca_ = _pca.PCA(
             n_components=self.n_components,
-            rescale_with_mean=True,
-            rescale_with_std=False,
+            rescale_with_mean=self.rescale_with_mean,
+            rescale_with_std=self.rescale_with_std,
             n_iter=self.n_iter,
             random_state=self.random_state,
             engine=self.engine,
