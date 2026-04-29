@@ -14,6 +14,8 @@ from prince import pca, utils
 class MFA(pca.PCA, collections.UserDict):
     def __init__(
         self,
+        rescale_with_mean=True,
+        rescale_with_std=True,
         n_components=2,
         n_iter=3,
         copy=True,
@@ -22,8 +24,8 @@ class MFA(pca.PCA, collections.UserDict):
         engine="sklearn",
     ):
         super().__init__(
-            rescale_with_mean=True,
-            rescale_with_std=True,
+            rescale_with_mean=rescale_with_mean,
+            rescale_with_std=rescale_with_std,
             n_components=n_components,
             n_iter=n_iter,
             copy=copy,
@@ -56,8 +58,8 @@ class MFA(pca.PCA, collections.UserDict):
         for group, cols in sorted(self.groups_.items()):
             if self.all_nums_[group]:
                 fa = pca.PCA(
-                    rescale_with_mean=True,
-                    rescale_with_std=True,
+                    rescale_with_mean=self.rescale_with_mean,
+                    rescale_with_std=self.rescale_with_std,
                     n_components=self.n_components,
                     n_iter=self.n_iter,
                     copy=True,
@@ -134,7 +136,12 @@ class MFA(pca.PCA, collections.UserDict):
         coords = []
         for _, names in self.groups_.items():
             partial_coords = pd.DataFrame(0.0, index=Z.index, columns=Z.columns)
-            partial_coords.loc[:, names] = (Z[names] - Z[names].mean()) / Z[names].std(ddof=0)
+            scaled = Z[names].copy()
+            if self.rescale_with_mean:
+                scaled = scaled - scaled.mean()
+            if self.rescale_with_std:
+                scaled = scaled / scaled.std(ddof=0)
+            partial_coords.loc[:, names] = scaled
             partial_coords = partial_coords * self.column_weight_
             partial_coords = (len(self.groups_) * partial_coords).dot(self.svd_.V.T)
             coords.append(partial_coords)
