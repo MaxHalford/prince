@@ -9,8 +9,3 @@
 ### New features
 
 - **FAMD: `column_correlations` property**. Returns the signed Pearson correlations between standardized quantitative variables and principal components (corresponding to FactoMineR's `quanti.var$coord`). These are the values plotted in a correlation circle. For qualitative variables, η² values are returned (same as `column_coordinates_`).
-
-### Documentation
-
-- Added the [Wikipedia FAMD example](https://en.wikipedia.org/wiki/Factor_analysis_of_mixed_data) to the FAMD notebook, reproducing the relationship matrix (Table 2) and all four figures (individuals, relationship square, correlation circle, categories).
-- Added reference to the original Escofier (1979) paper.
