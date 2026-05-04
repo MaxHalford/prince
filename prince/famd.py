@@ -59,7 +59,7 @@ class FAMD(pca.PCA):
         X_cat_oh = pd.get_dummies(X_cat.astype(str), dtype=float)
         self.one_hot_columns_ = X_cat_oh.columns.tolist()
         self.categories_ = {col: X_cat[col].astype(str).unique() for col in self.cat_cols_}
-        prop = X_cat_oh.sum() / X_cat_oh.sum().sum() * 2
+        prop = X_cat_oh.mean()
         X_cat_oh_norm = X_cat_oh.sub(X_cat_oh.mean(axis="rows")).div(prop**0.5, axis="columns")
 
         Z = pd.concat([X_num, X_cat_oh_norm], axis=1)
@@ -78,8 +78,12 @@ class FAMD(pca.PCA):
                 rc.apply(lambda x: (tt.multiply(x * weights, axis=0).sum() ** 2 / ni).sum()) / norm
             ).values
         eta2 = pd.DataFrame(eta2_dict, index=rc.columns)
+        # Save signed correlations for quantitative variables before squaring.
+        # For standardized data, PCA column_coordinates_ = V.T * sqrt(eig) = correlations.
+        # This corresponds to FactoMineR's quanti.var$coord.
+        self._quanti_var_coord = self.column_coordinates_.loc[self.num_cols_].copy()
         self.column_coordinates_ = pd.concat(
-            [self.column_coordinates_.loc[self.num_cols_] ** 2, eta2.T]
+            [self._quanti_var_coord**2, eta2.T]
         )
         self.column_coordinates_.columns.name = "component"
         self.column_coordinates_.index.name = "variable"
@@ -107,7 +111,7 @@ class FAMD(pca.PCA):
         X_cat = pd.get_dummies(X_cat.astype(str), dtype=float).reindex(
             columns=self.one_hot_columns_, fill_value=0
         )
-        prop = X_cat.sum() / X_cat.sum().sum() * 2
+        prop = X_cat.mean()
         X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
 
         Z = pd.concat([X_num, X_cat], axis=1).fillna(0.0)
@@ -129,10 +133,19 @@ class FAMD(pca.PCA):
     def row_cosine_similarities(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
-    @utils.check_is_dataframe_input
+    @property
     @utils.check_is_fitted
-    def column_correlations(self, X):
-        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
+    def column_correlations(self):
+        """Correlations between variables and components.
+
+        For quantitative variables, these are the signed Pearson correlations between
+        each standardized variable and each principal component (FactoMineR: quanti.var$coord).
+        These values form the correlation circle.
+
+        For qualitative variables, signed correlations do not exist. The eta-squared (η²)
+        values from column_coordinates_ are returned instead.
+        """
+        return pd.concat([self._quanti_var_coord, self.column_coordinates_.loc[self.cat_cols_]])
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
