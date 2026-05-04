@@ -229,9 +229,7 @@ class TestWikipediaExample:
                 [0.98021546, 1.00000000, 0.01777237, 0.00150503, 0.00050714],
             ]
         )
-        np.testing.assert_allclose(
-            self.famd.column_coordinates_.abs().values, expected, atol=1e-5
-        )
+        np.testing.assert_allclose(self.famd.column_coordinates_.abs().values, expected, atol=1e-5)
 
     def test_column_contributions(self):
         # FactoMineR: famd$var$contrib (as percentages)
@@ -271,9 +269,7 @@ class TestWikipediaExample:
         )
         cc = self.famd.column_correlations
         # Quantitative: signed correlations match FactoMineR quanti.var$coord
-        np.testing.assert_allclose(
-            cc.loc[self.num_cols].abs().values, expected_abs, atol=1e-5
-        )
+        np.testing.assert_allclose(cc.loc[self.num_cols].abs().values, expected_abs, atol=1e-5)
         # Squaring the correlations gives the quanti part of column_coordinates_
         np.testing.assert_allclose(
             self.famd.column_coordinates_.loc[self.num_cols].values,

@@ -82,9 +82,7 @@ class FAMD(pca.PCA):
         # For standardized data, PCA column_coordinates_ = V.T * sqrt(eig) = correlations.
         # This corresponds to FactoMineR's quanti.var$coord.
         self._quanti_var_coord = self.column_coordinates_.loc[self.num_cols_].copy()
-        self.column_coordinates_ = pd.concat(
-            [self._quanti_var_coord**2, eta2.T]
-        )
+        self.column_coordinates_ = pd.concat([self._quanti_var_coord**2, eta2.T])
         self.column_coordinates_.columns.name = "component"
         self.column_coordinates_.index.name = "variable"
 
