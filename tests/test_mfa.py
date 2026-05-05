@@ -139,6 +139,44 @@ class TestMFA:
         P = self.mfa.column_contributions_
         np.testing.assert_allclose(F, P * 100)
 
+    def test_group_coords(self):
+        F = load_df_from_R("mfa$group$coord").iloc[:, : self.mfa.n_components]
+        P = self.mfa.group_coordinates_
+        np.testing.assert_allclose(F, P)
+
+    def test_group_contrib(self):
+        F = load_df_from_R("mfa$group$contrib").iloc[:, : self.mfa.n_components]
+        P = self.mfa.group_contributions_
+        np.testing.assert_allclose(F, P * 100)
+
+    def test_group_cos2(self):
+        F = load_df_from_R("mfa$group$cos2").iloc[:, : self.mfa.n_components]
+        P = self.mfa.group_cosine_similarities_
+        np.testing.assert_allclose(F, P)
+
+    def test_partial_cor(self):
+        F = load_df_from_R("mfa$partial.axes$cor").iloc[:, : self.mfa.n_components]
+        P = self.mfa.partial_correlations_
+        # FactoMineR always includes all groups (active + supplementary) with ncp=5 per group.
+        # Select rows matching prince's active groups and n_components.
+        n = self.mfa.n_components
+        ncp_facto = F.shape[0] // len(self.groups)
+        active_group_indices = [i for i, g in enumerate(self.groups) if g != "2023-24"] if self.sup_groups else list(range(len(self.groups)))
+        indices = [g * ncp_facto + l for g in active_group_indices for l in range(n)]
+        np.testing.assert_allclose(F.iloc[indices].abs(), P.abs())
+
+    def test_partial_contrib(self):
+        F = load_df_from_R("mfa$partial.axes$contrib").iloc[:, : self.mfa.n_components]
+        P = self.mfa.partial_contributions_
+        n = self.mfa.n_components
+        ncp_facto = F.shape[0] // len(self.groups)
+        active_group_indices = [i for i, g in enumerate(self.groups) if g != "2023-24"] if self.sup_groups else list(range(len(self.groups)))
+        indices = [g * ncp_facto + l for g in active_group_indices for l in range(n)]
+        # Renormalize contributions since we're comparing a subset of partial axes
+        F_subset = F.iloc[indices]
+        F_renorm = F_subset / F_subset.sum(axis=0) * 100
+        np.testing.assert_allclose(F_renorm, P * 100)
+
     def test_partial_row_coords(self):
         F = load_df_from_R("mfa$ind$coord.partiel").iloc[:, : self.mfa.n_components]
         P = self.mfa.partial_row_coordinates(self.dataset)
