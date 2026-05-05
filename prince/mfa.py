@@ -105,6 +105,17 @@ class MFA(pca.PCA, collections.UserDict):
             ],
         )
 
+        # Precompute integer column positions so transform methods can skip
+        # DataFrame column lookups and work directly on numpy arrays.
+        all_z_cols = [col for _, cols in self.groups_.items() for col in cols]
+        x_col_map = {c: i for i, c in enumerate(X.columns)}
+        self._z_col_indices_ = np.array([x_col_map[c] for c in all_z_cols])
+
+        active_col_map = {c: i for i, c in enumerate(self.feature_names_in_)}
+        self._group_col_indices_ = {}
+        for group, names in self._active_groups().items():
+            self._group_col_indices_[group] = np.array([active_col_map[n] for n in names])
+
         return self
 
     def _determine_groups(self, X: pd.DataFrame, groups: dict | list | None) -> dict:
@@ -136,39 +147,60 @@ class MFA(pca.PCA, collections.UserDict):
             axis="columns",
         )
 
+    def _extract_Z_numpy(self, X):
+        """Extract Z as a numpy array using precomputed column indices (fast path)."""
+        X_np = np.asarray(X, dtype=np.float64)
+        return X_np[:, self._z_col_indices_]
+
+    def _scale_active_numpy(self, Z_np):
+        """Scale the active columns of Z using the fitted scaler (numpy-only path)."""
+        n_active = len(self.feature_names_in_)
+        Z_active = Z_np[:, :n_active]
+        if hasattr(self, "scaler_"):
+            return self.scaler_.transform(Z_active)
+        return Z_active.copy()
+
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_coordinates(self, X):
         """Returns the row principal coordinates."""
-        Z = self._build_Z(X)
-        return super().row_coordinates(Z)
+        Z_np = self._extract_Z_numpy(X)
+        Z_scaled = self._scale_active_numpy(Z_np)
+        Z_scaled *= self.column_weight_
+        coord = pd.DataFrame(
+            data=Z_scaled @ self.svd_.V.T,
+            index=X.index if isinstance(X, pd.DataFrame) else None,
+        )
+        coord.columns.name = "component"
+        return coord
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def partial_row_coordinates(self, X):
         """Returns the partial row principal coordinates."""
-        Z = self._build_Z(X)
+        Z_np = self._extract_Z_numpy(X)
+        Z_scaled = self._scale_active_numpy(Z_np)
         active_groups = self._active_groups()
-        active_columns = self.feature_names_in_
+        K = len(active_groups)
+        V = self.svd_.V
+        weights = self.column_weight_
 
-        # Scale active columns using fitted scaler parameters
-        Z_active = Z[active_columns]
-        Z_scaled = pd.DataFrame(
-            self.scaler_.transform(Z_active.to_numpy()),
-            index=Z.index,
-            columns=active_columns,
-        )
-
+        # For each group, only the group's columns are non-zero, so we can
+        # skip the full zero-array and do a smaller matrix multiply:
+        # (K * Z_group * w_group) @ V[:, group_cols].T
         coords = []
-        for _, names in active_groups.items():
-            partial_coords = pd.DataFrame(0.0, index=Z.index, columns=active_columns)
-            partial_coords.loc[:, names] = Z_scaled[names]
-            partial_coords = partial_coords * self.column_weight_
-            partial_coords = (len(active_groups) * partial_coords).dot(self.svd_.V.T)
-            coords.append(partial_coords)
-        coords = pd.concat(coords, axis=1, keys=active_groups.keys())
-        coords.columns.name = "component"
-        return coords
+        for group in active_groups:
+            col_idx = self._group_col_indices_[group]
+            group_data = Z_scaled[:, col_idx] * (K * weights[col_idx])
+            coords.append(group_data @ V[:, col_idx].T)
+
+        result = pd.concat(
+            [pd.DataFrame(c, index=X.index) for c in coords],
+            axis=1,
+            keys=active_groups.keys(),
+        )
+        result.columns.name = "component"
+        return result
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
@@ -184,14 +216,20 @@ class MFA(pca.PCA, collections.UserDict):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
-        Z = self._build_Z(X)
-        return super().row_standard_coordinates(Z)
+        return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
-        Z = self._build_Z(X)
-        return super().row_cosine_similarities(Z)
+        Z_np = self._extract_Z_numpy(X)
+        Z_scaled = self._scale_active_numpy(Z_np)
+        squared_coordinates = (np.square(Z_scaled) * self.column_weight_).sum(axis=1)
+        Z_scaled *= self.column_weight_
+        coord = Z_scaled @ self.svd_.V.T
+        return pd.DataFrame(
+            data=coord**2 / squared_coordinates[:, np.newaxis],
+            index=X.index if isinstance(X, pd.DataFrame) else None,
+        )
 
     def _active_groups(self):
         supplementary_groups = getattr(self, "supplementary_groups_", [])
@@ -246,19 +284,20 @@ class MFA(pca.PCA, collections.UserDict):
         active_groups = self._active_groups()
         n_active = len(self.svd_.U)
         row_weights = np.full(n_active, 1.0 / n_active)
+        n_comp = self.n_components
+        n_cols = len(active_groups) * n_comp
 
-        partial = []
+        tab = np.empty((n_active, n_cols))
         labels = []
-        eig_ratios = []
+        eig_ratios = np.empty(n_cols)
+        col = 0
         for group in active_groups:
             group_pca = self[group]
-            row_coords = group_pca.svd_.U * group_pca.eigenvalues_**0.5
-            for k in range(self.n_components):
-                partial.append(row_coords[:, k])
+            tab[:, col : col + n_comp] = group_pca.svd_.U[:, :n_comp] * group_pca.eigenvalues_[:n_comp] ** 0.5
+            for k in range(n_comp):
                 labels.append((group, k))
-                eig_ratios.append(group_pca.eigenvalues_[k] / group_pca.eigenvalues_[0])
-
-        tab = np.column_stack(partial)
+                eig_ratios[col + k] = group_pca.eigenvalues_[k] / group_pca.eigenvalues_[0]
+            col += n_comp
 
         # Center and standardize with row weights
         weighted_mean = (tab * row_weights[:, np.newaxis]).sum(axis=0)
@@ -291,6 +330,79 @@ class MFA(pca.PCA, collections.UserDict):
         df = pd.DataFrame(contrib, index=index)
         df.columns.name = "component"
         return df
+
+    @utils.check_is_fitted
+    def plot_partial(self, x_component=0, y_component=1):
+        """Plot the partial axes correlations.
+
+        Each arrow represents a group's PCA component projected onto the global MFA space.
+        Arrows close to the unit circle indicate a strong relationship between the group's
+        axis and the global axis.
+
+        """
+        cor = self.partial_correlations_
+        eig = self._eigenvalues_summary.to_dict(orient="index")
+
+        x_col = f"component {x_component}"
+        y_col = f"component {y_component}"
+
+        df = cor[[x_component, y_component]].copy()
+        df.columns = [x_col, y_col]
+        df = df.reset_index()
+        df["group"] = df["group"].astype(str)
+        df["label"] = df["group"] + " dim " + df["component"].astype(str)
+        df["origin_x"] = 0.0
+        df["origin_y"] = 0.0
+
+        # Unit circle
+        theta = np.linspace(0, 2 * np.pi, 100)
+        circle_df = pd.DataFrame({x_col: np.cos(theta), y_col: np.sin(theta)})
+
+        x_axis = alt.X(
+            x_col,
+            scale=alt.Scale(domain=[-1.1, 1.1]),
+            axis=alt.Axis(
+                title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+            ),
+        )
+        y_axis = alt.Y(
+            y_col,
+            scale=alt.Scale(domain=[-1.1, 1.1]),
+            axis=alt.Axis(
+                title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+            ),
+        )
+
+        circle = alt.Chart(circle_df).mark_line(
+            color="lightgray", strokeDash=[4, 4]
+        ).encode(
+            x=x_axis, y=y_axis, order="index:O"
+        )
+
+        arrows = alt.Chart(df).mark_rule().encode(
+            x=alt.X("origin_x:Q", scale=alt.Scale(domain=[-1.1, 1.1])),
+            y=alt.Y("origin_y:Q", scale=alt.Scale(domain=[-1.1, 1.1])),
+            x2=alt.X2(f"{x_col}:Q"),
+            y2=alt.Y2(f"{y_col}:Q"),
+            color=alt.Color("group:N"),
+            tooltip=["label", x_col, y_col],
+        )
+
+        points = alt.Chart(df).mark_point(filled=True, size=40).encode(
+            x=x_axis, y=y_axis,
+            color=alt.Color("group:N"),
+            tooltip=["label", x_col, y_col],
+        )
+
+        labels = alt.Chart(df).mark_text(dx=7, dy=-7, align="left").encode(
+            x=x_axis, y=y_axis,
+            text="label:N",
+            color=alt.Color("group:N"),
+        )
+
+        return alt.layer(circle, arrows, points, labels).properties(
+            width=400, height=400
+        ).interactive()
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted

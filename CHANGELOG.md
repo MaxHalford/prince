@@ -12,6 +12,7 @@
 
 - **MFA: group-level results**. Added `group_coordinates_`, `group_contributions_`, and `group_cosine_similarities_` properties. These summarize how each group of variables relates to the global MFA components, corresponding to FactoMineR's `result$group$coord`, `result$group$contrib`, and `result$group$cos2`. Requested in [#217](https://github.com/MaxHalford/prince/issues/217).
 - **MFA: partial axes results**. Added `partial_correlations_` and `partial_contributions_` properties. These describe how each group's own PCA axes relate to the global MFA axes, corresponding to FactoMineR's `result$partial.axes$cor` and `result$partial.axes$contrib`. Requested in [#217](https://github.com/MaxHalford/prince/issues/217).
+- **MFA: partial axes correlation plot**. Added `plot_partial` method. Produces a correlation circle showing how each group's PCA axes project onto the global MFA plane, corresponding to FactoMineR's `plot.MFA(res, choix="axes")`.
 
 ## 0.18.0
 
