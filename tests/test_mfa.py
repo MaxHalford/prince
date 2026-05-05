@@ -109,3 +109,46 @@ class TestMFA:
         F = load_df_from_R("mfa$ind$contrib").iloc[:, : self.mfa.n_components]
         P = self.mfa.row_contributions_
         np.testing.assert_allclose(F, P * 100)
+
+    def test_col_coords(self):
+        F = load_df_from_R("mfa$quanti.var$coord").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_coordinates_
+        if self.sup_groups:
+            sup_cols = [col for col in P.index if col[0] == "2023-24"]
+            P = P.drop(sup_cols)
+        np.testing.assert_allclose(F.abs(), P.abs())
+
+    def test_col_cor(self):
+        F = load_df_from_R("mfa$quanti.var$cor").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_correlations
+        if self.sup_groups:
+            sup_cols = [col for col in P.index if col[0] == "2023-24"]
+            P = P.drop(sup_cols)
+        np.testing.assert_allclose(F.abs(), P.abs())
+
+    def test_col_cos2(self):
+        F = load_df_from_R("mfa$quanti.var$cos2").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_cosine_similarities_
+        if self.sup_groups:
+            sup_cols = [col for col in P.index if col[0] == "2023-24"]
+            P = P.drop(sup_cols)
+        np.testing.assert_allclose(F, P)
+
+    def test_col_contrib(self):
+        F = load_df_from_R("mfa$quanti.var$contrib").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_contributions_
+        np.testing.assert_allclose(F, P * 100)
+
+    def test_partial_row_coords(self):
+        F = load_df_from_R("mfa$ind$coord.partiel").iloc[:, : self.mfa.n_components]
+        P = self.mfa.partial_row_coordinates(self.dataset)
+
+        active_groups = [g for g in self.groups if not self.sup_groups or g != "2023-24"]
+        n_active_groups = len(active_groups)
+
+        for i, group in enumerate(active_groups):
+            F_group = F.iloc[i::n_active_groups]
+            P_group = P[group]
+            if self.sup_rows:
+                P_group = P_group.drop(["Manchester City", "Manchester United"])
+            np.testing.assert_allclose(F_group.abs().values, P_group.abs().values)

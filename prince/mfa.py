@@ -133,19 +133,30 @@ class MFA(pca.PCA, collections.UserDict):
     def partial_row_coordinates(self, X):
         """Returns the partial row principal coordinates."""
         Z = self._build_Z(X)
+        supplementary_groups = getattr(self, "supplementary_groups_", [])
+        active_groups = {
+            group: names
+            for group, names in self.groups_.items()
+            if group not in supplementary_groups
+        }
+        active_columns = self.feature_names_in_
+
+        # Scale active columns using fitted scaler parameters
+        Z_active = Z[active_columns]
+        Z_scaled = pd.DataFrame(
+            self.scaler_.transform(Z_active.to_numpy()),
+            index=Z.index,
+            columns=active_columns,
+        )
+
         coords = []
-        for _, names in self.groups_.items():
-            partial_coords = pd.DataFrame(0.0, index=Z.index, columns=Z.columns)
-            scaled = Z[names].copy()
-            if self.rescale_with_mean:
-                scaled = scaled - scaled.mean()
-            if self.rescale_with_std:
-                scaled = scaled / scaled.std(ddof=0)
-            partial_coords.loc[:, names] = scaled
+        for _, names in active_groups.items():
+            partial_coords = pd.DataFrame(0.0, index=Z.index, columns=active_columns)
+            partial_coords.loc[:, names] = Z_scaled[names]
             partial_coords = partial_coords * self.column_weight_
-            partial_coords = (len(self.groups_) * partial_coords).dot(self.svd_.V.T)
+            partial_coords = (len(active_groups) * partial_coords).dot(self.svd_.V.T)
             coords.append(partial_coords)
-        coords = pd.concat(coords, axis=1, keys=self.groups_.keys())
+        coords = pd.concat(coords, axis=1, keys=active_groups.keys())
         coords.columns.name = "component"
         return coords
 
@@ -171,12 +182,6 @@ class MFA(pca.PCA, collections.UserDict):
     def row_cosine_similarities(self, X):
         Z = self._build_Z(X)
         return super().row_cosine_similarities(Z)
-
-    @utils.check_is_dataframe_input
-    @utils.check_is_fitted
-    def column_cosine_similarities_(self, X):
-        Z = self._build_Z(X)
-        return super().column_cosine_similarities_(Z)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
