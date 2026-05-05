@@ -166,7 +166,7 @@ class TestMFA:
             if self.sup_groups
             else list(range(len(self.groups)))
         )
-        indices = [g * ncp_facto + l for g in active_group_indices for l in range(n)]
+        indices = [g * ncp_facto + k for g in active_group_indices for k in range(n)]
         np.testing.assert_allclose(F.iloc[indices].abs(), P.abs())
 
     def test_partial_contrib(self):
@@ -179,7 +179,7 @@ class TestMFA:
             if self.sup_groups
             else list(range(len(self.groups)))
         )
-        indices = [g * ncp_facto + l for g in active_group_indices for l in range(n)]
+        indices = [g * ncp_facto + k for g in active_group_indices for k in range(n)]
         # Renormalize contributions since we're comparing a subset of partial axes
         F_subset = F.iloc[indices]
         F_renorm = F_subset / F_subset.sum(axis=0) * 100
