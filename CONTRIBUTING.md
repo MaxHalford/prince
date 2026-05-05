@@ -8,16 +8,23 @@ cd prince
 uv sync --extra dev
 ```
 
-Install the [pre-commit](https://pre-commit.com/) push hooks. This will run some code quality checks every time you push to GitHub.
+Install [prek](https://github.com/j178/prek) to run code quality checks as git hooks:
 
 ```sh
-pre-commit install --hook-type pre-push
+uv tool install prek
+prek install --hook-type pre-push
 ```
 
-You can optionally run `pre-commit` at any time as so:
+You can optionally run the hooks at any time:
 
 ```sh
-pre-commit run --all-files
+prek run --all-files
+```
+
+You can also type check with [ty](https://github.com/astral-sh/ty):
+
+```sh
+uvx ty check
 ```
 
 ## Unit tests
@@ -29,7 +36,7 @@ Rscript -e 'install.packages("FactoMineR", repos="https://cloud.r-project.org")'
 ```
 
 ```sh
-pytest
+uv run pytest
 ```
 
 ## Building docs locally

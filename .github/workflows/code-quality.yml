@@ -9,9 +9,15 @@ on:
       - master
 
 jobs:
-  run:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-env
-      - run: uv run pre-commit run --all-files
+      - uses: actions/checkout@v6
+      - uses: j178/prek-action@v2
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8
+      - run: uvx ty check
