@@ -99,9 +99,7 @@ class MFA(pca.PCA, collections.UserDict):
             Z,
             column_weight=column_weights,
             supplementary_columns=[
-                column
-                for group in sup_groups
-                for column in self.groups_[group]
+                column for group in sup_groups for column in self.groups_[group]
             ],
         )
 
@@ -293,7 +291,9 @@ class MFA(pca.PCA, collections.UserDict):
         col = 0
         for group in active_groups:
             group_pca = self[group]
-            tab[:, col : col + n_comp] = group_pca.svd_.U[:, :n_comp] * group_pca.eigenvalues_[:n_comp] ** 0.5
+            tab[:, col : col + n_comp] = (
+                group_pca.svd_.U[:, :n_comp] * group_pca.eigenvalues_[:n_comp] ** 0.5
+            )
             for k in range(n_comp):
                 labels.append((group, k))
                 eig_ratios[col + k] = group_pca.eigenvalues_[k] / group_pca.eigenvalues_[0]
@@ -373,36 +373,52 @@ class MFA(pca.PCA, collections.UserDict):
             ),
         )
 
-        circle = alt.Chart(circle_df).mark_line(
-            color="lightgray", strokeDash=[4, 4]
-        ).encode(
-            x=x_axis, y=y_axis, order="index:O"
+        circle = (
+            alt.Chart(circle_df)
+            .mark_line(color="lightgray", strokeDash=[4, 4])
+            .encode(x=x_axis, y=y_axis, order="index:O")
         )
 
-        arrows = alt.Chart(df).mark_rule().encode(
-            x=alt.X("origin_x:Q", scale=alt.Scale(domain=[-1.1, 1.1])),
-            y=alt.Y("origin_y:Q", scale=alt.Scale(domain=[-1.1, 1.1])),
-            x2=alt.X2(f"{x_col}:Q"),
-            y2=alt.Y2(f"{y_col}:Q"),
-            color=alt.Color("group:N"),
-            tooltip=["label", x_col, y_col],
+        arrows = (
+            alt.Chart(df)
+            .mark_rule()
+            .encode(
+                x=alt.X("origin_x:Q", scale=alt.Scale(domain=[-1.1, 1.1])),
+                y=alt.Y("origin_y:Q", scale=alt.Scale(domain=[-1.1, 1.1])),
+                x2=alt.X2(f"{x_col}:Q"),
+                y2=alt.Y2(f"{y_col}:Q"),
+                color=alt.Color("group:N"),
+                tooltip=["label", x_col, y_col],
+            )
         )
 
-        points = alt.Chart(df).mark_point(filled=True, size=40).encode(
-            x=x_axis, y=y_axis,
-            color=alt.Color("group:N"),
-            tooltip=["label", x_col, y_col],
+        points = (
+            alt.Chart(df)
+            .mark_point(filled=True, size=40)
+            .encode(
+                x=x_axis,
+                y=y_axis,
+                color=alt.Color("group:N"),
+                tooltip=["label", x_col, y_col],
+            )
         )
 
-        labels = alt.Chart(df).mark_text(dx=7, dy=-7, align="left").encode(
-            x=x_axis, y=y_axis,
-            text="label:N",
-            color=alt.Color("group:N"),
+        labels = (
+            alt.Chart(df)
+            .mark_text(dx=7, dy=-7, align="left")
+            .encode(
+                x=x_axis,
+                y=y_axis,
+                text="label:N",
+                color=alt.Color("group:N"),
+            )
         )
 
-        return alt.layer(circle, arrows, points, labels).properties(
-            width=400, height=400
-        ).interactive()
+        return (
+            alt.layer(circle, arrows, points, labels)
+            .properties(width=400, height=400)
+            .interactive()
+        )
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted

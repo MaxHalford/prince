@@ -161,7 +161,11 @@ class TestMFA:
         # Select rows matching prince's active groups and n_components.
         n = self.mfa.n_components
         ncp_facto = F.shape[0] // len(self.groups)
-        active_group_indices = [i for i, g in enumerate(self.groups) if g != "2023-24"] if self.sup_groups else list(range(len(self.groups)))
+        active_group_indices = (
+            [i for i, g in enumerate(self.groups) if g != "2023-24"]
+            if self.sup_groups
+            else list(range(len(self.groups)))
+        )
         indices = [g * ncp_facto + l for g in active_group_indices for l in range(n)]
         np.testing.assert_allclose(F.iloc[indices].abs(), P.abs())
 
@@ -170,7 +174,11 @@ class TestMFA:
         P = self.mfa.partial_contributions_
         n = self.mfa.n_components
         ncp_facto = F.shape[0] // len(self.groups)
-        active_group_indices = [i for i, g in enumerate(self.groups) if g != "2023-24"] if self.sup_groups else list(range(len(self.groups)))
+        active_group_indices = (
+            [i for i, g in enumerate(self.groups) if g != "2023-24"]
+            if self.sup_groups
+            else list(range(len(self.groups)))
+        )
         indices = [g * ncp_facto + l for g in active_group_indices for l in range(n)]
         # Renormalize contributions since we're comparing a subset of partial axes
         F_subset = F.iloc[indices]
