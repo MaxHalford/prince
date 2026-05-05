@@ -109,3 +109,92 @@ class TestMFA:
         F = load_df_from_R("mfa$ind$contrib").iloc[:, : self.mfa.n_components]
         P = self.mfa.row_contributions_
         np.testing.assert_allclose(F, P * 100)
+
+    def test_col_coords(self):
+        F = load_df_from_R("mfa$quanti.var$coord").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_coordinates_
+        if self.sup_groups:
+            sup_cols = [col for col in P.index if col[0] == "2023-24"]
+            P = P.drop(sup_cols)
+        np.testing.assert_allclose(F.abs(), P.abs())
+
+    def test_col_cor(self):
+        F = load_df_from_R("mfa$quanti.var$cor").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_correlations
+        if self.sup_groups:
+            sup_cols = [col for col in P.index if col[0] == "2023-24"]
+            P = P.drop(sup_cols)
+        np.testing.assert_allclose(F.abs(), P.abs())
+
+    def test_col_cos2(self):
+        F = load_df_from_R("mfa$quanti.var$cos2").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_cosine_similarities_
+        if self.sup_groups:
+            sup_cols = [col for col in P.index if col[0] == "2023-24"]
+            P = P.drop(sup_cols)
+        np.testing.assert_allclose(F, P)
+
+    def test_col_contrib(self):
+        F = load_df_from_R("mfa$quanti.var$contrib").iloc[:, : self.mfa.n_components]
+        P = self.mfa.column_contributions_
+        np.testing.assert_allclose(F, P * 100)
+
+    def test_group_coords(self):
+        F = load_df_from_R("mfa$group$coord").iloc[:, : self.mfa.n_components]
+        P = self.mfa.group_coordinates_
+        np.testing.assert_allclose(F, P)
+
+    def test_group_contrib(self):
+        F = load_df_from_R("mfa$group$contrib").iloc[:, : self.mfa.n_components]
+        P = self.mfa.group_contributions_
+        np.testing.assert_allclose(F, P * 100)
+
+    def test_group_cos2(self):
+        F = load_df_from_R("mfa$group$cos2").iloc[:, : self.mfa.n_components]
+        P = self.mfa.group_cosine_similarities_
+        np.testing.assert_allclose(F, P)
+
+    def test_partial_cor(self):
+        F = load_df_from_R("mfa$partial.axes$cor").iloc[:, : self.mfa.n_components]
+        P = self.mfa.partial_correlations_
+        # FactoMineR always includes all groups (active + supplementary) with ncp=5 per group.
+        # Select rows matching prince's active groups and n_components.
+        n = self.mfa.n_components
+        ncp_facto = F.shape[0] // len(self.groups)
+        active_group_indices = (
+            [i for i, g in enumerate(self.groups) if g != "2023-24"]
+            if self.sup_groups
+            else list(range(len(self.groups)))
+        )
+        indices = [g * ncp_facto + k for g in active_group_indices for k in range(n)]
+        np.testing.assert_allclose(F.iloc[indices].abs(), P.abs())
+
+    def test_partial_contrib(self):
+        F = load_df_from_R("mfa$partial.axes$contrib").iloc[:, : self.mfa.n_components]
+        P = self.mfa.partial_contributions_
+        n = self.mfa.n_components
+        ncp_facto = F.shape[0] // len(self.groups)
+        active_group_indices = (
+            [i for i, g in enumerate(self.groups) if g != "2023-24"]
+            if self.sup_groups
+            else list(range(len(self.groups)))
+        )
+        indices = [g * ncp_facto + k for g in active_group_indices for k in range(n)]
+        # Renormalize contributions since we're comparing a subset of partial axes
+        F_subset = F.iloc[indices]
+        F_renorm = F_subset / F_subset.sum(axis=0) * 100
+        np.testing.assert_allclose(F_renorm, P * 100)
+
+    def test_partial_row_coords(self):
+        F = load_df_from_R("mfa$ind$coord.partiel").iloc[:, : self.mfa.n_components]
+        P = self.mfa.partial_row_coordinates(self.dataset)
+
+        active_groups = [g for g in self.groups if not self.sup_groups or g != "2023-24"]
+        n_active_groups = len(active_groups)
+
+        for i, group in enumerate(active_groups):
+            F_group = F.iloc[i::n_active_groups]
+            P_group = P[group]
+            if self.sup_rows:
+                P_group = P_group.drop(["Manchester City", "Manchester United"])
+            np.testing.assert_allclose(F_group.abs().values, P_group.abs().values)
