@@ -431,7 +431,6 @@ class FAMD(pca.PCA):
 
         return self.column_coordinates_.loc[quanti]
 
-    @property
     @utils.check_is_fitted
     def column_cosine_similarities(self):
         """
