@@ -293,18 +293,29 @@ class FAMD(pca.PCA):
             self.modality_coordinates_sup_.index.name = "modality"
             self.modality_coordinates_sup_.columns.name = "component"
 
-        # ============================================================
-        # 11. Final coordinates
-        # ============================================================
+            # ============================================================
+            # 11. Final coordinates (with sup)
+            # ============================================================
 
-        self.column_coordinates_ = pd.concat(
-            [
-                self.numerical_coordinates_active_,
-                self.modality_coordinates_active_,
-                self.numerical_coordinates_sup_,
-                self.modality_coordinates_sup_,
-            ]
-        )
+            self.column_coordinates_ = pd.concat(
+                [
+                    self.numerical_coordinates_active_,
+                    self.modality_coordinates_active_,
+                    self.numerical_coordinates_sup_,
+                    self.modality_coordinates_sup_,
+                ]
+            )
+
+        else:
+            # ============================================================
+            # 11. Final coordinates (if no sup)
+            # ============================================================
+            self.column_coordinates_ = pd.concat(
+                [
+                    self.numerical_coordinates_active_,
+                    self.modality_coordinates_active_,
+                ]
+            )
 
         self.column_coordinates_.columns.name = "component"
 
