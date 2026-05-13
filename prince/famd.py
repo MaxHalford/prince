@@ -272,8 +272,8 @@ class FAMD(pca.PCA):
                     np.sqrt(self.eigenvalues_), axis=1
                 ) / len(X)
 
-            self.numerical_coordinates_sup_.index.name = "variable"
-            self.numerical_coordinates_sup_.columns.name = "component"
+                self.numerical_coordinates_sup_.index.name = "variable"
+                self.numerical_coordinates_sup_.columns.name = "component"
 
             # --------------------------------------------------------
             # supplementary categorical
@@ -290,8 +290,8 @@ class FAMD(pca.PCA):
 
                 self.modality_coordinates_sup_ = (G_sup.T @ F).div(G_sup.sum(axis=0), axis=0)
 
-            self.modality_coordinates_sup_.index.name = "modality"
-            self.modality_coordinates_sup_.columns.name = "component"
+                self.modality_coordinates_sup_.index.name = "modality"
+                self.modality_coordinates_sup_.columns.name = "component"
 
             # ============================================================
             # 11. Final coordinates (with sup)
