@@ -143,7 +143,9 @@ class FAMD(pca.PCA):
             dtype=float,
         )
         self.active_modalities_ = G_active.columns.tolist()
-        self.active_categories_ = {col: X_cat_active[col].astype(str).unique() for col in self.active_categorical_columns_}
+        self.active_categories_ = {
+            col: X_cat_active[col].astype(str).unique() for col in self.active_categorical_columns_
+        }
 
         p_active = G_active.mean(axis=0)
         self.active_modalities_proportions_ = p_active
@@ -207,26 +209,43 @@ class FAMD(pca.PCA):
             supplementary_columns=supplementary_preprocessed_columns,
         )
 
-        # Determine column_coordinates_
-        # This is based on line 184 in FactoMineR's famd.R file
-        rc = self.row_coordinates(X)
-        weights = np.ones(len(G_active)) / len(G_active)
-        norm = (rc**2).multiply(weights, axis=0).sum()
-        eta2_dict = {}
-        for col in self.active_categorical_columns_:
-            tt = G_active[[f"{col}_{c}" for c in self.active_categories_[col]]]
-            ni = (tt / len(tt)).sum()
-            eta2_dict[col] = (
-                rc.apply(lambda x: (tt.multiply(x * weights, axis=0).sum() ** 2 / ni).sum()) / norm
-            ).values
-        eta2_active = pd.DataFrame(eta2_dict, index=rc.columns)
-        # Save signed correlations for quantitative variables before squaring.
-        # For standardized data, PCA column_coordinates_ = V.T * sqrt(eig) = correlations.
-        # This corresponds to FactoMineR's quanti.var$coord.
-        self._quanti_var_coord = self.column_coordinates_.loc[self.active_numerical_columns_].copy()
-        self.active_column_coordinates_ = pd.concat([self._quanti_var_coord**2, eta2_active.T])
-        self.active_column_coordinates_.columns.name = "component"
-        self.active_column_coordinates_.index.name = "variable"
+        # 10. Row coordinates
+        self.row_coordinates_ = pd.DataFrame(
+            self.svd_.U * np.sqrt(self.eigenvalues_),
+            index=X.index,
+        )
+        self.row_coordinates_.columns.name = "component"
+
+        # 11. Column coordinates
+        self.column_coordinates_.columns.name = "component"
+
+        # 12. Active numerical coordinates
+        self.active_numerical_coordinates_ = self.column_coordinates_.loc[
+            self.active_numerical_columns_
+        ]
+        self.active_numerical_coordinates_.index.name = "variable"
+
+        # 13. Active categorical modality coordinates
+        self.active_modality_coordinates_ = self.column_coordinates_.loc[self.active_modalities_]
+        self.active_modality_coordinates_.index.name = "modality"
+
+        # 14. Supplementary numerical coordinates
+        self.supplementary_numerical_coordinates_ = pd.DataFrame()
+
+        if self.supplementary_numerical_columns_:
+            self.supplementary_numerical_coordinates_ = self.column_coordinates_.loc[
+                self.supplementary_numerical_columns_
+            ]
+            self.supplementary_numerical_coordinates_.index.name = "variable"
+
+        # 15. Supplementary categorical modality coordinates
+        self.supplementary_modality_coordinates_ = pd.DataFrame()
+
+        if self.supplementary_categorical_columns_:
+            self.supplementary_modality_coordinates_ = self.column_coordinates_.loc[
+                self.supplementary_categorical_modalities_
+            ]
+            self.supplementary_modality_coordinates_.index.name = "modality"
 
         return self
 
@@ -285,7 +304,12 @@ class FAMD(pca.PCA):
         For qualitative variables, signed correlations do not exist. The eta-squared (η²)
         values from column_coordinates_ are returned instead.
         """
-        return pd.concat([self._quanti_var_coord, self.column_coordinates_.loc[self.active_categorical_columns_]])
+        return pd.concat(
+            [
+                self.active_numerical_coordinates_,
+                self.column_coordinates_.loc[self.active_categorical_columns_],
+            ]
+        )
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
