@@ -252,30 +252,53 @@ class FAMD(pca.PCA):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_coordinates(self, X):
-        # Separate numerical columns from categorical columns
-        X_num = X[self.active_categorical_columns_].copy()
-        X_cat = X[self.active_categorical_columns_]
+        """Return the principal coordinates of the rows.
 
-        # Preprocess numerical columns
-        X_num[:] = self.active_numerical_scaler_.transform(X_num)
+        Only active variables are used to reconstruct the FAMD space.
+        Supplementary variables do not participate in the projection:
+        they are projected separately after the factor space is built.
+        """
+        # Preprocessing of dataset using fitting scalers
 
-        # Preprocess categorical columns
-        if self.handle_unknown == "error":
-            for col in self.active_categorical_columns_:
-                unknown = set(X_cat[col].astype(str).unique()) - set(self.active_categories_[col])
-                if unknown:
-                    raise ValueError(
-                        f"Found unknown categories {unknown} in column '{col}' during transform."
-                    )
-        X_cat = pd.get_dummies(X_cat.astype(str), dtype=float).reindex(
-            columns=self.supplementary_categorical_modalities_, fill_value=0
+        # Active numerical variables
+        X_num_active = X[self.active_numerical_columns_].copy()
+
+        Z_num_active = pd.DataFrame(
+            self.active_numerical_scaler_.transform(X_num_active),
+            index=X.index,
+            columns=self.active_numerical_columns_,
         )
-        prop = X_cat.mean()
-        X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
 
-        Z = pd.concat([X_num, X_cat], axis=1).fillna(0.0)
+        # Active categorical variables
+        X_cat_active = X[self.active_categorical_columns_].astype(str)
 
-        return super().row_coordinates(Z)
+        G_active = pd.get_dummies(
+            X_cat_active,
+            dtype=float,
+        )
+
+        # Align with training modalities
+        G_active = G_active.reindex(
+            columns=self.active_modalities_,
+            fill_value=0.0,
+        )
+
+        Z_cat_active = G_active.sub(
+            self.active_modalities_proportions_,
+            axis=1,
+        ).div(
+            np.sqrt(self.active_modalities_proportions_),
+            axis=1,
+        )
+
+        # Build active Z matrix
+        Z_active = pd.concat(
+            [Z_num_active, Z_cat_active],
+            axis=1,
+        )
+
+        # Project into PCA space
+        return super().row_coordinates(Z_active)
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
@@ -289,8 +312,13 @@ class FAMD(pca.PCA):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def row_cosine_similarities(self, X):
-        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
+    def row_cosine_similarities(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Cosine squared of individuals on principal components."""
+        F = self.row_coordinates(X)
+        F = F**2
+        denom = F.sum(axis=1)
+
+        return F.div(denom, axis=0)
 
     @property
     @utils.check_is_fitted
