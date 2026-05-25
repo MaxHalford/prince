@@ -333,30 +333,105 @@ class FAMD(pca.PCA):
 
         return F.div(denom, axis=0)
 
-    @property
     @utils.check_is_fitted
     def column_correlations(self):
-        """Correlations between variables and components.
+        """Pearson correlations between quantitative variables and principal components.
 
-        For quantitative variables, these are the signed Pearson correlations between
-        each standardized variable and each principal component (FactoMineR: quanti.var$coord).
-        These values form the correlation circle.
+        Correlation are given for active and supplementary variables.
+        For quantitative variables, these values correspond to classical PCA loadings,
+        i.e. correlations between standardized variables and axes.
 
-        For qualitative variables, signed correlations do not exist. The eta-squared (η²)
-        values from column_coordinates_ are returned instead.
+        Since categorical modalities are encoded as numerical variables, one can compute their
+        correlations with the principal components.
+        These correlations correspond to the modality coordinates multiplied by
+        the modality's standard deviation.
+
+        Correlations are not defined for categorical variables. For these variables,
+        interpretation is based on contributions (η²) rather than correlations.
         """
+        # Actives
+        # Numerical columns
+        active_correlation_num = self.active_numerical_coordinates_
+
+        # Modalities
+        active_p = self.active_modalities_proportions_
+        active_correlation_mod = self.active_modality_coordinates_.multiply(np.sqrt(active_p * (1 - active_p)), axis=0)
+        correlations = pd.concat([active_correlation_num, active_correlation_mod])
+
+        # Supplementary
+        # Numerical columns
+        if hasattr(self, "supplementary_numerical_columns_") and self.supplementary_numerical_columns_:
+            supplementary_correlation_num = self.supplementary_numerical_coordinates_
+            correlations = pd.concat([correlations, supplementary_correlation_num])
+
+        # Modalities
+        if hasattr(self, "supplementary_categorical_columns_") and self.supplementary_categorical_columns_:
+            sup_p = self.supplementary_modalities_proportions_
+            sup_correlation_mod = self.supplementary_modality_coordinates_.divided(np.sqrt(1 - sup_p), axis=0)
+            correlations = pd.concat([correlations, sup_correlation_mod])
+
+        return correlations
+
+    @utils.check_is_fitted
+    def column_cosine_similarities(self):
+        """Squared cosines (cos²) of variables and modalities with respect to principal components.
+
+        This quantity measures the quality of representation of each element on each axis.
+        For quantitative variables and modalities, cos² is defined as the squared Pearson
+        correlation between the standardized variable and each principal component.
+
+        Notes:
+            Cosine similarities are not directly defined for categorical variables.
+        """
+        return self.column_correlations() ** 2
+
+    @utils.check_is_fitted
+    def column_contributions(self, aggregate = True):
+        """Column contributions.
+
+        For quantitative variables:
+            contribution = (coordinate²) / eigenvalue
+
+        For modalities:
+            contribution = (proportion x coordinate²) / eigenvalue
+
+        If aggregate=True, categorical contributions are aggregated :
+            η² / eigenvalue (Pagès définition of η²)
+
+        Arguments:
+            aggregate: If True, returns variable-level contributions.
+                If False, returns modality-level contributions.
+
+        Returns:
+            DataFrame with contributions per component.
+        """
+        # Numerical columns
+        quanti_ctr = (self.active_numerical_coordinates_**2).div(self.eigenvalues_, axis=1)
+
+        # Modalities
+        modality_ctr = (self.active_modality_coordinates_**2).div(self.eigenvalues_, axis=1)
+
+        # Return modality level
+        if not aggregate:
+            return pd.concat(
+                [
+                    quanti_ctr,
+                    modality_ctr,
+                ]
+            )
+
+        # Aggregation to variable level
+        cat_ctr = {}
+
+        for var in self.active_categorical_columns_:
+            mods = [m for m in self.active_modalities_ if m.startswith(var + "_")]
+            cat_ctr[var] = modality_ctr.loc[mods].sum()
+        cat_ctr = pd.DataFrame.from_dict(cat_ctr, orient="index")
+
+        # Concat result
         return pd.concat(
             [
-                self.active_numerical_coordinates_,
-                self.column_coordinates_.loc[self.active_categorical_columns_],
+                quanti_ctr,
+                cat_ctr,
             ]
         )
-
-    @utils.check_is_dataframe_input
-    @utils.check_is_fitted
-    def column_cosine_similarities_(self, X):
-        raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
-
-    @property
-    def column_contributions_(self):
-        return self.column_coordinates_ / self.eigenvalues_
