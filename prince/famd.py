@@ -257,6 +257,12 @@ class FAMD(pca.PCA):
         Only active variables are used to reconstruct the FAMD space.
         Supplementary variables do not participate in the projection:
         they are projected separately after the factor space is built.
+
+        Arguments:
+            X: Dataset 
+        
+        Returns:
+            Dataframe of row coordinates
         """
         # Preprocessing of dataset using fitting scalers
 
@@ -312,8 +318,15 @@ class FAMD(pca.PCA):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def row_cosine_similarities(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Cosine squared of individuals on principal components."""
+    def row_cosine_similarities(self, X):
+        """Cosine squared of individuals on principal components.
+        
+        Arguments:
+            X: Dataset 
+        
+        Returns:
+            Dataframe of row cosine similarities.
+        """
         F = self.row_coordinates(X)
         F = F**2
         denom = F.sum(axis=1)
