@@ -41,6 +41,8 @@ def compute_svd(
     # Compute the SVD
     if engine == "fbpca":
         if FBPCA_INSTALLED:
+            if random_state:
+                np.random.seed(random_state)
             U, s, V = fbpca.pca(X, k=n_components, n_iter=n_iter)
         else:
             raise ValueError("fbpca is not installed; please install it if you want to use it")
