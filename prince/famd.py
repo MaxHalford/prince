@@ -355,7 +355,7 @@ class FAMD(pca.PCA):
 
         # Modalities
         active_p = self.active_modalities_proportions_
-        active_correlation_mod = self.active_modality_coordinates_.multiply(np.sqrt(active_p * (1 - active_p)), axis=0)
+        active_correlation_mod = self.active_modality_coordinates_.multiply(np.sqrt(1 - active_p), axis=0)
         correlations = pd.concat([active_correlation_num, active_correlation_mod])
 
         # Supplementary
