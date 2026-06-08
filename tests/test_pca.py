@@ -166,16 +166,16 @@ class TestPCA:
 
     def test_col_coords(self):
         F = load_df_from_R("pca$var$coord")
-        P = self.pca.column_coordinates_
         if self.sup_cols:
-            P = P.drop(["rank", "points"])
+            F = pd.concat((F, load_df_from_R("pca$quanti.sup$coord")))
+        P = self.pca.column_coordinates_
         np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_col_cos2(self):
         F = load_df_from_R("pca$var$cos2")
-        P = self.pca.column_cosine_similarities_
         if self.sup_cols:
-            P = P.drop(["rank", "points"])
+            F = pd.concat((F, load_df_from_R("pca$quanti.sup$cos2")))
+        P = self.pca.column_cosine_similarities_
         np.testing.assert_allclose(F, P)
 
     def test_col_contrib(self):
