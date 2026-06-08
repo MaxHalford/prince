@@ -182,3 +182,10 @@ class TestPCA:
         F = load_df_from_R("pca$var$contrib")
         P = self.pca.column_contributions_
         np.testing.assert_allclose(F, P * 100)
+
+    def test_col_cor(self):
+        F = load_df_from_R("pca$var$cor")
+        if self.sup_cols:
+            F = pd.concat((F, load_df_from_R("pca$quanti.sup$cor")))
+        P = self.pca.column_correlations
+        np.testing.assert_allclose(F.abs(), P.abs())
