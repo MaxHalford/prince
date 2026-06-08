@@ -187,14 +187,22 @@ class TestMFA:
 
     def test_partial_row_coords(self):
         F = load_df_from_R("mfa$ind$coord.partiel").iloc[:, : self.mfa.n_components]
+        if self.sup_rows:
+            F_sup = load_df_from_R("mfa$ind.sup$coord.partiel").iloc[:, : self.mfa.n_components]
         P = self.mfa.partial_row_coordinates(self.dataset)
 
         active_groups = [g for g in self.groups if not self.sup_groups or g != "2023-24"]
         n_active_groups = len(active_groups)
+        sup_rows = ["Manchester City", "Manchester United"]
 
         for i, group in enumerate(active_groups):
             F_group = F.iloc[i::n_active_groups]
             P_group = P[group]
             if self.sup_rows:
-                P_group = P_group.drop(["Manchester City", "Manchester United"])
-            np.testing.assert_allclose(F_group.abs().values, P_group.abs().values)
+                P_group_active = P_group.drop(sup_rows)
+                np.testing.assert_allclose(F_group.abs().values, P_group_active.abs().values)
+                F_sup_group = F_sup.iloc[i::n_active_groups]
+                P_sup_group = P_group.loc[sup_rows]
+                np.testing.assert_allclose(F_sup_group.abs().values, P_sup_group.abs().values)
+            else:
+                np.testing.assert_allclose(F_group.abs().values, P_group.abs().values)
