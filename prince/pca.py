@@ -107,15 +107,11 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             ).fit(X_active, sample_weight=sample_weight)
             X_active = self.scaler_.transform(X_active)  # TODO: maybe fit_transform is faster
             if supplementary_columns:
-                X_sup = (
-                    preprocessing.StandardScaler(
-                        copy=self.copy,
-                        with_mean=self.rescale_with_mean,
-                        with_std=self.rescale_with_std,
-                    )
-                    .fit(X_sup, sample_weight=sample_weight)
-                    .transform(X_sup)
-                )
+                X_sup = preprocessing.StandardScaler(
+                    copy=self.copy,
+                    with_mean=self.rescale_with_mean,
+                    with_std=self.rescale_with_std,
+                ).fit_transform(X_sup, sample_weight=sample_weight)
 
         self._column_dist = pd.Series(
             (X_active**2 * sample_weight[:, np.newaxis]).sum(axis=0),
