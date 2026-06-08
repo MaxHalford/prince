@@ -112,26 +112,26 @@ class TestMFA:
 
     def test_col_coords(self):
         F = load_df_from_R("mfa$quanti.var$coord").iloc[:, : self.mfa.n_components]
-        P = self.mfa.column_coordinates_
         if self.sup_groups:
-            sup_cols = [col for col in P.index if col[0] == "2023-24"]
-            P = P.drop(sup_cols)
+            F_sup = load_df_from_R("mfa$quanti.var.sup$coord").iloc[:, : self.mfa.n_components]
+            F = pd.concat((F, F_sup))
+        P = self.mfa.column_coordinates_
         np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_col_cor(self):
         F = load_df_from_R("mfa$quanti.var$cor").iloc[:, : self.mfa.n_components]
-        P = self.mfa.column_correlations
         if self.sup_groups:
-            sup_cols = [col for col in P.index if col[0] == "2023-24"]
-            P = P.drop(sup_cols)
+            F_sup = load_df_from_R("mfa$quanti.var.sup$cor").iloc[:, : self.mfa.n_components]
+            F = pd.concat((F, F_sup))
+        P = self.mfa.column_correlations
         np.testing.assert_allclose(F.abs(), P.abs())
 
     def test_col_cos2(self):
         F = load_df_from_R("mfa$quanti.var$cos2").iloc[:, : self.mfa.n_components]
-        P = self.mfa.column_cosine_similarities_
         if self.sup_groups:
-            sup_cols = [col for col in P.index if col[0] == "2023-24"]
-            P = P.drop(sup_cols)
+            F_sup = load_df_from_R("mfa$quanti.var.sup$cos2").iloc[:, : self.mfa.n_components]
+            F = pd.concat((F, F_sup))
+        P = self.mfa.column_cosine_similarities_
         np.testing.assert_allclose(F, P)
 
     def test_col_contrib(self):
