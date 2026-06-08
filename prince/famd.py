@@ -53,7 +53,7 @@ class FAMD(pca.PCA):
             engine=engine,
         )
         self.handle_unknown = handle_unknown
-        categorical_columns = categorical_columns or []
+        categorical_columns = [] if categorical_columns is None else categorical_columns
         self.categorical_columns = categorical_columns
 
     def _check_input(self, X):
