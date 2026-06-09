@@ -393,7 +393,7 @@ class FAMD(pca.PCA):
             contribution = (coordinate²) / eigenvalue
 
         For modalities:
-            contribution = (proportion x coordinate²) / eigenvalue
+            contribution = (coordinate²) / eigenvalue
 
         If aggregate=True, categorical contributions are aggregated :
             η² / eigenvalue (Pagès définition of η²)
