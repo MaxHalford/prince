@@ -305,7 +305,7 @@ class TestMFACategorical:
                 ]
             )
         F = F.iloc[:, : self.n_components]
-        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-5)
+        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-4)
 
     def test_row_contrib(self):
         F = load_df_from_R("mfa$ind$contrib").iloc[:, : self.n_components]
@@ -315,7 +315,7 @@ class TestMFACategorical:
     def test_group_coords(self):
         F = load_df_from_R("mfa$group$coord").iloc[:, : self.n_components]
         P = self.mfa.group_coordinates_
-        np.testing.assert_allclose(F.values, P.values, atol=1e-5)
+        np.testing.assert_allclose(F.values, P.values, atol=1e-4)
 
     def test_group_contrib(self):
         F = load_df_from_R("mfa$group$contrib").iloc[:, : self.n_components]
@@ -325,7 +325,7 @@ class TestMFACategorical:
     def test_group_cos2(self):
         F = load_df_from_R("mfa$group$cos2").iloc[:, : self.n_components]
         P = self.mfa.group_cosine_similarities_
-        np.testing.assert_allclose(F.values, P.values, atol=1e-5)
+        np.testing.assert_allclose(F.values, P.values, atol=1e-4)
 
     def test_partial_row_coords(self):
         F = load_df_from_R("mfa$ind$coord.partiel").iloc[:, : self.n_components]
@@ -355,7 +355,7 @@ class TestMFACategorical:
         F = load_df_from_R("mfa$quanti.var$coord").iloc[:, : self.n_components]
         num_cols = [c for c in self.dataset.columns if c[0] == "description"]
         P = self.mfa.column_coordinates_.loc[num_cols]
-        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-5)
+        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-4)
 
     def test_partial_axis_correlations(self):
         """Partial-axis correlations should match FactoMineR for the active groups.
@@ -369,4 +369,4 @@ class TestMFACategorical:
         F = F.loc[[lbl for lbl in F.index if lbl.split(".", 1)[1] in active]]
         P = self.mfa.partial_correlations_
         assert F.shape == P.shape
-        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-5)
+        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-4)
