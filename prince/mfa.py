@@ -67,9 +67,7 @@ class MFA(pca.PCA, collections.UserDict):
             )
             if not (all_num or all_cat):
                 raise ValueError(f'Not all columns in "{group}" group are of the same type')
-            self.group_types_[group] = (
-                GroupType.NUMERICAL if all_num else GroupType.CATEGORICAL
-            )
+            self.group_types_[group] = GroupType.NUMERICAL if all_num else GroupType.CATEGORICAL
 
         # Fit a factor analysis in each group and record per-group preprocessing.
         # Numeric groups use PCA (centering / standardization controlled by self.rescale_*).
@@ -89,16 +87,8 @@ class MFA(pca.PCA, collections.UserDict):
                     engine=self.engine,
                 ).fit(X_g)
                 if hasattr(fa, "scaler_"):
-                    mean = (
-                        fa.scaler_.mean_
-                        if self.rescale_with_mean
-                        else np.zeros(len(cols))
-                    )
-                    scale = (
-                        fa.scaler_.scale_
-                        if self.rescale_with_std
-                        else np.ones(len(cols))
-                    )
+                    mean = fa.scaler_.mean_ if self.rescale_with_mean else np.zeros(len(cols))
+                    scale = fa.scaler_.scale_ if self.rescale_with_std else np.ones(len(cols))
                 else:
                     mean = np.zeros(len(cols))
                     scale = np.ones(len(cols))
@@ -142,9 +132,7 @@ class MFA(pca.PCA, collections.UserDict):
         Z = self._build_Z(X)
 
         sup_groups = getattr(self, "supplementary_groups_", [])
-        sup_columns = [
-            name for g in sup_groups for name in self._group_preproc_[g]["output_names"]
-        ]
+        sup_columns = [name for g in sup_groups for name in self._group_preproc_[g]["output_names"]]
 
         # Column weights make each group contribute the same first-eigenvalue inertia (1).
         # For a numerical group this is 1/lambda_1 per column (FactoMineR type "s").
@@ -201,9 +189,7 @@ class MFA(pca.PCA, collections.UserDict):
         # Precompute integer column positions for fast slicing in transform methods.
         # Z is built group-by-group in self.groups_ order, so this matches Z's layout.
         all_z_cols = [
-            name
-            for group in self.groups_
-            for name in self._group_preproc_[group]["output_names"]
+            name for group in self.groups_ for name in self._group_preproc_[group]["output_names"]
         ]
         z_col_map = {c: i for i, c in enumerate(all_z_cols)}
         self._z_col_indices_ = np.array([z_col_map[c] for c in Z.columns])

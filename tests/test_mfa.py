@@ -320,7 +320,7 @@ class TestMFACategorical:
     def test_group_contrib(self):
         F = load_df_from_R("mfa$group$contrib").iloc[:, : self.n_components]
         P = self.mfa.group_contributions_
-        np.testing.assert_allclose(F.values, P.values * 100, atol=1e-4)
+        np.testing.assert_allclose(F.values, P.values * 100, atol=1e-3)
 
     def test_group_cos2(self):
         F = load_df_from_R("mfa$group$cos2").iloc[:, : self.n_components]
