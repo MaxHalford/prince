@@ -145,3 +145,39 @@ def load_premier_league():
 
     """
     return pd.read_csv(DATASETS_DIR / "premier_league.csv", index_col=0, header=[0, 1])
+
+
+def load_poison():
+    """The Poison dataset from FactoMineR.
+
+    Survey of 55 children who fell sick during a school meal. The first two columns are
+    numeric (``Age``, ``Time`` before symptoms appeared), the rest are categorical:
+    whether the child fell sick, sex, the symptoms they experienced, and the foods they
+    ate. This dataset is a textbook example for MFA with categorical groups.
+
+    The columns are a ``MultiIndex`` grouping the variables into four groups:
+    ``description`` (numerical), ``illness`` (categorical), ``symptoms`` (categorical),
+    and ``foods`` (categorical), so it can be passed directly to :class:`prince.MFA`.
+
+    """
+    df = pd.read_csv(DATASETS_DIR / "poison.csv")
+    df.columns = pd.MultiIndex.from_tuples(
+        [
+            ("description", "Age"),
+            ("description", "Time"),
+            ("illness", "Sick"),
+            ("illness", "Sex"),
+            ("symptoms", "Nausea"),
+            ("symptoms", "Vomiting"),
+            ("symptoms", "Abdominals"),
+            ("symptoms", "Fever"),
+            ("symptoms", "Diarrhae"),
+            ("foods", "Potato"),
+            ("foods", "Fish"),
+            ("foods", "Mayo"),
+            ("foods", "Courgette"),
+            ("foods", "Cheese"),
+            ("foods", "Icecream"),
+        ]
+    )
+    return df

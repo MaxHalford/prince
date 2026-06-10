@@ -110,14 +110,14 @@ pip install prince
 
 ```mermaid
 flowchart TD
-    cat?(Categorical data?) --> |"✅"| num_too?(Numerical data too?)
+    groups?(Groups of columns?) --> |"✅"| MFA
+    groups? --> |"❌"| cat?(Categorical data?)
+    cat? --> |"✅"| num_too?(Numerical data too?)
     num_too? --> |"✅"| FAMD
     num_too? --> |"❌"| multiple_cat?(More than two columns?)
     multiple_cat? --> |"✅"| MCA
     multiple_cat? --> |"❌"| CA
-    cat? --> |"❌"| groups?(Groups of columns?)
-    groups? --> |"✅"| MFA
-    groups? --> |"❌"| shapes?(Analysing shapes?)
+    cat? --> |"❌"| shapes?(Analysing shapes?)
     shapes? --> |"✅"| GPA
     shapes? --> |"❌"| manifold?(Data on a manifold?)
     manifold? --> |"✅"| PGA

@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 import collections
+import enum
 
 import altair as alt
 import numpy as np
 import pandas as pd
 
-from prince import pca, utils
+from prince import mca, pca, utils
+
+
+class GroupType(enum.Enum):
+    """Type of variables in an MFA group.
+
+    A group must be homogeneous: every column in it is either numerical (PCA-style)
+    or categorical (MCA-style). Mixed groups are not supported.
+    """
+
+    NUMERICAL = "numerical"
+    CATEGORICAL = "categorical"
 
 
 class MFA(pca.PCA, collections.UserDict):
@@ -46,17 +58,27 @@ class MFA(pca.PCA, collections.UserDict):
             self.supplementary_groups_ = supplementary_groups
 
         # Check group types are consistent
-        self.all_nums_ = {}
+        self.group_types_ = {}
         for group, cols in sorted(self.groups_.items()):
             all_num = all(pd.api.types.is_numeric_dtype(X[c]) for c in cols)
-            all_cat = all(pd.api.types.is_string_dtype(X[c]) for c in cols)
+            all_cat = all(
+                pd.api.types.is_string_dtype(X[c]) or isinstance(X[c].dtype, pd.CategoricalDtype)
+                for c in cols
+            )
             if not (all_num or all_cat):
                 raise ValueError(f'Not all columns in "{group}" group are of the same type')
-            self.all_nums_[group] = all_num
+            self.group_types_[group] = (
+                GroupType.NUMERICAL if all_num else GroupType.CATEGORICAL
+            )
 
-        # Run a factor analysis in each group
+        # Fit a factor analysis in each group and record per-group preprocessing.
+        # Numeric groups use PCA (centering / standardization controlled by self.rescale_*).
+        # Categorical groups use MCA on an indicator matrix; the corresponding block of Z is
+        # built by centering each indicator column and dividing by sqrt(p_j), as in FactoMineR.
+        self._group_preproc_ = {}
         for group, cols in sorted(self.groups_.items()):
-            if self.all_nums_[group]:
+            X_g = X.loc[:, cols]
+            if self.group_types_[group] is GroupType.NUMERICAL:
                 fa = pca.PCA(
                     rescale_with_mean=self.rescale_with_mean,
                     rescale_with_std=self.rescale_with_std,
@@ -65,53 +87,131 @@ class MFA(pca.PCA, collections.UserDict):
                     copy=True,
                     random_state=self.random_state,
                     engine=self.engine,
-                )
+                ).fit(X_g)
+                if hasattr(fa, "scaler_"):
+                    mean = (
+                        fa.scaler_.mean_
+                        if self.rescale_with_mean
+                        else np.zeros(len(cols))
+                    )
+                    scale = (
+                        fa.scaler_.scale_
+                        if self.rescale_with_std
+                        else np.ones(len(cols))
+                    )
+                else:
+                    mean = np.zeros(len(cols))
+                    scale = np.ones(len(cols))
+                self._group_preproc_[group] = {
+                    "type": GroupType.NUMERICAL,
+                    "cols": list(cols),
+                    "mean": np.asarray(mean, dtype=np.float64),
+                    "scale": np.asarray(scale, dtype=np.float64),
+                    "output_names": list(cols),
+                }
             else:
-                raise NotImplementedError("Groups of non-numerical variables are not supported yet")
-            self[group] = fa.fit(X.loc[:, cols])
+                fa = mca.MCA(
+                    n_components=self.n_components,
+                    n_iter=self.n_iter,
+                    copy=True,
+                    random_state=self.random_state,
+                    engine=self.engine,
+                ).fit(X_g)
+                indicator = pd.get_dummies(
+                    X_g, columns=list(X_g.columns), prefix_sep="__", dtype=float
+                )
+                prop = indicator.mean(axis=0).to_numpy(dtype=np.float64)
+                # FactoMineR's "type='n'" normalization: each indicator column is centered
+                # and standardized (dividing by sqrt(p_j*(1-p_j))) so each column has variance 1.
+                scale = np.sqrt(prop * (1 - prop))
+                scale[scale <= 1e-12] = 1.0
+                self._group_preproc_[group] = {
+                    "type": GroupType.CATEGORICAL,
+                    "cols": list(cols),
+                    "indicator_columns": list(indicator.columns),
+                    "prop": prop,
+                    "mean": prop,
+                    "scale": scale,
+                    "n_vars": len(cols),
+                    "output_names": list(indicator.columns),
+                }
+            self[group] = fa
 
-        # Compute group squared distances (Lg coefficient) using all eigenvalues.
-        # trace(S^2) / eigenvalue_1^2, where S is the weighted covariance of the group data.
+        # Build the pre-scaled global Z. Each block is already centered and normalized so
+        # the global PCA below runs with no further scaling.
+        Z = self._build_Z(X)
+
+        sup_groups = getattr(self, "supplementary_groups_", [])
+        sup_columns = [
+            name for g in sup_groups for name in self._group_preproc_[g]["output_names"]
+        ]
+
+        # Column weights make each group contribute the same first-eigenvalue inertia (1).
+        # For a numerical group this is 1/lambda_1 per column (FactoMineR type "s").
+        # For a categorical group it is (1-p_j)/(lambda_1*Q) per indicator column
+        # (FactoMineR type "n"): with the variance-1 normalization above, that yields
+        # group block inertia equal to MCA_total_inertia / lambda_1.
+        active_blocks = []
+        for group in self.groups_:
+            if group in sup_groups:
+                continue
+            prep = self._group_preproc_[group]
+            lambda_1 = self[group].eigenvalues_[0]
+            if prep["type"] is GroupType.NUMERICAL:
+                active_blocks.append(np.full(len(prep["output_names"]), 1.0 / lambda_1))
+            else:
+                active_blocks.append((1 - prep["prop"]) / (lambda_1 * prep["n_vars"]))
+        column_weights = np.concatenate(active_blocks) if active_blocks else np.array([])
+
+        # Compute group squared distances (Lg(group, group)) using the pre-scaled block
+        # and the column weights, matching FactoMineR's funcLg formula:
+        #   Lg = sum_{j,k} cov(Z_j, Z_k)^2 * w_j * w_k
+        # For numerical groups the column weight is constant 1/lambda_1, recovering the
+        # trace(S^2)/lambda_1^2 formula. For categorical groups the per-column weight
+        # (1-p_j)/(lambda_1*Q) varies, so we apply it explicitly.
         self._group_dist2_ = {}
         n = len(X)
-        for group, cols in self.groups_.items():
-            if group in (supplementary_groups or []):
+        offset = 0
+        for group in self.groups_:
+            if group in sup_groups:
                 continue
-            group_pca = self[group]
-            X_g = X.loc[:, cols].to_numpy(dtype=np.float64)
-            if self.rescale_with_mean or self.rescale_with_std:
-                X_g = group_pca.scaler_.transform(X_g)
-            S = X_g.T @ X_g / n
-            self._group_dist2_[group] = np.sum(S**2) / group_pca.eigenvalues_[0] ** 2
+            block_cols = self._group_preproc_[group]["output_names"]
+            Z_g = Z.loc[:, block_cols].to_numpy(dtype=np.float64)
+            S = Z_g.T @ Z_g / n
+            w = column_weights[offset : offset + len(block_cols)]
+            self._group_dist2_[group] = float((S**2 * np.outer(w, w)).sum())
+            offset += len(block_cols)
 
-        # Fit the global PCA
-        Z = self._build_Z(X)
-        sup_groups = getattr(self, "supplementary_groups_", [])
-        column_weights = np.array(
-            [
-                1 / self[group].eigenvalues_[0]
-                for group, cols in self.groups_.items()
-                for _ in cols
-                if group not in sup_groups
-            ]
-        )
-        super().fit(
-            Z,
-            column_weight=column_weights,
-            supplementary_columns=[
-                column for group in sup_groups for column in self.groups_[group]
-            ],
-        )
+        # The global PCA sees an already-scaled Z, so disable its scaler. We restore the
+        # user-provided flags afterward so they remain inspectable on the fitted instance.
+        prev_rescale_mean = self.rescale_with_mean
+        prev_rescale_std = self.rescale_with_std
+        self.rescale_with_mean = False
+        self.rescale_with_std = False
+        try:
+            super().fit(
+                Z,
+                column_weight=column_weights,
+                supplementary_columns=sup_columns,
+            )
+        finally:
+            self.rescale_with_mean = prev_rescale_mean
+            self.rescale_with_std = prev_rescale_std
 
-        # Precompute integer column positions so transform methods can skip
-        # DataFrame column lookups and work directly on numpy arrays.
-        all_z_cols = [col for _, cols in self.groups_.items() for col in cols]
-        x_col_map = {c: i for i, c in enumerate(X.columns)}
-        self._z_col_indices_ = np.array([x_col_map[c] for c in all_z_cols])
+        # Precompute integer column positions for fast slicing in transform methods.
+        # Z is built group-by-group in self.groups_ order, so this matches Z's layout.
+        all_z_cols = [
+            name
+            for group in self.groups_
+            for name in self._group_preproc_[group]["output_names"]
+        ]
+        z_col_map = {c: i for i, c in enumerate(all_z_cols)}
+        self._z_col_indices_ = np.array([z_col_map[c] for c in Z.columns])
 
         active_col_map = {c: i for i, c in enumerate(self.feature_names_in_)}
         self._group_col_indices_ = {}
-        for group, names in self._active_groups().items():
+        for group in self._active_groups():
+            names = self._group_preproc_[group]["output_names"]
             self._group_col_indices_[group] = np.array([active_col_map[n] for n in names])
 
         return self
@@ -140,23 +240,39 @@ class MFA(pca.PCA, collections.UserDict):
         return groups
 
     def _build_Z(self, X):
-        return pd.concat(
-            (X[cols] for _, cols in self.groups_.items()),
-            axis="columns",
-        )
+        """Build the global pre-scaled Z block by applying each group's preprocessing.
+
+        Active groups come first and supplementary groups are appended at the end,
+        so downstream slicing of the active block via ``Z[:, :n_active]`` is correct
+        even when the user interleaves a supplementary group between active groups.
+        """
+        sup_groups = getattr(self, "supplementary_groups_", [])
+        active = [g for g in self.groups_ if g not in sup_groups]
+        sup = [g for g in self.groups_ if g in sup_groups]
+        blocks = [self._scale_group(X, group) for group in active + sup]
+        return pd.concat(blocks, axis="columns")
+
+    def _scale_group(self, X, group):
+        """Apply the fitted per-group preprocessing to produce that group's Z block."""
+        prep = self._group_preproc_[group]
+        X_g = X.loc[:, prep["cols"]]
+        if prep["type"] is GroupType.NUMERICAL:
+            arr = (X_g.to_numpy(dtype=np.float64) - prep["mean"]) / prep["scale"]
+        else:
+            indicator = pd.get_dummies(
+                X_g.astype(str), columns=list(X_g.columns), prefix_sep="__", dtype=float
+            ).reindex(columns=prep["indicator_columns"], fill_value=0.0)
+            arr = (indicator.to_numpy(dtype=np.float64) - prep["mean"]) / prep["scale"]
+        return pd.DataFrame(arr, index=X.index, columns=prep["output_names"])
 
     def _extract_Z_numpy(self, X):
-        """Extract Z as a numpy array using precomputed column indices (fast path)."""
-        X_np = np.asarray(X, dtype=np.float64)
-        return X_np[:, self._z_col_indices_]
+        """Extract the pre-scaled Z as a numpy array, in active-then-supplementary order."""
+        return self._build_Z(X).to_numpy(dtype=np.float64)
 
     def _scale_active_numpy(self, Z_np):
-        """Scale the active columns of Z using the fitted scaler (numpy-only path)."""
+        """Return the active columns of Z. Z is already pre-scaled, so this is a slice."""
         n_active = len(self.feature_names_in_)
-        Z_active = Z_np[:, :n_active]
-        if hasattr(self, "scaler_"):
-            return self.scaler_.transform(Z_active)
-        return Z_active.copy()
+        return Z_np[:, :n_active]
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
@@ -230,10 +346,15 @@ class MFA(pca.PCA, collections.UserDict):
         )
 
     def _active_groups(self):
+        """Mapping of active group name → list of its columns in Z (output names).
+
+        For numerical groups the output names are the original column names; for
+        categorical groups they are the indicator (one-hot) column names.
+        """
         supplementary_groups = getattr(self, "supplementary_groups_", [])
         return {
-            group: names
-            for group, names in self.groups_.items()
+            group: self._group_preproc_[group]["output_names"]
+            for group in self.groups_
             if group not in supplementary_groups
         }
 
@@ -283,21 +404,31 @@ class MFA(pca.PCA, collections.UserDict):
         n_active = len(self.svd_.U)
         row_weights = np.full(n_active, 1.0 / n_active)
         n_comp = self.n_components
-        n_cols = len(active_groups) * n_comp
 
-        tab = np.empty((n_active, n_cols))
+        # Categorical groups have at most (J - Q) non-trivial dimensions; the SVD may
+        # still return additional near-zero eigenvalues. We emit a row per dimension
+        # whose eigenvalue is non-trivial (matches FactoMineR), rather than padding
+        # shorter groups with phantom rows.
+        eig_trivial = 1e-12
+        blocks = []
         labels = []
-        eig_ratios = np.empty(n_cols)
-        col = 0
+        eig_ratios_list = []
         for group in active_groups:
             group_pca = self[group]
-            tab[:, col : col + n_comp] = (
-                group_pca.svd_.U[:, :n_comp] * group_pca.eigenvalues_[:n_comp] ** 0.5
+            group_eigs = group_pca.eigenvalues_
+            k_avail = min(
+                n_comp,
+                group_pca.svd_.U.shape[1],
+                int(np.sum(group_eigs > group_eigs[0] * eig_trivial)),
             )
-            for k in range(n_comp):
+            if k_avail == 0:
+                continue
+            blocks.append(group_pca.svd_.U[:, :k_avail] * group_eigs[:k_avail] ** 0.5)
+            for k in range(k_avail):
                 labels.append((group, k))
-                eig_ratios[col + k] = group_pca.eigenvalues_[k] / group_pca.eigenvalues_[0]
-            col += n_comp
+                eig_ratios_list.append(group_eigs[k] / group_eigs[0])
+        tab = np.concatenate(blocks, axis=1) if blocks else np.zeros((n_active, 0))
+        eig_ratios = np.array(eig_ratios_list)
 
         # Center and standardize with row weights
         weighted_mean = (tab * row_weights[:, np.newaxis]).sum(axis=0)
