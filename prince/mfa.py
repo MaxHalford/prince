@@ -73,7 +73,7 @@ class MFA(pca.PCA, collections.UserDict):
         # Numeric groups use PCA (centering / standardization controlled by self.rescale_*).
         # Categorical groups use MCA on an indicator matrix; the corresponding block of Z is
         # built by centering each indicator column and dividing by sqrt(p_j), as in FactoMineR.
-        self._group_preproc_ = {}
+        self._group_preprocessing_ = {}
         for group, cols in sorted(self.groups_.items()):
             X_g = X.loc[:, cols]
             if self.group_types_[group] is GroupType.NUMERICAL:
@@ -92,7 +92,7 @@ class MFA(pca.PCA, collections.UserDict):
                 else:
                     mean = np.zeros(len(cols))
                     scale = np.ones(len(cols))
-                self._group_preproc_[group] = {
+                self._group_preprocessing_[group] = {
                     "type": GroupType.NUMERICAL,
                     "cols": list(cols),
                     "mean": np.asarray(mean, dtype=np.float64),
@@ -115,7 +115,7 @@ class MFA(pca.PCA, collections.UserDict):
                 # and standardized (dividing by sqrt(p_j*(1-p_j))) so each column has variance 1.
                 scale = np.sqrt(prop * (1 - prop))
                 scale[scale <= 1e-12] = 1.0
-                self._group_preproc_[group] = {
+                self._group_preprocessing_[group] = {
                     "type": GroupType.CATEGORICAL,
                     "cols": list(cols),
                     "indicator_columns": list(indicator.columns),
@@ -132,7 +132,9 @@ class MFA(pca.PCA, collections.UserDict):
         Z = self._build_Z(X)
 
         sup_groups = getattr(self, "supplementary_groups_", [])
-        sup_columns = [name for g in sup_groups for name in self._group_preproc_[g]["output_names"]]
+        sup_columns = [
+            name for g in sup_groups for name in self._group_preprocessing_[g]["output_names"]
+        ]
 
         # Column weights make each group contribute the same first-eigenvalue inertia (1).
         # For a numerical group this is 1/lambda_1 per column (FactoMineR type "s").
@@ -143,12 +145,14 @@ class MFA(pca.PCA, collections.UserDict):
         for group in self.groups_:
             if group in sup_groups:
                 continue
-            prep = self._group_preproc_[group]
+            preprocessing = self._group_preprocessing_[group]
             lambda_1 = self[group].eigenvalues_[0]
-            if prep["type"] is GroupType.NUMERICAL:
-                active_blocks.append(np.full(len(prep["output_names"]), 1.0 / lambda_1))
+            if preprocessing["type"] is GroupType.NUMERICAL:
+                active_blocks.append(np.full(len(preprocessing["output_names"]), 1.0 / lambda_1))
             else:
-                active_blocks.append((1 - prep["prop"]) / (lambda_1 * prep["n_vars"]))
+                active_blocks.append(
+                    (1 - preprocessing["prop"]) / (lambda_1 * preprocessing["n_vars"])
+                )
         column_weights = np.concatenate(active_blocks) if active_blocks else np.array([])
 
         # Compute group squared distances (Lg(group, group)) using the pre-scaled block
@@ -163,7 +167,7 @@ class MFA(pca.PCA, collections.UserDict):
         for group in self.groups_:
             if group in sup_groups:
                 continue
-            block_cols = self._group_preproc_[group]["output_names"]
+            block_cols = self._group_preprocessing_[group]["output_names"]
             Z_g = Z.loc[:, block_cols].to_numpy(dtype=np.float64)
             S = Z_g.T @ Z_g / n
             w = column_weights[offset : offset + len(block_cols)]
@@ -189,7 +193,9 @@ class MFA(pca.PCA, collections.UserDict):
         # Precompute integer column positions for fast slicing in transform methods.
         # Z is built group-by-group in self.groups_ order, so this matches Z's layout.
         all_z_cols = [
-            name for group in self.groups_ for name in self._group_preproc_[group]["output_names"]
+            name
+            for group in self.groups_
+            for name in self._group_preprocessing_[group]["output_names"]
         ]
         z_col_map = {c: i for i, c in enumerate(all_z_cols)}
         self._z_col_indices_ = np.array([z_col_map[c] for c in Z.columns])
@@ -197,7 +203,7 @@ class MFA(pca.PCA, collections.UserDict):
         active_col_map = {c: i for i, c in enumerate(self.feature_names_in_)}
         self._group_col_indices_ = {}
         for group in self._active_groups():
-            names = self._group_preproc_[group]["output_names"]
+            names = self._group_preprocessing_[group]["output_names"]
             self._group_col_indices_[group] = np.array([active_col_map[n] for n in names])
 
         return self
@@ -240,16 +246,18 @@ class MFA(pca.PCA, collections.UserDict):
 
     def _scale_group(self, X, group):
         """Apply the fitted per-group preprocessing to produce that group's Z block."""
-        prep = self._group_preproc_[group]
-        X_g = X.loc[:, prep["cols"]]
-        if prep["type"] is GroupType.NUMERICAL:
-            arr = (X_g.to_numpy(dtype=np.float64) - prep["mean"]) / prep["scale"]
+        preprocessing = self._group_preprocessing_[group]
+        X_g = X.loc[:, preprocessing["cols"]]
+        if preprocessing["type"] is GroupType.NUMERICAL:
+            arr = (X_g.to_numpy(dtype=np.float64) - preprocessing["mean"]) / preprocessing["scale"]
         else:
             indicator = pd.get_dummies(
                 X_g.astype(str), columns=list(X_g.columns), prefix_sep="__", dtype=float
-            ).reindex(columns=prep["indicator_columns"], fill_value=0.0)
-            arr = (indicator.to_numpy(dtype=np.float64) - prep["mean"]) / prep["scale"]
-        return pd.DataFrame(arr, index=X.index, columns=prep["output_names"])
+            ).reindex(columns=preprocessing["indicator_columns"], fill_value=0.0)
+            arr = (indicator.to_numpy(dtype=np.float64) - preprocessing["mean"]) / preprocessing[
+                "scale"
+            ]
+        return pd.DataFrame(arr, index=X.index, columns=preprocessing["output_names"])
 
     def _extract_Z_numpy(self, X):
         """Extract the pre-scaled Z as a numpy array, in active-then-supplementary order."""
@@ -339,7 +347,7 @@ class MFA(pca.PCA, collections.UserDict):
         """
         supplementary_groups = getattr(self, "supplementary_groups_", [])
         return {
-            group: self._group_preproc_[group]["output_names"]
+            group: self._group_preprocessing_[group]["output_names"]
             for group in self.groups_
             if group not in supplementary_groups
         }
