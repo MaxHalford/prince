@@ -2,4 +2,6 @@ Package: prince-test
 Version: 0.0.0.1
 Title: Test dependencies
 Imports:
-    FactoMineR (== 2.14)
+    FactoMineR
+Remotes:
+    cran/FactoMineR@2.14
