@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
+
 from . import datasets
 from .ca import CA
 from .famd import FAMD
@@ -9,4 +11,9 @@ from .mfa import MFA
 from .pca import PCA
 from .pga import PGA
 
-__all__ = ["CA", "FAMD", "MCA", "MFA", "PCA", "PGA", "GPA", "datasets"]
+try:
+    __version__ = version("prince")
+except PackageNotFoundError:
+    __version__ = "unknown"
+
+__all__ = ["CA", "FAMD", "MCA", "MFA", "PCA", "PGA", "GPA", "__version__", "datasets"]
