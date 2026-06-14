@@ -102,30 +102,50 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
     def _subset_greenacre_quantities(self):
         """Adjusted eigenvalues and total inertia for subset MCA with Greenacre correction.
 
-        Ports the ``lambda = "adjusted"`` + ``subsetcol`` branch of R's ``ca::mjca``: the
-        column marginals are taken on the *full* indicator matrix (so dropping categories
-        does not redistribute mass), and the per-dimension inertia and the total inertia
-        are both computed on the subset of S-null and S-e, where S-null is built from the
-        Burt matrix with self-counts removed and S-e is built from the Burt matrix with
-        each variable's block-diagonal replaced by the marginal product.
+        Ports the ``lambda = "adjusted"`` + ``subsetcat`` branch of R's ``ca::mjca``
+        (Nenadić & Greenacre 2007; *Correspondence Analysis in Practice* ch. 19 & 21).
+        Notation follows the R source so the two implementations can be cross-checked:
+
+        - ``B``    : Burt matrix of the full (pre-drop) indicator matrix, ``Zᵀ Z``.
+        - ``P``    : ``B / sum(B)`` — Burt as a joint probability table.
+        - ``cm``   : column marginals of ``P`` — the standard MCA column masses.
+                     Computed on the *full* Burt so dropping categories does not
+                     redistribute mass (this is what makes the correction "subset"-aware).
+        - ``B_null``, ``S_null`` : Burt with self-counts (the literal diagonal) zeroed
+                     and standardised. For an indicator-derived Burt, the literal
+                     diagonal *is* each variable's block-diagonal, so ``B_null`` is the
+                     off-block-diagonal Burt — the part that carries inter-variable
+                     association. Its eigendecomposition on the active subset yields
+                     the principal inertias.
+        - ``Pe``, ``Se`` : ``P`` with each variable's block-diagonal replaced by the
+                     marginal product ``cmᵇ cmᵇᵀ`` (independence within each variable).
+                     ``sum(Se² ) · Q/(Q-1)`` on the active subset is the total adjusted
+                     inertia — what the per-dimension inertias are expressed against.
+        - ``Q``    : number of original variables (``self.K_``).
+        - ``mask`` : boolean selector of active one-hot columns (post-drop).
         """
         B = self._subset_full_burt_
         cm = B.sum(axis=0) / B.sum()
         sqrt_cm_outer = np.sqrt(np.outer(cm, cm))
         cm_outer = np.outer(cm, cm)
 
+        # S_null: standardised residuals of the off-block-diagonal Burt.
         B_null = B - np.diag(np.diag(B))
         S_null = (B_null / B_null.sum() - cm_outer) / sqrt_cm_outer
 
+        # Se: standardised residuals under the "independence within each variable" model.
         Pe = (B / B.sum()).copy()
         for q in range(self.K_):
             idx = np.where(self._subset_col_to_var_ == q)[0]
             Pe[np.ix_(idx, idx)] = np.outer(cm[idx], cm[idx])
         Se = (Pe - cm_outer) / sqrt_cm_outer
 
+        # Principal inertias on the active subset; clip numerical negatives.
         mask = self._subset_mask_
         eigvals = np.linalg.eigvalsh(S_null[np.ix_(mask, mask)])[::-1]
         lambda_adj = np.clip(eigvals, 0, None) ** 2
+        # Total adjusted inertia. The Q/(Q-1) factor mirrors the non-subset Greenacre
+        # adjustment (see eqn. 19.5 in Greenacre, CA in Practice).
         Q = self.K_
         lambda_t = (Se[np.ix_(mask, mask)] ** 2).sum() * Q / (Q - 1)
         return lambda_adj, lambda_t
