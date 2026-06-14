@@ -271,6 +271,56 @@ def test_issue_161():
     """
 
 
+def test_subset_greenacre_matches_ca_mjca():
+    """Subset-MCA Greenacre correction matches R's ``ca::mjca(lambda='adjusted', subsetcat=...)``.
+
+    Background: https://github.com/MaxHalford/prince/issues/206
+    """
+    wines = prince.datasets.load_burgundy_wines().drop(columns=["Oak type"], level=0)
+    wines.columns = [f"{a}_{b}" for a, b in wines.columns]
+    sep = "__"
+    one_hot = pd.get_dummies(wines, columns=wines.columns, prefix_sep=sep)
+    to_drop = [c for c in one_hot.columns if c.endswith(f"{sep}No")]
+
+    mca = prince.MCA(
+        n_components=4,
+        correction="greenacre",
+        one_hot_prefix_sep=sep,
+        one_hot_columns_to_drop=to_drop,
+    ).fit(wines)
+
+    R("library('ca')")
+    with tempfile.NamedTemporaryFile(suffix=".csv") as fp:
+        wines.to_csv(fp.name, index=False)
+        R(f"dataset <- read.csv('{fp.name}')")
+    R("""
+    dataset <- data.frame(lapply(dataset, factor))
+    lvl_lens <- sapply(dataset, nlevels)
+    offs <- c(0, cumsum(lvl_lens)[-length(lvl_lens)])
+    subsetcat <- c()
+    for (i in seq_along(dataset)) {
+      lv <- levels(dataset[[i]])
+      for (j in seq_along(lv)) {
+        if (lv[j] != 'No') subsetcat <- c(subsetcat, offs[i] + j)
+      }
+    }
+    mj <- mjca(dataset, lambda='adjusted', subsetcat=subsetcat, nd=4)
+    """)
+    r_lambda = np.array(R("mj$sv"))[: mca.eigenvalues_.shape[0]] ** 2
+    r_inertia_e = np.array(R("mj$inertia.e"))
+    r_inertia_t = float(np.array(R("mj$inertia.t"))[0])
+
+    np.testing.assert_allclose(mca.eigenvalues_[: len(r_lambda)], r_lambda, atol=1e-8)
+    np.testing.assert_allclose(
+        mca.percentage_of_variance_[: len(r_inertia_e)] / 100, r_inertia_e, atol=1e-8
+    )
+    np.testing.assert_allclose(
+        mca.percentage_of_variance_[: len(r_inertia_e)] / 100,
+        mca.eigenvalues_[: len(r_inertia_e)] / r_inertia_t,
+        atol=1e-10,
+    )
+
+
 def test_abdi_2007_correction():
     """
 

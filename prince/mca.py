@@ -82,18 +82,53 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         self.one_hot_columns_to_drop = one_hot_columns_to_drop
         self.correction = correction
 
+    def _one_hot(self, X):
+        if self.one_hot:
+            return pd.get_dummies(X, columns=X.columns, prefix_sep=self.one_hot_prefix_sep)
+        return X
+
     def _prepare(self, X):
         """One-hot encode the input if needed, and align columns with the fitted indicator matrix."""
-        if self.one_hot:
-            X = pd.get_dummies(X, columns=X.columns, prefix_sep=self.one_hot_prefix_sep)
-            if self.one_hot_columns_to_drop is not None:
-                X = X.drop(columns=self.one_hot_columns_to_drop, errors="ignore")
-            if (one_hot_columns_ := getattr(self, "one_hot_columns_", None)) is not None:
-                X = X.reindex(columns=one_hot_columns_.union(X.columns), fill_value=False)
+        X = self._one_hot(X)
+        if self.one_hot and self.one_hot_columns_to_drop is not None:
+            X = X.drop(columns=self.one_hot_columns_to_drop, errors="ignore")
+        if (one_hot_columns_ := getattr(self, "one_hot_columns_", None)) is not None:
+            X = X.reindex(columns=one_hot_columns_.union(X.columns), fill_value=False)
         return X
 
     def get_feature_names_out(self, input_features=None):
         return np.arange(self.n_components_)
+
+    def _subset_greenacre_quantities(self):
+        """Adjusted eigenvalues and total inertia for subset MCA with Greenacre correction.
+
+        Ports the ``lambda = "adjusted"`` + ``subsetcol`` branch of R's ``ca::mjca``: the
+        column marginals are taken on the *full* indicator matrix (so dropping categories
+        does not redistribute mass), and the per-dimension inertia and the total inertia
+        are both computed on the subset of S-null and S-e, where S-null is built from the
+        Burt matrix with self-counts removed and S-e is built from the Burt matrix with
+        each variable's block-diagonal replaced by the marginal product.
+        """
+        B = self._subset_full_burt_
+        cm = B.sum(axis=0) / B.sum()
+        sqrt_cm_outer = np.sqrt(np.outer(cm, cm))
+        cm_outer = np.outer(cm, cm)
+
+        B_null = B - np.diag(np.diag(B))
+        S_null = (B_null / B_null.sum() - cm_outer) / sqrt_cm_outer
+
+        Pe = (B / B.sum()).copy()
+        for q in range(self.K_):
+            idx = np.where(self._subset_col_to_var_ == q)[0]
+            Pe[np.ix_(idx, idx)] = np.outer(cm[idx], cm[idx])
+        Se = (Pe - cm_outer) / sqrt_cm_outer
+
+        mask = self._subset_mask_
+        eigvals = np.linalg.eigvalsh(S_null[np.ix_(mask, mask)])[::-1]
+        lambda_adj = np.clip(eigvals, 0, None) ** 2
+        Q = self.K_
+        lambda_t = (Se[np.ix_(mask, mask)] ** 2).sum() * Q / (Q - 1)
+        return lambda_adj, lambda_t
 
     @property
     def eigenvalues_(self):
@@ -101,6 +136,9 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         eigenvalues = super().eigenvalues_
         # Benzécri and Greenacre corrections
         if self.correction in {"benzecri", "greenacre"}:
+            if self.correction == "greenacre" and self.one_hot_columns_to_drop is not None:
+                lambda_adj, _ = self._subset_greenacre_quantities()
+                return lambda_adj[: len(eigenvalues)]
             K = self.K_
             return np.array(
                 [(K / (K - 1) * (eig - 1 / K)) ** 2 if eig > 1 / K else 0 for eig in eigenvalues]
@@ -111,6 +149,12 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
     @utils.check_is_fitted
     def percentage_of_variance_(self):
         """Returns the percentage of explained inertia per principal component."""
+        # Greenacre correction on a subset MCA: closed-form Benzécri assumes uniform row
+        # sums in the indicator matrix and so mis-calibrates when categories are dropped.
+        if self.correction == "greenacre" and self.one_hot_columns_to_drop is not None:
+            lambda_adj, lambda_t = self._subset_greenacre_quantities()
+            n = len(super().eigenvalues_)
+            return 100 * lambda_adj[:n] / lambda_t
         # Benzécri correction
         if self.correction == "benzecri":
             eigenvalues = self.eigenvalues_
@@ -151,12 +195,28 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         # K is the number of actual variables, to apply the Benzécri correction
         self.K_ = X.shape[1]
 
-        # One-hot encode the data
+        # One-hot encode the data. The full (pre-drop) indicator is kept so the
+        # subset-Greenacre correction can recover the full Burt marginals.
+        full_one_hot = self._one_hot(X)
         one_hot = self._prepare(X)
         self.one_hot_columns_ = one_hot.columns
 
         # We need the number of columns to apply the Greenacre correction
         self.J_ = one_hot.shape[1]
+
+        if (
+            self.one_hot
+            and self.one_hot_columns_to_drop is not None
+            and self.correction == "greenacre"
+        ):
+            Z_full = full_one_hot.to_numpy(dtype=float)
+            self._subset_full_burt_ = Z_full.T @ Z_full
+            var_index = {col: i for i, col in enumerate(X.columns)}
+            sep = self.one_hot_prefix_sep
+            self._subset_col_to_var_ = np.array(
+                [var_index[c.rsplit(sep, 1)[0]] for c in full_one_hot.columns]
+            )
+            self._subset_mask_ = full_one_hot.columns.isin(one_hot.columns).astype(bool)
 
         # Apply CA to the indicator matrix
         super().fit(one_hot)
