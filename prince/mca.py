@@ -105,25 +105,8 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
 
         Ports the ``lambda = "adjusted"`` + ``subsetcat`` branch of R's ``ca::mjca``
         (Nenadić & Greenacre 2007; *Correspondence Analysis in Practice* ch. 19 & 21).
-        Notation follows the R source so the two implementations can be cross-checked:
+        Notation follows the R source so the two implementations can be cross-checked.
 
-        - ``B``    : Burt matrix of the full (pre-drop) indicator matrix, ``Zᵀ Z``.
-        - ``P``    : ``B / sum(B)`` — Burt as a joint probability table.
-        - ``cm``   : column marginals of ``P`` — the standard MCA column masses.
-                     Computed on the *full* Burt so dropping categories does not
-                     redistribute mass (this is what makes the correction "subset"-aware).
-        - ``B_null``, ``S_null`` : Burt with self-counts (the literal diagonal) zeroed
-                     and standardised. For an indicator-derived Burt, the literal
-                     diagonal *is* each variable's block-diagonal, so ``B_null`` is the
-                     off-block-diagonal Burt — the part that carries inter-variable
-                     association. Its eigendecomposition on the active subset yields
-                     the principal inertias.
-        - ``Pe``, ``Se`` : ``P`` with each variable's block-diagonal replaced by the
-                     marginal product ``cmᵇ cmᵇᵀ`` (independence within each variable).
-                     ``sum(Se² ) · Q/(Q-1)`` on the active subset is the total adjusted
-                     inertia — what the per-dimension inertias are expressed against.
-        - ``Q``    : number of original variables (``self.K_``).
-        - ``mask`` : boolean selector of active one-hot columns (post-drop).
         """
         B = self._subset_full_burt_
         cm = B.sum(axis=0) / B.sum()
@@ -252,9 +235,7 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
             else:
                 keep_mask = np.ones(J_full, dtype=bool)
             kept_columns = full_columns[keep_mask]
-            one_hot_sp = (
-                full_one_hot_sp[:, keep_mask] if not keep_mask.all() else full_one_hot_sp
-            )
+            one_hot_sp = full_one_hot_sp[:, keep_mask] if not keep_mask.all() else full_one_hot_sp
             one_hot_dense = one_hot_sp.toarray()
         else:
             full_one_hot_sp = None
@@ -272,9 +253,7 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
             and self.correction == "greenacre"
         ):
             # Sparse Zᵀ Z is much faster than dense for wide indicator matrices.
-            self._subset_full_burt_ = np.asarray(
-                (full_one_hot_sp.T @ full_one_hot_sp).todense()
-            )
+            self._subset_full_burt_ = np.asarray((full_one_hot_sp.T @ full_one_hot_sp).todense())
             self._subset_col_to_var_ = np.repeat(np.arange(self.K_), n_levels)
             self._subset_mask_ = np.asarray(keep_mask, dtype=bool)
 
