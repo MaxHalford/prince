@@ -116,7 +116,10 @@ class TestPCA:
         sklearn.utils.validation.check_is_fitted(self.pca)
 
     def test_total_inertia(self):
-        F = robjects.r("sum(pca$eig[,1])")[0]
+        # FactoMineR 2.15 only stores the top `ncp` eigenvalues, so
+        # `sum(pca$eig[,1])` no longer equals the true total inertia.
+        # Recover it from the percentage of variance of the first component.
+        F = robjects.r("pca$eig[1,1] / (pca$eig[1,2] / 100)")[0]
         P = self.pca.total_inertia_
         assert math.isclose(F, P)
 

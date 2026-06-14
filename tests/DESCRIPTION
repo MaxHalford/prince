@@ -3,5 +3,3 @@ Version: 0.0.0.1
 Title: Test dependencies
 Imports:
     FactoMineR
-Remotes:
-    cran/FactoMineR@2.14

@@ -65,7 +65,10 @@ class TestMFA:
         sklearn.utils.validation.check_is_fitted(self.mfa)
 
     def test_total_inertia(self):
-        F = robjects.r("sum(mfa$eig[,1])")[0]
+        # FactoMineR 2.15 only stores the top `ncp` eigenvalues, so
+        # `sum(mfa$eig[,1])` no longer equals the true total inertia.
+        # Recover it from the percentage of variance of the first component.
+        F = robjects.r("mfa$eig[1,1] / (mfa$eig[1,2] / 100)")[0]
         P = self.mfa.total_inertia_
         assert math.isclose(F, P)
 
@@ -279,7 +282,10 @@ class TestMFACategorical:
         sklearn.utils.validation.check_is_fitted(self.mfa)
 
     def test_total_inertia(self):
-        F = robjects.r("sum(mfa$eig[,1])")[0]
+        # FactoMineR 2.15 only stores the top `ncp` eigenvalues, so
+        # `sum(mfa$eig[,1])` no longer equals the true total inertia.
+        # Recover it from the percentage of variance of the first component.
+        F = robjects.r("mfa$eig[1,1] / (mfa$eig[1,2] / 100)")[0]
         assert math.isclose(F, self.mfa.total_inertia_)
 
     def test_eigenvalues(self):

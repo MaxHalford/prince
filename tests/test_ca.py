@@ -84,7 +84,11 @@ class TestCA:
         np.testing.assert_allclose(np.abs(F), np.abs(P))
 
     def test_total_inertia(self):
-        F = robjects.r("sum(ca$eig[,1])")[0]
+        # FactoMineR 2.15 only stores the top `ncp` eigenvalues in `ca$eig`, so
+        # `sum(ca$eig[,1])` no longer equals the true total inertia. The first
+        # row's "percentage of variance" is still computed against the true
+        # total, so we recover it from `eig[1,1] / (eig[1,2] / 100)`.
+        F = robjects.r("ca$eig[1,1] / (ca$eig[1,2] / 100)")[0]
         P = self.ca.total_inertia_
         assert math.isclose(F, P)
 

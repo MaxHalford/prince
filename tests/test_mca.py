@@ -23,6 +23,14 @@ class TestMCA(_TestCA):
 
         n_components = 5
         n_active_rows = 1_000
+        # FactoMineR 2.15's `svd.triplet` uses `irlba` whenever
+        # `ncp < 0.5 * min(nrow_active, ncol_indicator)`. For the Hearthstone
+        # dataset that means anything below ~19 picks the iterative solver,
+        # whose approximation on later components drifts well past Prince's
+        # full-SVD precision (1-5% relative error on component 5). Asking
+        # FactoMineR for more components forces the full-SVD branch; we then
+        # slice the outputs back down to `n_components` before comparing.
+        n_components_R = 20
 
         # Fit Prince
         self.dataset = prince.datasets.load_hearthstone_cards()
@@ -40,7 +48,7 @@ class TestMCA(_TestCA):
             self.dataset.to_csv(fp)
             R(f"dataset <- read.csv('{fp.name}')[,-1]")
 
-        args = f"dataset, ncp={n_components}, graph=F"
+        args = f"dataset, ncp={n_components_R}, graph=F"
         if self.sup_cols:
             if self.sup_rows:
                 R(
@@ -53,6 +61,24 @@ class TestMCA(_TestCA):
                 R(f"ca <- MCA({args}, ind.sup=c({n_active_rows + 1}:nrow(dataset)))")
             else:
                 R(f"ca <- MCA({args})")
+
+        # Slice FactoMineR's outputs back down to `n_components` so the rest
+        # of the assertions (inherited from TestCA) compare matching shapes.
+        R(f"""
+        nc <- {n_components}
+        ca$svd$U <- ca$svd$U[, 1:nc, drop=FALSE]
+        ca$svd$V <- ca$svd$V[, 1:nc, drop=FALSE]
+        ca$ind$coord   <- ca$ind$coord[, 1:nc, drop=FALSE]
+        ca$ind$cos2    <- ca$ind$cos2[, 1:nc, drop=FALSE]
+        ca$ind$contrib <- ca$ind$contrib[, 1:nc, drop=FALSE]
+        ca$var$coord   <- ca$var$coord[, 1:nc, drop=FALSE]
+        ca$var$cos2    <- ca$var$cos2[, 1:nc, drop=FALSE]
+        ca$var$contrib <- ca$var$contrib[, 1:nc, drop=FALSE]
+        if (!is.null(ca$ind.sup))   ca$ind.sup$coord    <- ca$ind.sup$coord[, 1:nc, drop=FALSE]
+        if (!is.null(ca$ind.sup))   ca$ind.sup$cos2     <- ca$ind.sup$cos2[, 1:nc, drop=FALSE]
+        if (!is.null(ca$quali.sup)) ca$quali.sup$coord  <- ca$quali.sup$coord[, 1:nc, drop=FALSE]
+        if (!is.null(ca$quali.sup)) ca$quali.sup$cos2   <- ca$quali.sup$cos2[, 1:nc, drop=FALSE]
+        """)
 
     @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
     def test_row_coords(self, method_name):
