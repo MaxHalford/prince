@@ -237,25 +237,21 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
             kept_columns = full_columns[keep_mask]
             one_hot_sp = full_one_hot_sp[:, keep_mask] if not keep_mask.all() else full_one_hot_sp
             one_hot_dense = one_hot_sp.toarray()
+
+            if self.one_hot_columns_to_drop is not None and self.correction == "greenacre":
+                # Sparse Zᵀ Z is much faster than dense for wide indicator matrices.
+                self._subset_full_burt_ = np.asarray(
+                    (full_one_hot_sp.T @ full_one_hot_sp).todense()
+                )
+                self._subset_col_to_var_ = np.repeat(np.arange(self.K_), n_levels)
+                self._subset_mask_ = np.asarray(keep_mask, dtype=bool)
         else:
-            full_one_hot_sp = None
             keep_mask = np.ones(X.shape[1], dtype=bool)
             kept_columns = X.columns
-            n_levels = None
             one_hot_dense = np.ascontiguousarray(X.to_numpy(), dtype=np.float64)
 
         self.one_hot_columns_ = kept_columns
         self.J_ = len(kept_columns)
-
-        if (
-            self.one_hot
-            and self.one_hot_columns_to_drop is not None
-            and self.correction == "greenacre"
-        ):
-            # Sparse Zᵀ Z is much faster than dense for wide indicator matrices.
-            self._subset_full_burt_ = np.asarray((full_one_hot_sp.T @ full_one_hot_sp).todense())
-            self._subset_col_to_var_ = np.repeat(np.arange(self.K_), n_levels)
-            self._subset_mask_ = np.asarray(keep_mask, dtype=bool)
 
         # Wrap the dense ndarray in a single-block DataFrame so CA.fit sees one
         # contiguous array instead of J per-column ExtensionArrays.
