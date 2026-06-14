@@ -198,7 +198,9 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         # One-hot encode the data. The full (pre-drop) indicator is kept so the
         # subset-Greenacre correction can recover the full Burt marginals.
         full_one_hot = self._one_hot(X)
-        one_hot = self._prepare(X)
+        one_hot = full_one_hot
+        if self.one_hot and self.one_hot_columns_to_drop is not None:
+            one_hot = one_hot.drop(columns=self.one_hot_columns_to_drop, errors="ignore")
         self.one_hot_columns_ = one_hot.columns
 
         # We need the number of columns to apply the Greenacre correction
