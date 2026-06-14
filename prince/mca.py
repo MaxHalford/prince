@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 import sklearn.base
 import sklearn.preprocessing
 import sklearn.utils
@@ -215,34 +216,73 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         # K is the number of actual variables, to apply the Benzécri correction
         self.K_ = X.shape[1]
 
-        # One-hot encode the data. The full (pre-drop) indicator is kept so the
-        # subset-Greenacre correction can recover the full Burt marginals.
-        full_one_hot = self._one_hot(X)
-        one_hot = full_one_hot
-        if self.one_hot and self.one_hot_columns_to_drop is not None:
-            one_hot = one_hot.drop(columns=self.one_hot_columns_to_drop, errors="ignore")
-        self.one_hot_columns_ = one_hot.columns
+        # Build the indicator matrix directly as a scipy sparse CSC: factorize each
+        # input column to get integer codes, then construct one COO from offsets. This
+        # avoids ``pd.get_dummies`` (which is dominated by per-column object work) and
+        # gives a sparse Zᵀ Z for the subset-Greenacre Burt with no extra conversion.
+        # We densify once into a single contiguous float ndarray right before CA.fit,
+        # so sklearn's ``check_array`` sees one block instead of iterating over J
+        # per-column ExtensionArrays.
+        if self.one_hot:
+            categories_per_col = [pd.Categorical(X[c]) for c in X.columns]
+            n_levels = np.array([len(c.categories) for c in categories_per_col])
+            offsets = np.concatenate(([0], np.cumsum(n_levels)[:-1]))
+            J_full = int(n_levels.sum())
+            sep = self.one_hot_prefix_sep
+            full_columns = pd.Index(
+                [
+                    f"{col}{sep}{level}"
+                    for col, cat in zip(X.columns, categories_per_col)
+                    for level in cat.categories
+                ]
+            )
 
-        # We need the number of columns to apply the Greenacre correction
-        self.J_ = one_hot.shape[1]
+            n_rows = len(X)
+            codes = np.column_stack([c.codes.astype(np.int64) for c in categories_per_col])
+            valid = (codes >= 0).ravel()
+            row_idx = np.repeat(np.arange(n_rows), self.K_)[valid]
+            col_idx = (codes + offsets[None, :]).ravel()[valid]
+            full_one_hot_sp = sp.csc_matrix(
+                (np.ones(row_idx.size, dtype=np.float64), (row_idx, col_idx)),
+                shape=(n_rows, J_full),
+            )
+
+            if self.one_hot_columns_to_drop is not None:
+                keep_mask = ~full_columns.isin(self.one_hot_columns_to_drop)
+            else:
+                keep_mask = np.ones(J_full, dtype=bool)
+            kept_columns = full_columns[keep_mask]
+            one_hot_sp = (
+                full_one_hot_sp[:, keep_mask] if not keep_mask.all() else full_one_hot_sp
+            )
+            one_hot_dense = one_hot_sp.toarray()
+        else:
+            full_one_hot_sp = None
+            keep_mask = np.ones(X.shape[1], dtype=bool)
+            kept_columns = X.columns
+            n_levels = None
+            one_hot_dense = np.ascontiguousarray(X.to_numpy(), dtype=np.float64)
+
+        self.one_hot_columns_ = kept_columns
+        self.J_ = len(kept_columns)
 
         if (
             self.one_hot
             and self.one_hot_columns_to_drop is not None
             and self.correction == "greenacre"
         ):
-            Z_full = full_one_hot.to_numpy(dtype=float)
-            self._subset_full_burt_ = Z_full.T @ Z_full
-            var_index = {col: i for i, col in enumerate(X.columns)}
-            sep = self.one_hot_prefix_sep
-            self._subset_col_to_var_ = np.array(
-                [var_index[c.rsplit(sep, 1)[0]] for c in full_one_hot.columns]
+            # Sparse Zᵀ Z is much faster than dense for wide indicator matrices.
+            self._subset_full_burt_ = np.asarray(
+                (full_one_hot_sp.T @ full_one_hot_sp).todense()
             )
-            self._subset_mask_ = full_one_hot.columns.isin(one_hot.columns).astype(bool)
+            self._subset_col_to_var_ = np.repeat(np.arange(self.K_), n_levels)
+            self._subset_mask_ = np.asarray(keep_mask, dtype=bool)
 
-        # Apply CA to the indicator matrix
+        # Wrap the dense ndarray in a single-block DataFrame so CA.fit sees one
+        # contiguous array instead of J per-column ExtensionArrays.
+        one_hot = pd.DataFrame(one_hot_dense, index=X.index, columns=kept_columns)
+
         super().fit(one_hot)
-
         return self
 
     @utils.check_is_dataframe_input
