@@ -271,6 +271,43 @@ def test_issue_161():
     """
 
 
+def test_non_subset_correction_matches_ca_mjca():
+    """Non-subset Benzécri/Greenacre corrections match R's ``ca::mjca(lambda='adjusted')``.
+
+    FactoMineR doesn't expose these corrections, but Greenacre's own ``ca`` package does,
+    and its closed-form is what prince's non-subset path implements.
+    """
+    wines = prince.datasets.load_burgundy_wines().drop(columns=["Oak type"], level=0)
+    wines.columns = [f"{a}_{b}" for a, b in wines.columns]
+
+    R("library('ca')")
+    with tempfile.NamedTemporaryFile(suffix=".csv") as fp:
+        wines.to_csv(fp.name, index=False)
+        R(f"dataset <- read.csv('{fp.name}')")
+    R("""
+    dataset <- data.frame(lapply(dataset, factor))
+    mj <- mjca(dataset, lambda='adjusted', nd=4)
+    """)
+    r_lambda = np.array(R("mj$sv")) ** 2
+    r_inertia_e = np.array(R("mj$inertia.e"))
+    n_nonzero = int(np.sum(r_lambda > 0))
+
+    mca_g = prince.MCA(n_components=4, correction="greenacre").fit(wines)
+    np.testing.assert_allclose(mca_g.eigenvalues_[:n_nonzero], r_lambda[:n_nonzero], atol=1e-8)
+    np.testing.assert_allclose(
+        mca_g.percentage_of_variance_[:n_nonzero] / 100, r_inertia_e[:n_nonzero], atol=1e-8
+    )
+
+    # Benzécri shares the same adjusted eigenvalues; only the percentages differ — they
+    # renormalise to sum to 100% instead of using Greenacre's adjusted-inertia denominator.
+    mca_b = prince.MCA(n_components=4, correction="benzecri").fit(wines)
+    np.testing.assert_allclose(mca_b.eigenvalues_[:n_nonzero], r_lambda[:n_nonzero], atol=1e-8)
+    expected_benzecri_pct = r_lambda[:n_nonzero] / r_lambda.sum() * 100
+    np.testing.assert_allclose(
+        mca_b.percentage_of_variance_[:n_nonzero], expected_benzecri_pct, atol=1e-8
+    )
+
+
 def test_subset_greenacre_matches_ca_mjca():
     """Subset-MCA Greenacre correction matches R's ``ca::mjca(lambda='adjusted', subsetcat=...)``.
 
