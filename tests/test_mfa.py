@@ -253,7 +253,10 @@ class TestMFACategorical:
         if self.sup_rows:
             active = active.drop(index=self._sup_row_indices)
         supplementary_groups = [self._sup_group_name] if self.sup_groups else []
-        self.mfa = prince.MFA(n_components=self.n_components).fit(
+        # engine="scipy" forces a deterministic full SVD so the tight (atol=1e-4)
+        # comparisons against FactoMineR don't flake on randomized-SVD precision noise
+        # on the last component (see CI flake on PR #236).
+        self.mfa = prince.MFA(n_components=self.n_components, engine="scipy").fit(
             active,
             supplementary_groups=supplementary_groups,
         )
