@@ -37,9 +37,22 @@ class FAMD(pca.PCA):
     one_hot_columns_ : list of str
         One-hot encoded modality names for the active categoricals.
     categories_ : dict[str, ndarray]
-        Maps each active categorical column to its observed categories. The set of
-        keys is the list of active categorical columns; supplementary categoricals
-        are ``set(cat_cols_) - set(categories_)``.
+        Maps each active categorical column to its observed categories.
+    column_coordinates_ : pd.DataFrame
+        Genuine PCA coordinates of the preprocessed columns: one row per active
+        numerical variable (signed Pearson correlation = FactoMineR's
+        ``quanti.var$coord``) and one row per modality (``G_s(k_q)`` per Pagès 2004
+        §5.1 — the PCA coordinate of the MCA-coded indicator). Matches MCA's
+        per-preprocessed-column convention.
+    column_contributions_ : pd.DataFrame
+        Per-preprocessed-column contribution to each component: ``f² / λ``.
+    variable_coordinates_ : pd.DataFrame
+        Aggregated variable-level inertia decomposition (FactoMineR's ``var$coord``):
+        ``r²`` for numerical and ``η²`` for categorical, one row per original
+        variable. Convenient for the FactoMineR-style relationship-square plot.
+    variable_contributions_ : pd.DataFrame
+        Variable-level contributions ``variable_coordinates_ / λ`` (FactoMineR's
+        ``var$contrib``), one row per original variable.
     """
 
     def __init__(
@@ -201,21 +214,12 @@ class FAMD(pca.PCA):
         """Signed Pearson correlations for numerical variables, η² for categoricals.
 
         For quantitative variables: signed correlations with each principal component
-        (FactoMineR: ``quanti.var$coord``) — the values plotted in the correlation circle.
-
-        For qualitative variables: η²(q, s) = Σ_{k_q} G_s(k_q)² where G_s(k_q) is the
-        PCA coordinate of modality k_q (Pagès 2004, §5.1 p. 98–99). The cross-factors
-        between G_s and the barycentric form F_s cancel because of the FAMD modality
-        scaling, leaving the sum of squared modality coordinates.
+        (FactoMineR: ``quanti.var$coord``) — the values plotted in the correlation
+        circle. For qualitative variables: η² aggregated to the variable level, since
+        no signed-correlation concept exists per categorical.
         """
         num_corr = self.column_coordinates_.loc[self._active_num_cols()]
-        eta2_rows = {
-            col: (self.column_coordinates_.loc[self._modalities_for(col)].to_numpy() ** 2).sum(
-                axis=0
-            )
-            for col in self._active_cat_cols()
-        }
-        eta2 = pd.DataFrame(eta2_rows, index=self.column_coordinates_.columns).T
+        eta2 = self._variable_level_categorical()
         return pd.concat([num_corr, eta2])
 
     @utils.check_is_dataframe_input
@@ -225,10 +229,50 @@ class FAMD(pca.PCA):
 
     @property
     def column_contributions_(self):
-        """Contribution of each preprocessed column (modality or numerical) to each
-        component: ``f² / λ`` where ``f`` is the PCA coordinate and ``λ`` the eigenvalue.
+        """Per-preprocessed-column contribution to each component: ``f² / λ``.
+
+        Rows correspond to ``column_coordinates_``: one row per active numerical and
+        one row per active modality. Summing over the modalities of a categorical
+        variable yields its variable-level contribution (see
+        ``variable_contributions_``).
         """
         return self.column_coordinates_**2 / self.eigenvalues_
+
+    def _variable_level_categorical(self):
+        """η² at the variable level: Σ_modalities G_s(k_q)²."""
+        rows = {
+            col: (self.column_coordinates_.loc[self._modalities_for(col)].to_numpy() ** 2).sum(
+                axis=0
+            )
+            for col in self._active_cat_cols()
+        }
+        return pd.DataFrame(rows, index=self.column_coordinates_.columns).T
+
+    @property
+    @utils.check_is_fitted
+    def variable_coordinates_(self):
+        """Variable-level inertia decomposition (FactoMineR's ``var$coord``):
+        ``r²`` per numerical and ``η²`` per categorical, one row per original variable.
+
+        Derivation: numerical entries of ``column_coordinates_`` are signed
+        correlations, so squaring gives ``r²``; categorical entries are aggregated
+        as ``Σ_{modalities} G_s(k_q)² = η²(q, s)`` (Pagès 2004 §5.1; the cross-terms
+        between G_s and the barycentric form F_s cancel).
+        """
+        num = self.column_coordinates_.loc[self._active_num_cols()] ** 2
+        cat = self._variable_level_categorical()
+        out = pd.concat([num, cat])
+        out.index.name = "variable"
+        out.columns.name = "component"
+        return out
+
+    @property
+    @utils.check_is_fitted
+    def variable_contributions_(self):
+        """Variable-level contributions ``variable_coordinates_ / λ`` (FactoMineR's
+        ``var$contrib``), one row per original variable.
+        """
+        return self.variable_coordinates_ / self.eigenvalues_
 
 
 def _mca_code(X_cat):

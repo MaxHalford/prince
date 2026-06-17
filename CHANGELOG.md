@@ -19,7 +19,7 @@
 ### New features
 
 - **FAMD: explicit `categorical_columns` constructor argument and `supplementary_columns=` in `fit`**. Mirrors PCA's supplementary-variable support: columns listed as supplementary are projected onto the factor space but do not influence the axes. `categorical_columns` defaults to `None`, preserving the existing dtype-based auto-detection.
-- **FAMD: `column_coordinates_` now stores genuine PCA coordinates** (signed correlations for numerical variables, modality coordinates per Pagès 2004 §5.1) instead of the mixed r²/η² inertia matrix. This places modality and numerical variables in the same coordinate space, so downstream operations like contributions and cosine similarities are mathematically consistent. `column_contributions_` correspondingly uses `f²/λ` (modality-level). FactoMineR's variable-level `famd$var$coord` is recoverable via `column_correlations` (η² for categoricals, squared signed correlations for numerical). Discussed in [#215](https://github.com/MaxHalford/prince/issues/215).
+- **FAMD: `column_coordinates_` now stores genuine PCA coordinates per preprocessed column** — signed correlations for numerical variables and modality coordinates ``G_s(k_q)`` per Pagès 2004 §5.1 — matching MCA's per-preprocessed-column convention. The mixed r²/η² inertia matrix is still available as a first-class attribute under the name `variable_coordinates_` (FactoMineR's `var$coord`), with `variable_contributions_` mirroring `var$contrib`. `column_contributions_` is now `column_coordinates_²/λ` (per preprocessed column). Discussed in [#215](https://github.com/MaxHalford/prince/issues/215).
 
 ### Bug fixes
 

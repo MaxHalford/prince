@@ -87,32 +87,91 @@ class TestFAMD:
         P = self.famd.row_contributions_
         np.testing.assert_allclose(F, P * 100)
 
-    def test_col_coords(self):
-        # FAMD column_coordinates_ are genuine PCA coordinates (signed correlations for
-        # numerical variables, modality coordinates for categoricals). To compare to
-        # FactoMineR's famd$var$coord (= r² for num, η² for cat at the variable level),
-        # we square numerical coords and aggregate modality coords into per-variable η².
+    def test_variable_coords(self):
+        # variable_coordinates_ matches FactoMineR's famd$var$coord directly:
+        # r² for numerical, η² for categorical (one row per original variable).
         F = load_df_from_R("famd$var$coord")
-        num_part = self.famd.column_coordinates_.loc[self.famd.num_cols_] ** 2
-        cat_part = self.famd.column_correlations.loc[self.famd.cat_cols_]
-        P = pd.concat([num_part, cat_part])
-        np.testing.assert_allclose(F, P, atol=1e-8)
+        np.testing.assert_allclose(F, self.famd.variable_coordinates_, atol=1e-8)
 
-    def test_col_contrib(self):
-        # famd$var$contrib aggregates contributions to the variable level. Prince stores
-        # modality-level contributions; we sum modalities of each categorical to match.
+    def test_variable_contrib(self):
         F = load_df_from_R("famd$var$contrib")
-        contrib = self.famd.column_contributions_
-        num_part = contrib.loc[self.famd.num_cols_]
-        cat_rows = {
-            col: contrib.loc[
-                [m for m in self.famd.one_hot_columns_ if m.startswith(f"{col}_")]
-            ].sum()
+        np.testing.assert_allclose(F, self.famd.variable_contributions_ * 100, atol=1e-8)
+
+    def test_col_coords_modality_level(self):
+        # column_coordinates_ is at the preprocessed-column level (one row per
+        # numerical + one row per modality), like MCA. Sanity check: squaring the
+        # numerical rows reproduces the variable-level r² entries.
+        cc = self.famd.column_coordinates_
+        for col in self.famd.num_cols_:
+            np.testing.assert_allclose(
+                cc.loc[col] ** 2,
+                self.famd.variable_coordinates_.loc[col],
+                atol=1e-10,
+            )
+        # And summing squared modality coords reproduces the η² entries.
+        for col in self.famd.cat_cols_:
+            mods = [m for m in self.famd.one_hot_columns_ if m.startswith(f"{col}_")]
+            np.testing.assert_allclose(
+                (cc.loc[mods] ** 2).sum(axis=0),
+                self.famd.variable_coordinates_.loc[col],
+                atol=1e-10,
+            )
+
+    # -- Comparison with FactoMineR's per-type outputs --
+
+    def test_quanti_var_coord_matches_factominer(self):
+        """Numerical rows of column_coordinates_ = FactoMineR's famd$quanti.var$coord
+        (signed Pearson correlations)."""
+        F = load_df_from_R("famd$quanti.var$coord")
+        P = self.famd.column_coordinates_.loc[self.famd.num_cols_]
+        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-8)
+
+    def test_quanti_var_contrib_matches_factominer(self):
+        """Numerical rows of column_contributions_ * 100 = famd$quanti.var$contrib."""
+        F = load_df_from_R("famd$quanti.var$contrib")
+        P = self.famd.column_contributions_.loc[self.famd.num_cols_] * 100
+        np.testing.assert_allclose(F.values, P.values, atol=1e-8)
+
+    def _prince_modality(self, factominer_label):
+        """Map FactoMineR's bare-category label (e.g. ``"Altbier"``) to prince's
+        prefixed modality name (e.g. ``"style_Altbier"``). FactoMineR strips the
+        column prefix; prince keeps ``{col}_{cat}``."""
+        for col in self.famd.cat_cols_:
+            cats = {str(c) for c in self.famd.categories_[col]}
+            if factominer_label in cats:
+                return f"{col}_{factominer_label}"
+        raise KeyError(factominer_label)
+
+    def test_quali_var_coord_matches_factominer_via_pages_scaling(self):
+        """Modality rows of column_coordinates_ are Pagès's G_s(k_q) (PCA coord on the
+        MCA-coded indicator). FactoMineR's famd$quali.var$coord stores the barycentres
+        F_s(k_q). They're related by F_s = G_s · √(λ/p) (Pagès 2004 §5.1).
+
+        FactoMineR orders modalities differently than pandas (locale-aware on the cat
+        values), so we align by reindexing prince's output to FactoMineR's order.
+        """
+        F = load_df_from_R("famd$quali.var$coord")
+        prince_mods = [self._prince_modality(m) for m in F.index]
+        G = self.famd.column_coordinates_.loc[prince_mods].to_numpy()
+
+        n = len(self.dataset)
+        p_by_mod = {
+            f"{col}_{cat}": (self.dataset[col].astype(str) == str(cat)).sum() / n
             for col in self.famd.cat_cols_
+            for cat in self.famd.categories_[col]
         }
-        cat_part = pd.DataFrame(cat_rows).T
-        P = pd.concat([num_part, cat_part])
-        np.testing.assert_allclose(F, P * 100, atol=1e-8)
+        p = np.array([p_by_mod[m] for m in prince_mods])
+        lam = self.famd.eigenvalues_
+        expected_bary = G * (np.sqrt(lam) / np.sqrt(p)[:, None])
+        np.testing.assert_allclose(np.abs(F.values), np.abs(expected_bary), atol=1e-8)
+
+    def test_quali_var_contrib_matches_factominer(self):
+        """Modality rows of column_contributions_ * 100 = famd$quali.var$contrib
+        (after aligning modality order)."""
+        F = load_df_from_R("famd$quali.var$contrib")
+        prince_mods = [self._prince_modality(m) for m in F.index]
+        P = self.famd.column_contributions_.loc[prince_mods] * 100
+        np.testing.assert_allclose(F.values, P.values, atol=1e-8)
 
 
 class TestWikipediaExample:
@@ -235,10 +294,8 @@ class TestWikipediaExample:
     def test_column_coordinates(self):
         """Figure 2: relationship square (r² for quanti, η² for quali).
 
-        FactoMineR's famd$var$coord aggregates to the variable level. Prince now stores
-        genuine PCA coordinates per modality, so we reconstruct the variable-level matrix:
-        r² for numerical, η² for categorical (Σ over modality coords squared, see
-        derivation in PR #223 / issue #215).
+        FactoMineR's famd$var$coord is the variable-level inertia matrix. With the new
+        FAMD API this lives in ``variable_coordinates_`` directly.
         """
         expected = np.array(
             [
@@ -250,15 +307,10 @@ class TestWikipediaExample:
                 [0.98021546, 1.00000000, 0.01777237, 0.00150503, 0.00050714],
             ]
         )
-        num_part = self.famd.column_coordinates_.loc[self.num_cols] ** 2
-        cat_part = self.famd.column_correlations.loc[self.cat_cols]
-        actual = pd.concat([num_part, cat_part])
-        np.testing.assert_allclose(actual.values, expected, atol=1e-5)
+        np.testing.assert_allclose(self.famd.variable_coordinates_.values, expected, atol=1e-5)
 
     def test_column_contributions(self):
-        """FactoMineR's famd$var$contrib aggregates to the variable level. Prince stores
-        per-modality contributions for categoricals; we sum them within each variable.
-        """
+        # FactoMineR's famd$var$contrib (as percentages).
         expected = np.array(
             [
                 [0.538193, 0.000000, 48.804945, 32.621824, 18.035038],
@@ -269,23 +321,16 @@ class TestWikipediaExample:
                 [28.274326, 40.000000, 0.901645, 2.694639, 8.129390],
             ]
         )
-        contrib = self.famd.column_contributions_
-        num_part = contrib.loc[self.num_cols]
-        cat_rows = {
-            col: contrib.loc[
-                [m for m in self.famd.one_hot_columns_ if m.startswith(f"{col}_")]
-            ].sum()
-            for col in self.cat_cols
-        }
-        cat_part = pd.DataFrame(cat_rows).T
-        actual = pd.concat([num_part, cat_part])
-        np.testing.assert_allclose(actual.values * 100, expected, atol=1e-4)
+        np.testing.assert_allclose(
+            self.famd.variable_contributions_.values * 100, expected, atol=1e-4
+        )
 
     def test_column_contributions_sum_to_one(self):
-        # Modality-level contributions sum to 1 per component (each component's total
-        # contribution is partitioned across all preprocessed columns).
+        # Per-preprocessed-column contributions sum to 1 per component.
         sums = self.famd.column_contributions_.sum()
         np.testing.assert_allclose(sums.values, 1.0)
+        # Aggregated variable-level contributions also sum to 1 per component.
+        np.testing.assert_allclose(self.famd.variable_contributions_.sum().values, 1.0)
 
     # -- Figure 3: Correlation circle --
 
