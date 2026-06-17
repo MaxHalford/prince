@@ -184,7 +184,6 @@ class TestWikipediaExample:
 
     @pytest.fixture(autouse=True)
     def _prepare(self):
-        import pandas as pd
 
         self.dataset = pd.DataFrame(
             {
@@ -431,7 +430,6 @@ def test_categorical_columns_explicit():
     ``categorical_columns`` is the escape hatch.
     """
     import prince
-    import pandas as pd
 
     df = pd.DataFrame(
         {
@@ -455,7 +453,6 @@ def test_supplementary_columns():
     """Supplementary columns are projected onto the active factor space without
     influencing how the axes are computed."""
     import prince
-    import pandas as pd
 
     df = pd.DataFrame(
         {
