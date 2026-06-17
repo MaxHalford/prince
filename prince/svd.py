@@ -50,16 +50,29 @@ def compute_svd(
         else:
             raise ValueError("fbpca is not installed; please install it if you want to use it")
     elif engine == "scipy":
-        U, s, V = scipy.linalg.svd(X)
-        U = U[:, :n_components]
-        s = s[:n_components]
-        V = V[:n_components, :]
+        U, s, V = scipy.linalg.svd(X, full_matrices=False)
     elif engine == "sklearn":
         U, s, V = extmath.randomized_svd(
             X, n_components=n_components, n_iter=n_iter, random_state=random_state
         )
     else:
         raise ValueError("engine has to be one of ('fbpca', 'scipy', 'sklearn')")
+
+    # Normalise to exactly ``n_components``. ``scipy.linalg.svd`` (and ``fbpca``) cap
+    # at ``min(M, N)`` for rank reasons, while ``sklearn.randomized_svd`` always returns
+    # the requested number, padding the tail with noise. We unify on the sklearn shape
+    # contract — extra components past the matrix rank get zero singular values, and the
+    # corresponding U/V columns are zeros (downstream code multiplies them by 0 anyway).
+    k = len(s)
+    if k < n_components:
+        pad = n_components - k
+        s = np.concatenate([s, np.zeros(pad)])
+        U = np.hstack([U, np.zeros((U.shape[0], pad))])
+        V = np.vstack([V, np.zeros((pad, V.shape[1]))])
+    elif k > n_components:
+        s = s[:n_components]
+        U = U[:, :n_components]
+        V = V[:n_components, :]
 
     # U, V = extmath.svd_flip(U, V)
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 import sklearn.base
 import sklearn.preprocessing
 import sklearn.utils
@@ -82,18 +83,56 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         self.one_hot_columns_to_drop = one_hot_columns_to_drop
         self.correction = correction
 
+    def _one_hot(self, X):
+        if self.one_hot:
+            return pd.get_dummies(X, columns=X.columns, prefix_sep=self.one_hot_prefix_sep)
+        return X
+
     def _prepare(self, X):
         """One-hot encode the input if needed, and align columns with the fitted indicator matrix."""
-        if self.one_hot:
-            X = pd.get_dummies(X, columns=X.columns, prefix_sep=self.one_hot_prefix_sep)
-            if self.one_hot_columns_to_drop is not None:
-                X = X.drop(columns=self.one_hot_columns_to_drop, errors="ignore")
-            if (one_hot_columns_ := getattr(self, "one_hot_columns_", None)) is not None:
-                X = X.reindex(columns=one_hot_columns_.union(X.columns), fill_value=False)
+        X = self._one_hot(X)
+        if self.one_hot and self.one_hot_columns_to_drop is not None:
+            X = X.drop(columns=self.one_hot_columns_to_drop, errors="ignore")
+        if (one_hot_columns_ := getattr(self, "one_hot_columns_", None)) is not None:
+            X = X.reindex(columns=one_hot_columns_.union(X.columns), fill_value=False)
         return X
 
     def get_feature_names_out(self, input_features=None):
         return np.arange(self.n_components_)
+
+    def _subset_greenacre_quantities(self):
+        """Adjusted eigenvalues and total inertia for subset MCA with Greenacre correction.
+
+        Ports the ``lambda = "adjusted"`` + ``subsetcat`` branch of R's ``ca::mjca``
+        (Nenadić & Greenacre 2007; *Correspondence Analysis in Practice* ch. 19 & 21).
+        Notation follows the R source so the two implementations can be cross-checked.
+
+        """
+        B = self._subset_full_burt_
+        cm = B.sum(axis=0) / B.sum()
+        sqrt_cm_outer = np.sqrt(np.outer(cm, cm))
+        cm_outer = np.outer(cm, cm)
+
+        # S_null: standardised residuals of the off-block-diagonal Burt.
+        B_null = B - np.diag(np.diag(B))
+        S_null = (B_null / B_null.sum() - cm_outer) / sqrt_cm_outer
+
+        # Se: standardised residuals under the "independence within each variable" model.
+        Pe = (B / B.sum()).copy()
+        for q in range(self.K_):
+            idx = np.where(self._subset_col_to_var_ == q)[0]
+            Pe[np.ix_(idx, idx)] = np.outer(cm[idx], cm[idx])
+        Se = (Pe - cm_outer) / sqrt_cm_outer
+
+        # Principal inertias on the active subset; clip numerical negatives.
+        mask = self._subset_mask_
+        eigvals = np.linalg.eigvalsh(S_null[np.ix_(mask, mask)])[::-1]
+        lambda_adj = np.clip(eigvals, 0, None) ** 2
+        # Total adjusted inertia. The Q/(Q-1) factor mirrors the non-subset Greenacre
+        # adjustment (see eqn. 19.5 in Greenacre, CA in Practice).
+        Q = self.K_
+        lambda_t = (Se[np.ix_(mask, mask)] ** 2).sum() * Q / (Q - 1)
+        return lambda_adj, lambda_t
 
     @property
     def eigenvalues_(self):
@@ -101,6 +140,9 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         eigenvalues = super().eigenvalues_
         # Benzécri and Greenacre corrections
         if self.correction in {"benzecri", "greenacre"}:
+            if self.correction == "greenacre" and self.one_hot_columns_to_drop is not None:
+                lambda_adj, _ = self._subset_greenacre_quantities()
+                return lambda_adj[: len(eigenvalues)]
             K = self.K_
             return np.array(
                 [(K / (K - 1) * (eig - 1 / K)) ** 2 if eig > 1 / K else 0 for eig in eigenvalues]
@@ -111,6 +153,12 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
     @utils.check_is_fitted
     def percentage_of_variance_(self):
         """Returns the percentage of explained inertia per principal component."""
+        # Greenacre correction on a subset MCA: closed-form Benzécri assumes uniform row
+        # sums in the indicator matrix and so mis-calibrates when categories are dropped.
+        if self.correction == "greenacre" and self.one_hot_columns_to_drop is not None:
+            lambda_adj, lambda_t = self._subset_greenacre_quantities()
+            n = len(super().eigenvalues_)
+            return 100 * lambda_adj[:n] / lambda_t
         # Benzécri correction
         if self.correction == "benzecri":
             eigenvalues = self.eigenvalues_
@@ -151,16 +199,65 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         # K is the number of actual variables, to apply the Benzécri correction
         self.K_ = X.shape[1]
 
-        # One-hot encode the data
-        one_hot = self._prepare(X)
-        self.one_hot_columns_ = one_hot.columns
+        # Build the indicator matrix directly as a scipy sparse CSC: factorize each
+        # input column to get integer codes, then construct one COO from offsets. This
+        # avoids ``pd.get_dummies`` (which is dominated by per-column object work) and
+        # gives a sparse Zᵀ Z for the subset-Greenacre Burt with no extra conversion.
+        # We densify once into a single contiguous float ndarray right before CA.fit,
+        # so sklearn's ``check_array`` sees one block instead of iterating over J
+        # per-column ExtensionArrays.
+        if self.one_hot:
+            categories_per_col = [pd.Categorical(X[c]) for c in X.columns]
+            n_levels = np.array([len(c.categories) for c in categories_per_col])
+            offsets = np.concatenate(([0], np.cumsum(n_levels)[:-1]))
+            J_full = int(n_levels.sum())
+            sep = self.one_hot_prefix_sep
+            full_columns = pd.Index(
+                [
+                    f"{col}{sep}{level}"
+                    for col, cat in zip(X.columns, categories_per_col)
+                    for level in cat.categories
+                ]
+            )
 
-        # We need the number of columns to apply the Greenacre correction
-        self.J_ = one_hot.shape[1]
+            n_rows = len(X)
+            codes = np.column_stack([c.codes.astype(np.int64) for c in categories_per_col])
+            valid = (codes >= 0).ravel()
+            row_idx = np.repeat(np.arange(n_rows), self.K_)[valid]
+            col_idx = (codes + offsets[None, :]).ravel()[valid]
+            full_one_hot_sp = sp.csc_matrix(
+                (np.ones(row_idx.size, dtype=np.float64), (row_idx, col_idx)),
+                shape=(n_rows, J_full),
+            )
 
-        # Apply CA to the indicator matrix
+            if self.one_hot_columns_to_drop is not None:
+                keep_mask = ~full_columns.isin(self.one_hot_columns_to_drop)
+            else:
+                keep_mask = np.ones(J_full, dtype=bool)
+            kept_columns = full_columns[keep_mask]
+            one_hot_sp = full_one_hot_sp[:, keep_mask] if not keep_mask.all() else full_one_hot_sp
+            one_hot_dense = one_hot_sp.toarray()
+
+            if self.one_hot_columns_to_drop is not None and self.correction == "greenacre":
+                # Sparse Zᵀ Z is much faster than dense for wide indicator matrices.
+                self._subset_full_burt_ = np.asarray(
+                    (full_one_hot_sp.T @ full_one_hot_sp).todense()
+                )
+                self._subset_col_to_var_ = np.repeat(np.arange(self.K_), n_levels)
+                self._subset_mask_ = np.asarray(keep_mask, dtype=bool)
+        else:
+            keep_mask = np.ones(X.shape[1], dtype=bool)
+            kept_columns = X.columns
+            one_hot_dense = np.ascontiguousarray(X.to_numpy(), dtype=np.float64)
+
+        self.one_hot_columns_ = kept_columns
+        self.J_ = len(kept_columns)
+
+        # Wrap the dense ndarray in a single-block DataFrame so CA.fit sees one
+        # contiguous array instead of J per-column ExtensionArrays.
+        one_hot = pd.DataFrame(one_hot_dense, index=X.index, columns=kept_columns)
+
         super().fit(one_hot)
-
         return self
 
     @utils.check_is_dataframe_input
