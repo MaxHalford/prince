@@ -23,6 +23,23 @@ class FAMD(pca.PCA):
     categorical_columns : list of str, optional
         Columns to treat as categorical. If ``None``, columns are auto-detected
         based on dtype (non-float columns are treated as categorical).
+
+    Attributes
+    ----------
+    num_cols_ : list of str
+        All numerical columns seen at fit time (active + supplementary).
+    cat_cols_ : list of str
+        All categorical columns seen at fit time (active + supplementary).
+    num_scaler_ : sklearn.preprocessing.StandardScaler
+        Fitted on the active numerical columns. ``num_scaler_.feature_names_in_``
+        is the canonical list of active numerical columns; supplementary numerical
+        columns are ``set(num_cols_) - set(num_scaler_.feature_names_in_)``.
+    one_hot_columns_ : list of str
+        One-hot encoded modality names for the active categoricals.
+    categories_ : dict[str, ndarray]
+        Maps each active categorical column to its observed categories. The set of
+        keys is the list of active categorical columns; supplementary categoricals
+        are ``set(cat_cols_) - set(categories_)``.
     """
 
     def __init__(
@@ -65,12 +82,15 @@ class FAMD(pca.PCA):
             num_cols = [c for c in X.columns if c not in cat_set]
         return num_cols, cat_cols
 
-    def _preprocess_categorical(self, X_cat):
-        """One-hot encode and apply Pagès's MCA coding (X_oh - p) / sqrt(p)."""
-        X_oh = pd.get_dummies(X_cat.astype(str), dtype=float)
-        p = X_oh.mean(axis="rows")
-        X_oh_scaled = X_oh.sub(p, axis="columns").div(np.sqrt(p), axis="columns")
-        return X_oh, X_oh_scaled
+    def _modalities_for(self, col):
+        """Modality column names for an active categorical, in training order."""
+        return [f"{col}_{cat}" for cat in self.categories_[col]]
+
+    def _active_num_cols(self):
+        return list(self.num_scaler_.feature_names_in_)
+
+    def _active_cat_cols(self):
+        return list(self.categories_)
 
     @utils.check_is_dataframe_input
     def fit(self, X, y=None, supplementary_columns=None):
@@ -86,7 +106,6 @@ class FAMD(pca.PCA):
         """
         supplementary_columns = list(supplementary_columns or [])
 
-        # Detect column types across the full input (active + supplementary).
         self.num_cols_, self.cat_cols_ = self._split_column_types(X)
         if not self.num_cols_:
             raise ValueError("All variables are qualitative: MCA should be used")
@@ -106,54 +125,32 @@ class FAMD(pca.PCA):
                 "No active categorical variables left after removing supplementary ones"
             )
 
-        # Active numerical: standardize. ``num_scaler_.feature_names_in_`` is the
-        # canonical record of which numerical columns are active; supplementary
-        # numerical columns are not surfaced as their own attribute and can be
-        # recovered as ``set(num_cols_) - set(num_scaler_.feature_names_in_)``.
-        # Cast to float upfront so integer columns can be passed as numerical via
-        # ``categorical_columns=[...]`` — pandas refuses to assign float arrays into
-        # int dtypes via ``X_num[:] = ...``.
+        # Cast to float so int columns can be passed as numerical via
+        # `categorical_columns=[...]` — `X_num[:] = ...` refuses to assign float
+        # arrays into int dtypes.
         X_num = X[active_num].astype(float)
         self.num_scaler_ = preprocessing.StandardScaler().fit(X_num)
         X_num[:] = self.num_scaler_.transform(X_num)
 
-        # Active categorical: one-hot encode + center + scale by sqrt(p). Similarly,
-        # ``one_hot_columns_`` is the active-modality record; supplementary categoricals
-        # can be recovered as ``[c for c in cat_cols_ if not any one_hot_columns_ starts
-        # with "c_"]``.
-        X_cat_oh, X_cat_oh_norm = self._preprocess_categorical(X[active_cat])
+        X_cat_oh, X_cat_oh_norm = _mca_code(X[active_cat])
         self.one_hot_columns_ = X_cat_oh.columns.tolist()
         self.categories_ = {col: X[col].astype(str).unique() for col in active_cat}
 
         Z_parts = [X_num, X_cat_oh_norm]
         sup_preprocessed_columns = []
-
         if sup_num:
             X_sup_num = X[sup_num].astype(float)
             X_sup_num[:] = preprocessing.StandardScaler().fit_transform(X_sup_num)
             Z_parts.append(X_sup_num)
             sup_preprocessed_columns.extend(sup_num)
-
         if sup_cat:
-            X_sup_oh, X_sup_oh_norm = self._preprocess_categorical(X[sup_cat])
+            X_sup_oh, X_sup_oh_norm = _mca_code(X[sup_cat])
             Z_parts.append(X_sup_oh_norm)
             sup_preprocessed_columns.extend(X_sup_oh.columns.tolist())
 
         Z = pd.concat(Z_parts, axis=1)
         super().fit(Z, supplementary_columns=sup_preprocessed_columns)
-
         return self
-
-    def _active_num_cols(self):
-        return list(self.num_scaler_.feature_names_in_)
-
-    def _active_cat_cols(self):
-        # A categorical is active iff at least one of its modalities is in one_hot_columns_.
-        return [
-            c
-            for c in self.cat_cols_
-            if any(m.startswith(f"{c}_") for m in self.one_hot_columns_)
-        ]
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
@@ -172,13 +169,15 @@ class FAMD(pca.PCA):
                     raise ValueError(
                         f"Found unknown categories {unknown} in column '{col}' during transform."
                     )
-        X_cat = pd.get_dummies(X_cat.astype(str), dtype=float).reindex(
+        # Recompute proportions from the input (matches the historical FAMD
+        # transform behavior — kept for backward compatibility with #169 doctest).
+        X_cat_oh = pd.get_dummies(X_cat.astype(str), dtype=float).reindex(
             columns=self.one_hot_columns_, fill_value=0
         )
-        prop = X_cat.mean()
-        X_cat = X_cat.sub(X_cat.mean(axis="rows")).div(prop**0.5, axis="columns")
+        p = X_cat_oh.mean(axis="rows")
+        X_cat_norm = X_cat_oh.sub(p, axis="columns").div(np.sqrt(p), axis="columns")
 
-        Z = pd.concat([X_num, X_cat], axis=1).fillna(0.0)
+        Z = pd.concat([X_num, X_cat_norm], axis=1).fillna(0.0)
         return super().row_coordinates(Z)
 
     @utils.check_is_dataframe_input
@@ -199,29 +198,24 @@ class FAMD(pca.PCA):
     @property
     @utils.check_is_fitted
     def column_correlations(self):
-        """Signed correlations between numerical variables and components.
+        """Signed Pearson correlations for numerical variables, η² for categoricals.
 
-        For quantitative variables, these are the signed Pearson correlations
-        (FactoMineR: ``quanti.var$coord``). They populate the correlation circle.
-        Categorical variables are returned as η² values (no signed correlation
-        exists for them).
+        For quantitative variables: signed correlations with each principal component
+        (FactoMineR: ``quanti.var$coord``) — the values plotted in the correlation circle.
+
+        For qualitative variables: η²(q, s) = Σ_{k_q} G_s(k_q)² where G_s(k_q) is the
+        PCA coordinate of modality k_q (Pagès 2004, §5.1 p. 98–99). The cross-factors
+        between G_s and the barycentric form F_s cancel because of the FAMD modality
+        scaling, leaving the sum of squared modality coordinates.
         """
-        active_num = self._active_num_cols()
-        active_cat = self._active_cat_cols()
-
-        num_corr = self.column_coordinates_.loc[active_num]
-
-        # η²(q, s) = Σ_{k_q} G_s(k_q)² where G_s(k_q) is the PCA coord on the MCA-coded
-        # indicator (Pagès 2004, §5.1 p.98–99). The barycentre form F_s(k_q) and G_s(k_q)
-        # are related by G_s = √(p/λ)·F_s, and substituting into the variance-ratio
-        # definition of η² makes the p_j and λ factors cancel, giving Σ G_s².
-        eta2_rows = {}
-        for col in active_cat:
-            mods = [m for m in self.one_hot_columns_ if m.startswith(f"{col}_")]
-            f = self.column_coordinates_.loc[mods].to_numpy()
-            eta2_rows[col] = (f**2).sum(axis=0)
+        num_corr = self.column_coordinates_.loc[self._active_num_cols()]
+        eta2_rows = {
+            col: (self.column_coordinates_.loc[self._modalities_for(col)].to_numpy() ** 2).sum(
+                axis=0
+            )
+            for col in self._active_cat_cols()
+        }
         eta2 = pd.DataFrame(eta2_rows, index=self.column_coordinates_.columns).T
-
         return pd.concat([num_corr, eta2])
 
     @utils.check_is_dataframe_input
@@ -231,9 +225,18 @@ class FAMD(pca.PCA):
 
     @property
     def column_contributions_(self):
-        """Contribution of each (modality or numerical) variable to each component.
-
-        For genuine PCA coordinates ``f``, the contribution is ``f² / λ`` (where ``λ`` is
-        the eigenvalue). Rows are columns of the preprocessed indicator/numerical matrix.
+        """Contribution of each preprocessed column (modality or numerical) to each
+        component: ``f² / λ`` where ``f`` is the PCA coordinate and ``λ`` the eigenvalue.
         """
         return self.column_coordinates_**2 / self.eigenvalues_
+
+
+def _mca_code(X_cat):
+    """One-hot encode and apply Pagès's MCA coding ``(X_oh - p) / sqrt(p)``.
+
+    Returns the raw one-hot matrix (for column names) and the centered/scaled one.
+    """
+    X_oh = pd.get_dummies(X_cat.astype(str), dtype=float)
+    p = X_oh.mean(axis="rows")
+    X_oh_scaled = X_oh.sub(p, axis="columns").div(np.sqrt(p), axis="columns")
+    return X_oh, X_oh_scaled
