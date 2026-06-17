@@ -13,13 +13,10 @@
 - **MFA: categorical groups**. Categorical groups are now fitted with MCA (indicator columns centered and divided by √(p_j·(1-p_j)), with column weight (1-p_j)/(λ₁·Q)). This allows numeric and categorical groups to be mixed in a single MFA. Adds `prince.datasets.load_poison()`. Closes [#231](https://github.com/MaxHalford/prince/issues/231).
 - **MCA: faster `fit`**. The indicator matrix is now built directly as a scipy CSC sparse matrix (factorize columns, build COO from offsets) instead of going through a dense intermediate, with a single densification at the end. Materially faster on wide categorical datasets.
 - **`prince.__version__`**. The package version is now exposed as `prince.__version__`.
-
-## 0.19.0 — 2026-05-05
-
-### New features
-
 - **FAMD: explicit `categorical_columns` constructor argument and `supplementary_columns=` in `fit`**. Mirrors PCA's supplementary-variable support: columns listed as supplementary are projected onto the factor space but do not influence the axes. `categorical_columns` defaults to `None`, preserving the existing dtype-based auto-detection.
 - **FAMD: `column_coordinates_` now stores genuine PCA coordinates per preprocessed column** — signed correlations for numerical variables and modality coordinates ``G_s(k_q)`` per Pagès 2004 §5.1 — matching MCA's per-preprocessed-column convention. The mixed r²/η² inertia matrix is still available as a first-class attribute under the name `variable_coordinates_` (FactoMineR's `var$coord`), with `variable_contributions_` mirroring `var$contrib`. `column_contributions_` is now `column_coordinates_²/λ` (per preprocessed column). Discussed in [#215](https://github.com/MaxHalford/prince/issues/215).
+
+## 0.19.0 — 2026-05-05
 
 ### Bug fixes
 
