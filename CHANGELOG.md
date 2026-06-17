@@ -16,6 +16,11 @@
 
 ## 0.19.0 — 2026-05-05
 
+### New features
+
+- **FAMD: explicit `categorical_columns` constructor argument and `supplementary_columns=` in `fit`**. Mirrors PCA's supplementary-variable support: columns listed as supplementary are projected onto the factor space but do not influence the axes. `categorical_columns` defaults to `None`, preserving the existing dtype-based auto-detection.
+- **FAMD: `column_coordinates_` now stores genuine PCA coordinates** (signed correlations for numerical variables, modality coordinates per Pagès 2004 §5.1) instead of the mixed r²/η² inertia matrix. This places modality and numerical variables in the same coordinate space, so downstream operations like contributions and cosine similarities are mathematically consistent. `column_contributions_` correspondingly uses `f²/λ` (modality-level). FactoMineR's variable-level `famd$var$coord` is recoverable via `column_correlations` (η² for categoricals, squared signed correlations for numerical). Discussed in [#215](https://github.com/MaxHalford/prince/issues/215).
+
 ### Bug fixes
 
 - **MFA: `column_cosine_similarities_` was not callable**. Calling `mfa.column_cosine_similarities_(X)` raised `TypeError: 'DataFrame' object is not callable` because a method override was trying to call the parent class's `@property`. The override was removed — the inherited property works correctly. Reported in [#218](https://github.com/MaxHalford/prince/issues/218).
