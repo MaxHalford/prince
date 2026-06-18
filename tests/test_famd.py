@@ -184,7 +184,6 @@ class TestWikipediaExample:
 
     @pytest.fixture(autouse=True)
     def _prepare(self):
-
         self.dataset = pd.DataFrame(
             {
                 "k1": [2.0, 5.0, 3.0, 4.0, 1.0, 6.0],
