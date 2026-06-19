@@ -171,7 +171,9 @@ class MFA(pca.PCA, collections.UserDict):
             Z_g = Z.loc[:, block_cols].to_numpy(dtype=np.float64)
             S = Z_g.T @ Z_g / n
             w = column_weights[offset : offset + len(block_cols)]
-            self._group_dist2_[group] = float((S**2 * np.outer(w, w)).sum())
+            # sum_{j,k} S_jk^2 w_j w_k is the quadratic form w' (S∘S) w; the BLAS
+            # matvec route is several times faster than materialising S**2 and outer(w, w).
+            self._group_dist2_[group] = float(w @ (S * S) @ w)
             offset += len(block_cols)
 
         # The global PCA sees an already-scaled Z, so disable its scaler. We restore the
@@ -331,7 +333,7 @@ class MFA(pca.PCA, collections.UserDict):
     def row_cosine_similarities(self, X):
         Z_np = self._extract_Z_numpy(X)
         Z_scaled = self._scale_active_numpy(Z_np)
-        squared_coordinates = (np.square(Z_scaled) * self.column_weight_).sum(axis=1)
+        squared_coordinates = (Z_scaled * Z_scaled) @ self.column_weight_
         Z_scaled *= self.column_weight_
         coord = Z_scaled @ self.svd_.V.T
         return pd.DataFrame(
@@ -425,9 +427,9 @@ class MFA(pca.PCA, collections.UserDict):
         eig_ratios = np.array(eig_ratios_list)
 
         # Center and standardize with row weights
-        weighted_mean = (tab * row_weights[:, np.newaxis]).sum(axis=0)
+        weighted_mean = row_weights @ tab
         tab = tab - weighted_mean
-        sigma = np.sqrt((tab**2 * row_weights[:, np.newaxis]).sum(axis=0))
+        sigma = np.sqrt(row_weights @ (tab * tab))
         sigma[sigma < 1e-08] = 1
         tab = tab / sigma
 

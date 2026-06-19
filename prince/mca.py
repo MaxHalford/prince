@@ -110,8 +110,8 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         """
         B = self._subset_full_burt_
         cm = B.sum(axis=0) / B.sum()
-        sqrt_cm_outer = np.sqrt(np.outer(cm, cm))
         cm_outer = np.outer(cm, cm)
+        sqrt_cm_outer = np.sqrt(cm_outer)
 
         # S_null: standardised residuals of the off-block-diagonal Burt.
         B_null = B - np.diag(np.diag(B))

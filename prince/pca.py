@@ -114,7 +114,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
                 ).fit_transform(X_sup, sample_weight=sample_weight)
 
         self._column_dist = pd.Series(
-            (X_active**2 * sample_weight[:, np.newaxis]).sum(axis=0),
+            sample_weight @ np.square(X_active),
             index=active_variables,
         )
         if supplementary_columns:
@@ -122,7 +122,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
                 (
                     self._column_dist,
                     pd.Series(
-                        (X_sup**2 * sample_weight[:, np.newaxis]).sum(axis=0),
+                        sample_weight @ np.square(X_sup),
                         index=supplementary_columns,
                     ),
                 )
@@ -138,9 +138,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             column_weights=column_weight,
         )
 
-        self.total_inertia_ = np.sum(
-            np.square(X_active) * column_weight * sample_weight[:, np.newaxis]
-        )
+        self.total_inertia_ = sample_weight @ np.square(X_active) @ np.asarray(column_weight)
 
         self.column_coordinates_ = pd.DataFrame(
             data=self.svd_.V.T * self.eigenvalues_**0.5,
@@ -297,7 +295,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         the squared cosine.
 
         """
-        squared_coordinates = (np.square(self._scale(X)) * self.column_weight_).sum(axis=1)
+        scaled = np.asarray(self._scale(X), dtype=np.float64)
+        squared_coordinates = (scaled * scaled) @ np.asarray(self.column_weight_)
         return (self.row_coordinates(X) ** 2).div(squared_coordinates, axis=0)
 
     @property
