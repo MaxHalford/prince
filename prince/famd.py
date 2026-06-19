@@ -83,7 +83,9 @@ class FAMD(pca.PCA):
 
     def _check_input(self, X):
         if self.check_input:
-            sklearn.utils.check_array(X, dtype=[str, "numeric"])
+            # sklearn-stubs types `dtype` as `str`, but a list is valid at runtime
+            # (mixed string/numeric columns are expected here).
+            sklearn.utils.check_array(X, dtype=[str, "numeric"])  # pyright: ignore[reportArgumentType]
 
     def _split_column_types(self, X):
         if self.categorical_columns is None:
@@ -100,13 +102,14 @@ class FAMD(pca.PCA):
         return [f"{col}_{cat}" for cat in self.categories_[col]]
 
     def _active_num_cols(self):
-        return list(self.num_scaler_.feature_names_in_)
+        # feature_names_in_ is set by StandardScaler.fit but missing from sklearn-stubs.
+        return list(self.num_scaler_.feature_names_in_)  # pyright: ignore[reportAttributeAccessIssue]
 
     def _active_cat_cols(self):
         return list(self.categories_)
 
     @utils.check_is_dataframe_input
-    def fit(self, X, y=None, supplementary_columns=None):
+    def fit(self, X, y=None, sample_weight=None, column_weight=None, supplementary_columns=None):
         """Fit a Factor Analysis of Mixed Data (FAMD) model.
 
         Parameters
@@ -116,7 +119,19 @@ class FAMD(pca.PCA):
         supplementary_columns : list of str, optional
             Columns to treat as supplementary (projected onto the factor space
             after fitting, not used to compute it).
+
+        Notes
+        -----
+        ``sample_weight`` and ``column_weight`` are accepted to match the ``PCA``
+        signature but are not supported: FAMD's preprocessing (standardisation and
+        MCA coding) is computed unweighted, so honouring them would silently produce
+        inconsistent results. Passing either raises ``NotImplementedError``.
         """
+        if sample_weight is not None or column_weight is not None:
+            raise NotImplementedError(
+                "FAMD does not support sample_weight or column_weight: its preprocessing "
+                "is computed unweighted."
+            )
         supplementary_columns = list(supplementary_columns or [])
 
         self.num_cols_, self.cat_cols_ = self._split_column_types(X)
@@ -177,7 +192,7 @@ class FAMD(pca.PCA):
         X_cat = X[active_cat]
         if self.handle_unknown == "error":
             for col in active_cat:
-                unknown = set(X_cat[col].astype(str).unique()) - set(self.categories_[col])
+                unknown = set(X_cat[col].astype(str)) - set(self.categories_[col])
                 if unknown:
                     raise ValueError(
                         f"Found unknown categories {unknown} in column '{col}' during transform."
@@ -195,12 +210,12 @@ class FAMD(pca.PCA):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, as_array=False):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def row_standard_coordinates(self, X):
+    def row_standard_coordinates(self, X=None):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @utils.check_is_dataframe_input
@@ -222,9 +237,9 @@ class FAMD(pca.PCA):
         eta2 = self._variable_level_categorical()
         return pd.concat([num_corr, eta2])
 
-    @utils.check_is_dataframe_input
+    @property
     @utils.check_is_fitted
-    def column_cosine_similarities_(self, X):
+    def column_cosine_similarities_(self):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @property
