@@ -240,12 +240,15 @@ class FAMD(pca.PCA):
 
     def _variable_level_categorical(self):
         """η² at the variable level: Σ_modalities G_s(k_q)²."""
-        rows = {
-            col: (self.column_coordinates_.loc[self._modalities_for(col)].to_numpy() ** 2).sum(
-                axis=0
-            )
-            for col in self._active_cat_cols()
-        }
+
+        def eta2(col):
+            # Σ_q G_s(k_q)² per component is the column-wise sum of squares of the
+            # modality coordinates; `einsum("ij,ij->j", M, M)` computes it without
+            # materialising the M**2 temporary (cf. CA's total-inertia einsum).
+            M = self.column_coordinates_.loc[self._modalities_for(col)].to_numpy()
+            return np.einsum("ij,ij->j", M, M)
+
+        rows = {col: eta2(col) for col in self._active_cat_cols()}
         return pd.DataFrame(rows, index=self.column_coordinates_.columns).T
 
     @property
