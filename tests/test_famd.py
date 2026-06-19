@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 
 import numpy as np
+import pandas as pd
 import pytest
 import sklearn.utils.estimator_checks
 import sklearn.utils.validation
@@ -86,15 +87,91 @@ class TestFAMD:
         P = self.famd.row_contributions_
         np.testing.assert_allclose(F, P * 100)
 
-    def test_col_coords(self):
+    def test_variable_coords(self):
+        # variable_coordinates_ matches FactoMineR's famd$var$coord directly:
+        # r² for numerical, η² for categorical (one row per original variable).
         F = load_df_from_R("famd$var$coord")
-        P = self.famd.column_coordinates_
-        np.testing.assert_allclose(F.abs(), P.abs())
+        np.testing.assert_allclose(F, self.famd.variable_coordinates_, atol=1e-8)
 
-    def test_col_contrib(self):
+    def test_variable_contrib(self):
         F = load_df_from_R("famd$var$contrib")
-        P = self.famd.column_contributions_
-        np.testing.assert_allclose(F, P * 100)
+        np.testing.assert_allclose(F, self.famd.variable_contributions_ * 100, atol=1e-8)
+
+    def test_col_coords_modality_level(self):
+        # column_coordinates_ is at the preprocessed-column level (one row per
+        # numerical + one row per modality), like MCA. Sanity check: squaring the
+        # numerical rows reproduces the variable-level r² entries.
+        cc = self.famd.column_coordinates_
+        for col in self.famd.num_cols_:
+            np.testing.assert_allclose(
+                cc.loc[col] ** 2,
+                self.famd.variable_coordinates_.loc[col],
+                atol=1e-10,
+            )
+        # And summing squared modality coords reproduces the η² entries.
+        for col in self.famd.cat_cols_:
+            mods = [m for m in self.famd.one_hot_columns_ if m.startswith(f"{col}_")]
+            np.testing.assert_allclose(
+                (cc.loc[mods] ** 2).sum(axis=0),
+                self.famd.variable_coordinates_.loc[col],
+                atol=1e-10,
+            )
+
+    # -- Comparison with FactoMineR's per-type outputs --
+
+    def test_quanti_var_coord_matches_factominer(self):
+        """Numerical rows of column_coordinates_ = FactoMineR's famd$quanti.var$coord
+        (signed Pearson correlations)."""
+        F = load_df_from_R("famd$quanti.var$coord")
+        P = self.famd.column_coordinates_.loc[self.famd.num_cols_]
+        np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-8)
+
+    def test_quanti_var_contrib_matches_factominer(self):
+        """Numerical rows of column_contributions_ * 100 = famd$quanti.var$contrib."""
+        F = load_df_from_R("famd$quanti.var$contrib")
+        P = self.famd.column_contributions_.loc[self.famd.num_cols_] * 100
+        np.testing.assert_allclose(F.values, P.values, atol=1e-8)
+
+    def _prince_modality(self, factominer_label):
+        """Map FactoMineR's bare-category label (e.g. ``"Altbier"``) to prince's
+        prefixed modality name (e.g. ``"style_Altbier"``). FactoMineR strips the
+        column prefix; prince keeps ``{col}_{cat}``."""
+        for col in self.famd.cat_cols_:
+            cats = {str(c) for c in self.famd.categories_[col]}
+            if factominer_label in cats:
+                return f"{col}_{factominer_label}"
+        raise KeyError(factominer_label)
+
+    def test_quali_var_coord_matches_factominer_via_pages_scaling(self):
+        """Modality rows of column_coordinates_ are Pagès's G_s(k_q) (PCA coord on the
+        MCA-coded indicator). FactoMineR's famd$quali.var$coord stores the barycentres
+        F_s(k_q). They're related by F_s = G_s · √(λ/p) (Pagès 2004 §5.1).
+
+        FactoMineR orders modalities differently than pandas (locale-aware on the cat
+        values), so we align by reindexing prince's output to FactoMineR's order.
+        """
+        F = load_df_from_R("famd$quali.var$coord")
+        prince_mods = [self._prince_modality(m) for m in F.index]
+        G = self.famd.column_coordinates_.loc[prince_mods].to_numpy()
+
+        n = len(self.dataset)
+        p_by_mod = {
+            f"{col}_{cat}": (self.dataset[col].astype(str) == str(cat)).sum() / n
+            for col in self.famd.cat_cols_
+            for cat in self.famd.categories_[col]
+        }
+        p = np.array([p_by_mod[m] for m in prince_mods])
+        lam = self.famd.eigenvalues_
+        expected_bary = G * (np.sqrt(lam) / np.sqrt(p)[:, None])
+        np.testing.assert_allclose(np.abs(F.values), np.abs(expected_bary), atol=1e-8)
+
+    def test_quali_var_contrib_matches_factominer(self):
+        """Modality rows of column_contributions_ * 100 = famd$quali.var$contrib
+        (after aligning modality order)."""
+        F = load_df_from_R("famd$quali.var$contrib")
+        prince_mods = [self._prince_modality(m) for m in F.index]
+        P = self.famd.column_contributions_.loc[prince_mods] * 100
+        np.testing.assert_allclose(F.values, P.values, atol=1e-8)
 
 
 class TestWikipediaExample:
@@ -107,8 +184,6 @@ class TestWikipediaExample:
 
     @pytest.fixture(autouse=True)
     def _prepare(self):
-        import pandas as pd
-
         self.dataset = pd.DataFrame(
             {
                 "k1": [2.0, 5.0, 3.0, 4.0, 1.0, 6.0],
@@ -217,7 +292,8 @@ class TestWikipediaExample:
     def test_column_coordinates(self):
         """Figure 2: relationship square (r² for quanti, η² for quali).
 
-        FactoMineR: famd$var$coord.
+        FactoMineR's famd$var$coord is the variable-level inertia matrix. With the new
+        FAMD API this lives in ``variable_coordinates_`` directly.
         """
         expected = np.array(
             [
@@ -229,10 +305,10 @@ class TestWikipediaExample:
                 [0.98021546, 1.00000000, 0.01777237, 0.00150503, 0.00050714],
             ]
         )
-        np.testing.assert_allclose(self.famd.column_coordinates_.abs().values, expected, atol=1e-5)
+        np.testing.assert_allclose(self.famd.variable_coordinates_.values, expected, atol=1e-5)
 
     def test_column_contributions(self):
-        # FactoMineR: famd$var$contrib (as percentages)
+        # FactoMineR's famd$var$contrib (as percentages).
         expected = np.array(
             [
                 [0.538193, 0.000000, 48.804945, 32.621824, 18.035038],
@@ -244,12 +320,15 @@ class TestWikipediaExample:
             ]
         )
         np.testing.assert_allclose(
-            self.famd.column_contributions_.values * 100, expected, atol=1e-4
+            self.famd.variable_contributions_.values * 100, expected, atol=1e-4
         )
 
     def test_column_contributions_sum_to_one(self):
+        # Per-preprocessed-column contributions sum to 1 per component.
         sums = self.famd.column_contributions_.sum()
         np.testing.assert_allclose(sums.values, 1.0)
+        # Aggregated variable-level contributions also sum to 1 per component.
+        np.testing.assert_allclose(self.famd.variable_contributions_.sum().values, 1.0)
 
     # -- Figure 3: Correlation circle --
 
@@ -270,16 +349,12 @@ class TestWikipediaExample:
         cc = self.famd.column_correlations
         # Quantitative: signed correlations match FactoMineR quanti.var$coord
         np.testing.assert_allclose(cc.loc[self.num_cols].abs().values, expected_abs, atol=1e-5)
-        # Squaring the correlations gives the quanti part of column_coordinates_
+        # For numerical variables, column_coordinates_ now stores the signed correlations
+        # directly (genuine PCA coords on standardized input), so the two are equal.
         np.testing.assert_allclose(
             self.famd.column_coordinates_.loc[self.num_cols].values,
-            cc.loc[self.num_cols].values ** 2,
+            cc.loc[self.num_cols].values,
             atol=1e-5,
-        )
-        # Qualitative: column_correlations returns η² (same as column_coordinates_)
-        np.testing.assert_allclose(
-            cc.loc[self.cat_cols].values,
-            self.famd.column_coordinates_.loc[self.cat_cols].values,
         )
 
     # -- Figure 4: Category representation --
@@ -344,3 +419,79 @@ def test_issue_169():
     3         -0.752726  0.0
 
     """
+
+
+def test_categorical_columns_explicit():
+    """User can override dtype-based auto-detection by passing ``categorical_columns``.
+
+    Without ``categorical_columns``, only float columns are treated as numerical. An
+    integer column like ``rating`` would be detected as categorical. Passing
+    ``categorical_columns`` is the escape hatch.
+    """
+    import prince
+
+    df = pd.DataFrame(
+        {
+            "x1": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            "x2": [4.5, 4.5, 1.0, 1.0, 1.0, 1.0],
+            "rating": [1, 2, 1, 2, 3, 3],  # int — auto-detected as categorical
+            "label": ["A", "B", "B", "B", "A", "A"],
+        }
+    )
+    famd = prince.FAMD(n_components=2, engine="scipy").fit(df)
+    assert sorted(famd.num_cols_) == ["x1", "x2"]
+    assert sorted(famd.cat_cols_) == ["label", "rating"]
+
+    # Override: treat rating as numerical.
+    famd = prince.FAMD(n_components=2, engine="scipy", categorical_columns=["label"]).fit(df)
+    assert sorted(famd.num_cols_) == ["rating", "x1", "x2"]
+    assert sorted(famd.cat_cols_) == ["label"]
+
+
+def test_supplementary_columns():
+    """Supplementary columns are projected onto the active factor space without
+    influencing how the axes are computed."""
+    import prince
+
+    df = pd.DataFrame(
+        {
+            "x1": [2.0, 5.0, 3.0, 4.0, 1.0, 6.0],
+            "x2": [4.5, 4.5, 1.0, 1.0, 1.0, 1.0],
+            "x3": [4.0, 4.0, 2.0, 2.0, 1.0, 2.0],
+            "q1": ["A", "C", "B", "B", "A", "C"],
+            "q2": ["B", "B", "B", "B", "A", "A"],
+            "q3_sup": ["C", "C", "B", "B", "A", "A"],
+            "x_sup": [10.0, 20.0, 30.0, 40.0, 50.0, 60.0],
+        },
+        index=[f"i{i}" for i in range(1, 7)],
+    )
+
+    famd_full = prince.FAMD(n_components=4, engine="scipy").fit(df)
+    famd_sup = prince.FAMD(n_components=4, engine="scipy").fit(
+        df, supplementary_columns=["q3_sup", "x_sup"]
+    )
+
+    # The active factor space ignores supplementary cols, so dropping them up-front
+    # and fitting must give the same eigenvalues + active row coords as passing them
+    # as supplementary.
+    famd_active = prince.FAMD(n_components=4, engine="scipy").fit(
+        df.drop(columns=["q3_sup", "x_sup"])
+    )
+    np.testing.assert_allclose(famd_sup.eigenvalues_, famd_active.eigenvalues_, atol=1e-10)
+    np.testing.assert_allclose(
+        famd_sup.row_coordinates(df).abs().values,
+        famd_active.row_coordinates(df.drop(columns=["q3_sup", "x_sup"])).abs().values,
+        atol=1e-10,
+    )
+
+    # Supplementary cols (or their modalities) appear in column_coordinates_ but
+    # don't affect eigenvalues.
+    assert "x_sup" in famd_sup.column_coordinates_.index
+    assert any(m.startswith("q3_sup_") for m in famd_sup.column_coordinates_.index)
+    assert "x_sup" not in famd_full.cat_cols_
+
+    # num_cols_/cat_cols_ keep the *full* picture; active subsets are derivable.
+    assert "x_sup" in famd_sup.num_cols_
+    assert "q3_sup" in famd_sup.cat_cols_
+    active_num = list(famd_sup.num_scaler_.feature_names_in_)
+    assert "x_sup" not in active_num
