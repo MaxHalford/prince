@@ -15,14 +15,20 @@ version = "0.19.0"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA, PGA"
 
 [project.optional-dependencies]
+# Kept separate from `dev` so linting never needs to build the heavier dev
+# dependencies (e.g. rpy2, which requires R on the machine). The lint CI job
+# and pre-commit only sync this extra.
+lint = [
+    "ruff>=0.8.8",
+]
 dev = [
+    "prince[lint]",
     "nbconvert>=7.16.5",
     "fbpca>=1.0",
     "geomstats>=2.8.0",
     "pytest>=8.3.4",
     "ipykernel>=6.13.0",
     "rpy2>=3.5.2",
-    "ruff>=0.8.8",
     "xarray>=2025.1.0",
 ]
 
