@@ -94,7 +94,7 @@ class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
         )
 
         # Compute total inertia
-        self.total_inertia_ = np.einsum("ij,ji->", S, S.T)
+        self.total_inertia_ = np.einsum("ij,ij->", S, S)
 
         self.row_contributions_ = pd.DataFrame(
             sparse.diags(self.row_masses_.values)
