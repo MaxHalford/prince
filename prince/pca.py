@@ -415,7 +415,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             # Scale the column coordinates to the row coordinates.
             # `row_coords` is defined above whenever row markers/labels are drawn; the
             # column branch relies on that pre-existing runtime behaviour.
-            column_coords = column_coords * row_coords.abs().max()  # ty: ignore[possibly-unresolved-reference]
+            row_scale = row_coords.abs().max()  # ty: ignore[possibly-unresolved-reference]
+            column_coords = column_coords * row_scale
             column_labels = pd.Series(column_coords.index, index=column_coords.index)
 
             column_chart = alt.Chart(
