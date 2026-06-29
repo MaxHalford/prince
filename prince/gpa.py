@@ -7,6 +7,7 @@ from scipy.linalg import orthogonal_procrustes
 from scipy.spatial import procrustes
 from sklearn import base
 from sklearn import utils as sk_utils
+from typing_extensions import override
 
 from prince import utils
 
@@ -108,7 +109,8 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
 
         return X_new
 
-    def fit_transform(self, X, y=None):
+    @override
+    def fit_transform(self, X, y=None, **fit_params):
         """Fit the model with X and return the aligned shapes.
 
         Parameters:

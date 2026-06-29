@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+from typing import TYPE_CHECKING, Any
 
 import altair as alt
 import numpy as np
@@ -10,8 +11,12 @@ import pandas as pd
 import sklearn.base
 import sklearn.utils
 from sklearn import preprocessing
+from typing_extensions import override
 
 from prince import svd, utils
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 def select_active_variables(method):
@@ -43,6 +48,10 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         Whether to check the coherence of the inputs or not.
 
     """
+
+    # Fit attributes (set during ``fit``); annotated here so static type checkers
+    # know they exist on instances.
+    n_components_: int
 
     def __init__(
         self,
@@ -95,6 +104,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         self.n_features_in_ = len(active_variables)
 
         X_active = X[active_variables].to_numpy(dtype=np.float64, copy=self.copy)
+        X_sup: npt.NDArray[np.float64] = np.empty((len(X), 0), dtype=np.float64)
         if supplementary_columns:
             X_sup = X[supplementary_columns].to_numpy(dtype=np.float64, copy=self.copy)
 
@@ -172,6 +182,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     @property
     @utils.check_is_fitted
+    @override
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         return np.square(self.svd_.s)
@@ -214,11 +225,10 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         """
 
         index = X.index if isinstance(X, pd.DataFrame) else None
-        X = self._scale(X)
-        X = np.array(X, copy=self.copy)
-        X *= self.column_weight_
+        X_arr = np.array(self._scale(X), copy=self.copy)
+        X_arr *= self.column_weight_
 
-        coord = pd.DataFrame(data=X.dot(self.svd_.V.T), index=index)
+        coord = pd.DataFrame(data=X_arr.dot(self.svd_.V.T), index=index)
         coord.columns.name = "component"
         return coord
 
@@ -236,7 +246,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         return rc.to_numpy() if as_array else rc
 
     @utils.check_is_dataframe_input
-    def fit_transform(self, X, y=None, as_array=False):
+    @override
+    def fit_transform(self, X, y=None, as_array=False, **fit_params):
         """A faster way to fit/transform.
 
         This methods produces exactly the same result as calling `fit(X)` followed
@@ -273,7 +284,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def row_standard_coordinates(self, X: pd.DataFrame = None):
+    def row_standard_coordinates(self, X: pd.DataFrame | None = None):
         """Returns the row standard coordinates.
 
         The row standard coordinates are obtained by dividing each row principal coordinate by it's
@@ -342,7 +353,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         show_column_labels=False,
         row_labels_column=None,
     ):
-        row_params = {
+        row_params: dict[str, Any] = {
             "tooltip": (
                 X.index.names
                 if isinstance(X.index, pd.MultiIndex)
@@ -401,8 +412,10 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if show_column_markers or show_column_labels:
             column_coords = self.column_coordinates_.copy()
             column_coords.columns = [f"component {i}" for i in column_coords.columns]
-            # Scale the column coordinates to the row coordinates
-            column_coords = column_coords * row_coords.abs().max()
+            # Scale the column coordinates to the row coordinates.
+            # `row_coords` is defined above whenever row markers/labels are drawn; the
+            # column branch relies on that pre-existing runtime behaviour.
+            column_coords = column_coords * row_coords.abs().max()  # ty: ignore[possibly-unresolved-reference]
             column_labels = pd.Series(column_coords.index, index=column_coords.index)
 
             column_chart = alt.Chart(

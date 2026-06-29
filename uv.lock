@@ -1543,6 +1543,7 @@ dependencies = [
     { name = "pandas", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -1570,6 +1571,7 @@ requires-dist = [
     { name = "rpy2", marker = "extra == 'dev'", specifier = ">=3.5.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.8" },
     { name = "scikit-learn", specifier = ">=1.5.1" },
+    { name = "typing-extensions", specifier = ">=4.6" },
     { name = "xarray", marker = "extra == 'dev'", specifier = ">=2025.1.0" },
 ]
 provides-extras = ["dev"]

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import collections
 import enum
+from typing import Any, cast
 
 import altair as alt
 import numpy as np
 import pandas as pd
+from typing_extensions import override
 
 from prince import mca, pca, utils
 
@@ -23,7 +25,14 @@ class GroupType(enum.Enum):
     CATEGORICAL = "categorical"
 
 
-class MFA(pca.PCA, collections.UserDict):
+# A group's name and the list of (output) column names it maps to. The per-group
+# preprocessing dict mixes value types (enums, ndarrays, name lists, ints), so it is
+# typed loosely as ``dict[str, Any]`` and concrete element types are recovered via casts
+# at the use sites below.
+Preprocessing = dict[str, Any]
+
+
+class MFA(pca.PCA, collections.UserDict[Any, Any]):
     def __init__(
         self,
         rescale_with_mean=True,
@@ -47,6 +56,7 @@ class MFA(pca.PCA, collections.UserDict):
         )
         collections.UserDict.__init__(self)
 
+    @override
     @utils.check_is_dataframe_input
     def fit(self, X, y=None, groups=None, supplementary_groups=None):
         # Checks groups are provided
@@ -73,7 +83,7 @@ class MFA(pca.PCA, collections.UserDict):
         # Numeric groups use PCA (centering / standardization controlled by self.rescale_*).
         # Categorical groups use MCA on an indicator matrix; the corresponding block of Z is
         # built by centering each indicator column and dividing by sqrt(p_j), as in FactoMineR.
-        self._group_preprocessing_ = {}
+        self._group_preprocessing_: dict[Any, Preprocessing] = {}
         for group, cols in sorted(self.groups_.items()):
             X_g = X.loc[:, cols]
             if self.group_types_[group] is GroupType.NUMERICAL:
@@ -210,7 +220,9 @@ class MFA(pca.PCA, collections.UserDict):
 
         return self
 
-    def _determine_groups(self, X: pd.DataFrame, groups: dict | list | None) -> dict:
+    def _determine_groups(
+        self, X: pd.DataFrame, groups: dict[Any, Any] | list[Any] | None
+    ) -> dict[Any, Any]:
         if groups is None:
             if isinstance(X.columns, pd.MultiIndex):
                 groups = X.columns.get_level_values(0).unique().tolist()
@@ -270,6 +282,7 @@ class MFA(pca.PCA, collections.UserDict):
         n_active = len(self.feature_names_in_)
         return Z_np[:, :n_active]
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_coordinates(self, X):
@@ -316,18 +329,23 @@ class MFA(pca.PCA, collections.UserDict):
     @utils.check_is_fitted
     def column_coordinates(self, X):
         Z = self._build_Z(X)
-        return super().column_coordinates(Z)
+        # PCA does not define ``column_coordinates`` in its own MRO, but the concrete
+        # group factor analyses do; cast to ``Any`` so the dynamic dispatch type-checks.
+        return cast(Any, super()).column_coordinates(Z)
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def inverse_transform(self, X):
         raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
         return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
@@ -547,6 +565,7 @@ class MFA(pca.PCA, collections.UserDict):
             .interactive()
         )
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def plot(self, X, x_component=0, y_component=1, show_partial_rows=False, **params):
@@ -565,6 +584,7 @@ class MFA(pca.PCA, collections.UserDict):
         row_plot = None
         partial_row_plot = None
         edges_plot = None
+        partial_row_coords: pd.DataFrame | None = None
 
         # Barycenters
         row_coords = self.row_coordinates(X)
@@ -613,6 +633,9 @@ class MFA(pca.PCA, collections.UserDict):
 
         # Edges to connect the main markers to the partial markers
         if show_partial_rows:
+            # ``partial_row_coords`` is always assigned in the preceding
+            # ``if show_partial_rows`` block; narrow it away from ``None``.
+            assert partial_row_coords is not None
             edges = pd.merge(
                 left=row_coords[
                     [index_name, f"component {x_component}", f"component {y_component}"]

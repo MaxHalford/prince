@@ -10,6 +10,7 @@ import pandas as pd
 import sklearn.base
 from scipy import sparse
 from sklearn.utils import check_array
+from typing_extensions import override
 
 from prince import svd, utils
 
@@ -134,6 +135,7 @@ class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
 
     @property
     @utils.check_is_fitted
+    @override
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         return np.square(self.svd_.s)

@@ -8,6 +8,7 @@ import scipy.sparse as sp
 import sklearn.base
 import sklearn.preprocessing
 import sklearn.utils
+from typing_extensions import override
 
 from prince import utils
 
@@ -47,6 +48,8 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         Can only be used when ``one_hot=True``.
 
     """
+
+    n_components_: int
 
     def __init__(
         self,
@@ -135,6 +138,7 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         return lambda_adj, lambda_t
 
     @property
+    @override
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         eigenvalues = super().eigenvalues_
@@ -151,6 +155,7 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
 
     @property
     @utils.check_is_fitted
+    @override
     def percentage_of_variance_(self):
         """Returns the percentage of explained inertia per principal component."""
         # Greenacre correction on a subset MCA: closed-form Benzécri assumes uniform row
@@ -174,6 +179,7 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         return super().percentage_of_variance_
 
     @utils.check_is_dataframe_input
+    @override
     def fit(self, X, y=None):
         """Fit the MCA on a categorical dataframe.
 
@@ -262,12 +268,14 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
+    @override
     def row_coordinates(self, X):
         """Row principal coordinates in the MCA space."""
         return super().row_coordinates(self._prepare(X))
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
+    @override
     def row_cosine_similarities(self, X):
         """Squared cosine similarities (cos2) of each row on each component."""
         oh = self._prepare(X)
@@ -275,12 +283,14 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
+    @override
     def column_coordinates(self, X):
         """Column (category) principal coordinates in the MCA space."""
         return super().column_coordinates(self._prepare(X))
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
+    @override
     def column_cosine_similarities(self, X):
         """Squared cosine similarities (cos2) of each column on each component."""
         oh = self._prepare(X)

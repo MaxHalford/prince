@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import sklearn.utils
 from sklearn import preprocessing
+from typing_extensions import override
 
 from prince import pca, utils
 
@@ -35,10 +36,12 @@ class FAMD(pca.PCA):
         )
         self.handle_unknown = handle_unknown
 
+    @override
     def _check_input(self, X):
         if self.check_input:
             sklearn.utils.check_array(X, dtype=[str, "numeric"])
 
+    @override
     @utils.check_is_dataframe_input
     def fit(self, X, y=None):
         # Separate numerical columns from categorical columns
@@ -89,6 +92,7 @@ class FAMD(pca.PCA):
         return self
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def row_coordinates(self, X):
         # Separate numerical columns from categorical columns
@@ -117,21 +121,25 @@ class FAMD(pca.PCA):
         return super().row_coordinates(Z)
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def inverse_transform(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @property
+    @override
     @utils.check_is_fitted
     def column_correlations(self):
         """Correlations between variables and components.
@@ -146,10 +154,12 @@ class FAMD(pca.PCA):
         return pd.concat([self._quanti_var_coord, self.column_coordinates_.loc[self.cat_cols_]])
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def column_cosine_similarities_(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @property
+    @override
     def column_contributions_(self):
         return self.column_coordinates_ / self.eigenvalues_

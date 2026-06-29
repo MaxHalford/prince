@@ -46,6 +46,12 @@ def make_labels_and_names(X):
 
 
 class EigenvaluesMixin:
+    # These attributes are populated by the concrete estimator subclasses (e.g. PCA, CA),
+    # not by the mixin itself. Declared here (without assignment) so the type checker can
+    # resolve them; runtime behavior is unchanged.
+    eigenvalues_: np.ndarray
+    total_inertia_: float
+
     @property
     @check_is_fitted
     def percentage_of_variance_(self):
