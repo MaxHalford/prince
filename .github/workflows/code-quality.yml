@@ -20,4 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
-      - run: uvx ty check
+      # ty's rules are all configured as warnings (see [tool.ty.rules] in
+      # pyproject.toml), so the job should only fail on error-level diagnostics.
+      # Newer ty releases exit 1 on warnings by default; this flag keeps the
+      # intended behaviour without pinning the tool version.
+      - run: uvx ty check --exit-zero-on-warning
