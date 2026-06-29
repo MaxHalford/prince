@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  # Allow other workflows (e.g. Publishing) to require these checks.
+  workflow_call:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: j178/prek-action@v2
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      # ty resolves imports from the installed environment, so the project's
+      # dependencies must be present. We sync the locked base dependencies plus
+      # fbpca (the optional SVD engine imported in prince/svd.py). The heavier
+      # `dev` extra is deliberately avoided here because it pulls rpy2, which
+      # requires a full R toolchain that type-checking does not need.
+      - run: uv sync --locked
+      - run: uv pip install fbpca
+      - run: uvx ty check
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pandas-version: ["<3", ">=3,<4"]
+    name: pandas ${{ matrix.pandas-version }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/install-env
+      - run: uv pip install 'pandas${{ matrix.pandas-version }}'
+      - run: uv run pytest
+      - run: make execute-notebooks
