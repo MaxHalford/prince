@@ -374,63 +374,65 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         column_chart_markers = None
         column_chart_labels = None
 
-        if show_row_markers or show_row_labels:
+        # Row coordinates are needed both to draw the row chart and to scale the column
+        # coordinates into the same space for the biplot, so they are computed once
+        # whenever either chart is drawn.
+        if show_row_markers or show_row_labels or show_column_markers or show_column_labels:
             row_coords = self.row_coordinates(X)
             row_coords.columns = [f"component {i}" for i in row_coords.columns]
-            row_labels = (
-                pd.Series(
-                    row_coords.index.get_level_values(
-                        row_labels_column or row_coords.index.names[0]
-                    ),
-                    index=row_coords.index,
+
+            if show_row_markers or show_row_labels:
+                row_labels = (
+                    pd.Series(
+                        row_coords.index.get_level_values(
+                            row_labels_column or row_coords.index.names[0]
+                        ),
+                        index=row_coords.index,
+                    )
+                    if isinstance(row_coords.index, pd.MultiIndex)
+                    else pd.Series(row_coords.index, index=row_coords.index)
                 )
-                if isinstance(row_coords.index, pd.MultiIndex)
-                else pd.Series(row_coords.index, index=row_coords.index)
-            )
 
-            row_chart = alt.Chart(row_coords.assign(label=row_labels).reset_index()).encode(
-                alt.X(
-                    f"component {x_component}",
-                    scale=alt.Scale(zero=False),
-                    axis=alt.Axis(
-                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                row_chart = alt.Chart(row_coords.assign(label=row_labels).reset_index()).encode(
+                    alt.X(
+                        f"component {x_component}",
+                        scale=alt.Scale(zero=False),
+                        axis=alt.Axis(
+                            title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                        ),
                     ),
-                ),
-                alt.Y(
-                    f"component {y_component}",
-                    scale=alt.Scale(zero=False),
-                    axis=alt.Axis(
-                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    alt.Y(
+                        f"component {y_component}",
+                        scale=alt.Scale(zero=False),
+                        axis=alt.Axis(
+                            title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                        ),
                     ),
-                ),
-                **row_params,
-            )
-            row_chart_markers = row_chart.mark_circle(size=50 if show_row_markers else 0)
-            if show_row_labels:
-                row_chart_labels = row_chart.mark_text().encode(text="label:N")
+                    **row_params,
+                )
+                row_chart_markers = row_chart.mark_circle(size=50 if show_row_markers else 0)
+                if show_row_labels:
+                    row_chart_labels = row_chart.mark_text().encode(text="label:N")
 
-        if show_column_markers or show_column_labels:
-            column_coords = self.column_coordinates_.copy()
-            column_coords.columns = [f"component {i}" for i in column_coords.columns]
-            # Scale the column coordinates to the row coordinates.
-            # `row_coords` is defined above whenever row markers/labels are drawn; the
-            # column branch relies on that pre-existing runtime behaviour.
-            row_scale = row_coords.abs().max()  # ty: ignore[possibly-unresolved-reference]
-            column_coords = column_coords * row_scale
-            column_labels = pd.Series(column_coords.index, index=column_coords.index)
+            if show_column_markers or show_column_labels:
+                column_coords = self.column_coordinates_.copy()
+                column_coords.columns = [f"component {i}" for i in column_coords.columns]
+                # Scale the column coordinates into the row coordinate space for the biplot.
+                column_coords = column_coords * row_coords.abs().max()
+                column_labels = pd.Series(column_coords.index, index=column_coords.index)
 
-            column_chart = alt.Chart(
-                column_coords.assign(label=column_labels).reset_index()
-            ).encode(
-                alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
-                alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
-                tooltip=["variable"],
-            )
-            column_chart_markers = column_chart.mark_square(
-                color="green", size=50 if show_column_markers else 0
-            )
-            if show_column_labels:
-                column_chart_labels = column_chart.mark_text().encode(text="label:N")
+                column_chart = alt.Chart(
+                    column_coords.assign(label=column_labels).reset_index()
+                ).encode(
+                    alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                    alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
+                    tooltip=["variable"],
+                )
+                column_chart_markers = column_chart.mark_square(
+                    color="green", size=50 if show_column_markers else 0
+                )
+                if show_column_labels:
+                    column_chart_labels = column_chart.mark_text().encode(text="label:N")
 
         charts = filter(
             None,

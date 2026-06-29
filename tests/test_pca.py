@@ -192,3 +192,33 @@ class TestPCA:
             F = pd.concat((F, load_df_from_R("pca$quanti.sup$cor")))
         P = self.pca.column_correlations
         np.testing.assert_allclose(F.abs(), P.abs())
+
+
+@pytest.mark.parametrize(
+    "show_row_markers, show_row_labels, show_column_markers, show_column_labels",
+    [
+        (True, False, True, False),  # default biplot
+        (True, False, False, False),  # rows only
+        (False, False, True, False),  # columns only (used to raise on row scaling)
+        (False, True, False, True),  # labels only, no markers
+    ],
+)
+def test_plot_marker_combinations(
+    show_row_markers, show_row_labels, show_column_markers, show_column_labels
+):
+    """`plot` should not require rows to be drawn in order to draw columns.
+
+    The column coordinates are scaled into the row coordinate space, so the row
+    coordinates must be available whenever the column chart is drawn — even when row
+    markers and labels are both disabled.
+    """
+    pca = prince.PCA(n_components=2)
+    pca.fit(prince.datasets.load_decathlon())
+    chart = pca.plot(
+        prince.datasets.load_decathlon(),
+        show_row_markers=show_row_markers,
+        show_row_labels=show_row_labels,
+        show_column_markers=show_column_markers,
+        show_column_labels=show_column_labels,
+    )
+    assert chart is not None
