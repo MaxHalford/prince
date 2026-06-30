@@ -217,6 +217,37 @@ def test_mfa_non_numeric_supports_categorical():
     sklearn.utils.validation.check_is_fitted(mfa)
 
 
+def test_column_coordinates_labels_issue_242():
+    """Reproduce issue #242: clean (group, variable) MultiIndex labels for a mixed MFA."""
+    rng = np.random.RandomState(42)
+    n = 20
+    X = pd.DataFrame(
+        {
+            ("chemical", "shared"): rng.randn(n),
+            ("chemical", "unique"): rng.randn(n),
+            ("physical", "shared"): rng.randn(n),
+            ("physical", "unique"): rng.randn(n),
+            ("treatment", "arm"): rng.choice(["control", "treated"], n),
+            ("treatment", "site"): rng.choice(["gut", "skin"], n),
+        }
+    )
+    X.columns = pd.MultiIndex.from_tuples(X.columns)
+
+    index = prince.MFA(n_components=2).fit(X).column_coordinates_.index
+
+    assert isinstance(index, pd.MultiIndex)
+    assert index.names == ["group", "variable"]
+    # Numerical groups keep their (group, variable) labels.
+    assert ("chemical", "shared") in index
+    assert ("physical", "unique") in index
+    # Categorical indicators read (group, "variable__category"), not the stringified
+    # "('treatment', 'arm')__control" the bug produced.
+    assert ("treatment", "arm__control") in index
+    assert ("treatment", "arm__treated") in index
+    assert ("treatment", "site__gut") in index
+    assert ("treatment", "site__skin") in index
+
+
 @pytest.mark.parametrize(
     "sup_rows, sup_groups",
     [
@@ -365,6 +396,38 @@ class TestMFACategorical:
         num_cols = [c for c in self.dataset.columns if c[0] == "description"]
         P = self.mfa.column_coordinates_.loc[num_cols]
         np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-4)
+
+    def test_column_coordinates_index(self):
+        """Column outputs use a clean 2-level (group, variable) MultiIndex (issue #242).
+
+        Categorical indicator labels read ``variable__category`` rather than a stringified
+        ``(group, variable)`` tuple, and numerical labels keep their ``(group, variable)``
+        form. This holds for the supplementary group too, whose columns appear as
+        supplementary rows in ``column_coordinates_``.
+        """
+        index = self.mfa.column_coordinates_.index
+        assert isinstance(index, pd.MultiIndex)
+        assert index.names == ["group", "variable"]
+        # The group level spans every group (active groups plus any supplementary one).
+        assert set(index.get_level_values("group")) == set(self.group_names)
+        # No label should be a stringified tuple such as "('illness', 'Sick')__Sick_n".
+        assert not any(str(var).startswith("(") for var in index.get_level_values("variable"))
+        # Numerical labels stay (group, variable); categorical ones are variable__category.
+        assert ("description", "Age") in index
+        assert ("illness", "Sick__Sick_n") in index
+        assert ("illness", "Sick__Sick_y") in index
+        # The derived column outputs share the same index.
+        for derived in (
+            self.mfa.column_correlations,
+            self.mfa.column_cosine_similarities_,
+        ):
+            assert isinstance(derived.index, pd.MultiIndex)
+        assert isinstance(self.mfa.column_contributions_.index, pd.MultiIndex)
+
+    def test_column_coordinates_method_not_implemented(self):
+        """The X-taking column_coordinates method is not implemented yet (see #242)."""
+        with pytest.raises(NotImplementedError):
+            self.mfa.column_coordinates(self.dataset)
 
     def test_partial_axis_correlations(self):
         """Partial-axis correlations should match FactoMineR for the active groups.
