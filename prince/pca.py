@@ -148,6 +148,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             column_weights=column_weight,
         )
 
+        self.n_components_ = len(self.svd_.s)
+
         self.total_inertia_ = sample_weight @ np.square(X_active) @ np.asarray(column_weight)
 
         self.column_coordinates_ = pd.DataFrame(

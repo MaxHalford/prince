@@ -222,3 +222,11 @@ def test_plot_marker_combinations(
         show_column_labels=show_column_labels,
     )
     assert chart is not None
+
+
+def test_get_feature_names_out():
+    """get_feature_names_out returns one label per fitted component (sklearn transformer API)."""
+    X = pd.DataFrame(np.arange(40, dtype=float).reshape(10, 4), columns=list("abcd"))
+    pca = prince.PCA(n_components=3).fit(X)
+    assert pca.n_components_ == 3
+    assert len(pca.get_feature_names_out()) == pca.transform(X).shape[1] == 3

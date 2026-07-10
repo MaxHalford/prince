@@ -386,3 +386,10 @@ def test_abdi_2007_correction():
     [95.189, 1.678, 0.038, 0.0]
 
     """
+
+
+def test_get_feature_names_out():
+    """get_feature_names_out returns one label per fitted component (sklearn transformer API)."""
+    df = pd.DataFrame({"x": list("aabbcc") * 3, "y": list("pqr") * 6})
+    mca = prince.MCA(n_components=2).fit(df)
+    assert len(mca.get_feature_names_out()) == mca.transform(df).shape[1] == 2

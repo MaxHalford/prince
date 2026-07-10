@@ -264,6 +264,7 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         one_hot = pd.DataFrame(one_hot_dense, index=X.index, columns=kept_columns)
 
         super().fit(one_hot)
+        self.n_components_ = len(self.svd_.s)
         return self
 
     @utils.check_is_dataframe_input
