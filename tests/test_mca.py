@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from rpy2.robjects import r as R
+from sklearn.exceptions import NotFittedError
 
 import prince
 from tests import load_df_from_R
@@ -391,5 +392,11 @@ def test_abdi_2007_correction():
 def test_get_feature_names_out():
     """get_feature_names_out returns one label per fitted component (sklearn transformer API)."""
     df = pd.DataFrame({"x": list("aabbcc") * 3, "y": list("pqr") * 6})
-    mca = prince.MCA(n_components=2).fit(df)
-    assert len(mca.get_feature_names_out()) == mca.transform(df).shape[1] == 2
+    mca = prince.MCA(n_components=20).fit(df)
+    assert mca.get_feature_names_out().tolist() == list(range(len(mca.svd_.s)))
+    assert len(mca.get_feature_names_out()) == mca.transform(df).shape[1] == 5
+
+
+def test_get_feature_names_out_checks_is_fitted():
+    with pytest.raises(NotFittedError):
+        prince.MCA().get_feature_names_out()
