@@ -49,10 +49,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     """
 
-    # Fit attributes (set during ``fit``); annotated here so static type checkers
-    # know they exist on instances.
-    n_components_: int
-
     def __init__(
         self,
         rescale_with_mean=True,
@@ -77,8 +73,9 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if self.check_input:
             sklearn.utils.check_array(X)
 
+    @utils.check_is_fitted
     def get_feature_names_out(self, input_features=None):
-        return np.arange(self.n_components_)
+        return np.arange(len(self.svd_.s))
 
     @utils.check_is_dataframe_input
     def fit(
