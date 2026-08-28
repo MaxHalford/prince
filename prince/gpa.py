@@ -105,7 +105,10 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
 
         X_new = np.empty(X.shape)
         for shape_idx in range(X.shape[0]):
-            _, X_new[shape_idx], _ = procrustes(self.reference_shape, X[shape_idx])
+            if self.scale:
+                _, X_new[shape_idx], _ = procrustes(self.reference_shape, X[shape_idx])
+            else:
+                _, X_new[shape_idx] = unscaled_procrustes(self.reference_shape, X[shape_idx])
 
         return X_new
 
