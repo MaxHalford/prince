@@ -60,18 +60,19 @@ class TestGPA(unittest.TestCase):
         self.assertEqual(self.shapes.shape, aligned_shapes.shape)
 
     def test_transform_respects_scale(self):
-        # fit(X).transform(X) must reproduce fit_transform(X). With scale=False
-        # the aligned shapes keep their relative scale; transform used to always
-        # apply scaled Procrustes and collapse it.
         rng = np.random.RandomState(0)
         base = rng.normal(size=(6, 2))
         X = np.stack([base * 1.0, base * 5.0])
-        transformed_ft = prince.GPA(
-            scale=False, init="mean", max_iter=5, random_state=0
-        ).fit_transform(X.copy())
-        gpa = prince.GPA(scale=False, init="mean", max_iter=5, random_state=0)
-        transformed = gpa.fit(X.copy()).transform(X.copy())
-        np.testing.assert_allclose(transformed, transformed_ft)
+
+        for scale in (False, True):
+            params = {"scale": scale, "init": "mean", "max_iter": 5}
+            transformed_ft = prince.GPA(**params).fit_transform(X.copy())
+            transformed = prince.GPA(**params).fit(X.copy()).transform(X.copy())
+
+            np.testing.assert_allclose(transformed, transformed_ft)
+
+            norm_ratio = np.linalg.norm(transformed[1]) / np.linalg.norm(transformed[0])
+            np.testing.assert_allclose(norm_ratio, 1.0 if scale else 5.0)
 
     def test_fit_transform_equal(self):
         """In our specific case of all-same-shape circles, the shapes should

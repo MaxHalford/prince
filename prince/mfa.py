@@ -346,7 +346,7 @@ class MFA(pca.PCA, collections.UserDict[Any, Any]):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def partial_row_coordinates(self, X):
+    def partial_row_coordinates(self, X) -> pd.DataFrame:
         """Returns the partial row principal coordinates."""
         Z_np = self._extract_Z_numpy(X)
         Z_scaled = self._scale_active_numpy(Z_np)
@@ -631,7 +631,7 @@ class MFA(pca.PCA, collections.UserDict[Any, Any]):
         row_plot = None
         partial_row_plot = None
         edges_plot = None
-        partial_row_coords: pd.DataFrame | None = None
+        partial_row_coords = None
 
         # Barycenters
         row_coords = self.row_coordinates(X)

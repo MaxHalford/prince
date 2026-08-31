@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
 
 import altair as alt
 import numpy as np
@@ -19,14 +20,18 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 
-def select_active_variables(method):
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def select_active_variables(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
-    def _impl(self, X=None, *method_args, **method_kwargs):
+    def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
         if hasattr(self, "feature_names_in_") and isinstance(X, pd.DataFrame):
             return method(self, X[self.feature_names_in_], *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
-    return _impl
+    return cast(Callable[P, R], _impl)
 
 
 class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.EigenvaluesMixin):
@@ -284,7 +289,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def row_standard_coordinates(self, X: pd.DataFrame | None = None):
+    def row_standard_coordinates(self, X: pd.DataFrame):
         """Returns the row standard coordinates.
 
         The row standard coordinates are obtained by dividing each row principal coordinate by it's
