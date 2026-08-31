@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import functools
+from collections.abc import Callable
+from typing import Any, ParamSpec, TypeVar, cast
 
 import altair as alt
 import numpy as np
@@ -14,25 +16,28 @@ from typing_extensions import override
 
 from prince import svd, utils
 
+P = ParamSpec("P")
+R = TypeVar("R")
 
-def select_active_columns(method):
+
+def select_active_columns(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
-    def _impl(self, X=None, *method_args, **method_kwargs):
+    def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
         if hasattr(self, "active_cols_") and isinstance(X, pd.DataFrame):
             return method(self, X[self.active_cols_], *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
-    return _impl
+    return cast(Callable[P, R], _impl)
 
 
-def select_active_rows(method):
+def select_active_rows(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
-    def _impl(self, X=None, *method_args, **method_kwargs):
+    def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
         if hasattr(self, "active_rows_") and isinstance(X, pd.DataFrame):
             return method(self, X.loc[self.active_rows_], *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
-    return _impl
+    return cast(Callable[P, R], _impl)
 
 
 class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):

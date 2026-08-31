@@ -103,11 +103,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
         if self.check_input:
             self._check_input(X)
 
-        X_new = np.empty(X.shape)
-        for shape_idx in range(X.shape[0]):
-            _, X_new[shape_idx], _ = procrustes(self.reference_shape, X[shape_idx])
-
-        return X_new
+        return self._align(X, self.reference_shape)
 
     @override
     def fit_transform(self, X, y=None, **fit_params):
@@ -147,11 +143,7 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
 
         for iter_idx in range(self.max_iter):
             # Align each shape to reference shape
-            for shape_idx in range(X.shape[0]):
-                if self.scale:
-                    _, X[shape_idx], _ = procrustes(reference_shape, X[shape_idx])
-                else:
-                    _, X[shape_idx] = unscaled_procrustes(reference_shape, X[shape_idx])
+            X[:] = self._align(X, reference_shape)
 
             # Compute diagnostics
             mean_shape = X.mean(axis=0)
@@ -169,6 +161,16 @@ class GPA(base.BaseEstimator, base.TransformerMixin):
 
         # Return the aligned shapes
         return X
+
+    def _align(self, X, reference_shape):
+        """Align each shape in X to reference_shape."""
+        X_new = np.empty(X.shape)
+        for shape_idx in range(X.shape[0]):
+            if self.scale:
+                _, X_new[shape_idx], _ = procrustes(reference_shape, X[shape_idx])
+            else:
+                _, X_new[shape_idx] = unscaled_procrustes(reference_shape, X[shape_idx])
+        return X_new
 
     def _check_input(self, X):
         sk_utils.check_array(X, allow_nd=True)
