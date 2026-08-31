@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.20.2 — 2026-08-31
+
+### Bug fixes
+
+- **GPA: `transform` ignored `scale=False`**. `fit(X).transform(X)` now uses the same unscaled Procrustes alignment as `fit_transform(X)`, preserving relative shape size when scaling is disabled. Fixes [#248](https://github.com/MaxHalford/prince/pull/248).
+
 ## 0.20.1 — 2026-06-30
 
 ### Bug fixes
