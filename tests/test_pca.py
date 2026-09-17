@@ -10,6 +10,7 @@ import sklearn.utils.estimator_checks
 import sklearn.utils.validation
 from rpy2.robjects import numpy2ri
 from sklearn import decomposition, pipeline, preprocessing
+from sklearn.exceptions import NotFittedError
 
 import prince
 from tests import load_df_from_R
@@ -222,3 +223,16 @@ def test_plot_marker_combinations(
         show_column_labels=show_column_labels,
     )
     assert chart is not None
+
+
+def test_get_feature_names_out():
+    """get_feature_names_out returns one label per fitted component (sklearn transformer API)."""
+    X = pd.DataFrame(np.arange(40, dtype=float).reshape(10, 4), columns=list("abcd"))
+    pca = prince.PCA(n_components=3).fit(X)
+    assert pca.get_feature_names_out().tolist() == list(range(len(pca.svd_.s)))
+    assert len(pca.get_feature_names_out()) == pca.transform(X).shape[1] == 3
+
+
+def test_get_feature_names_out_checks_is_fitted():
+    with pytest.raises(NotFittedError):
+        prince.PCA().get_feature_names_out()

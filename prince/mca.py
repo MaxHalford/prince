@@ -49,8 +49,6 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
 
     """
 
-    n_components_: int
-
     def __init__(
         self,
         n_components=2,
@@ -100,8 +98,9 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
             X = X.reindex(columns=one_hot_columns_.union(X.columns), fill_value=False)
         return X
 
+    @utils.check_is_fitted
     def get_feature_names_out(self, input_features=None):
-        return np.arange(self.n_components_)
+        return np.arange(len(self.svd_.s))
 
     def _subset_greenacre_quantities(self):
         """Adjusted eigenvalues and total inertia for subset MCA with Greenacre correction.

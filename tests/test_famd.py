@@ -344,3 +344,12 @@ def test_issue_169():
     3         -0.752726  0.0
 
     """
+
+
+def test_get_feature_names_out():
+    """FAMD exposes get_feature_names_out via PCA (sklearn transformer API)."""
+    famd = prince.FAMD(n_components=2, engine="scipy").fit(prince.datasets.load_beers().head(200))
+    assert famd.get_feature_names_out().tolist() == list(range(len(famd.svd_.s)))
+    assert len(famd.get_feature_names_out()) == famd.transform(
+        prince.datasets.load_beers().head(200)
+    ).shape[1] == 2
