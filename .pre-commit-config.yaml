@@ -7,14 +7,20 @@ repos:
       - id: trailing-whitespace
       - id: mixed-line-ending
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.8.0
+  # ruff is invoked via the project's own venv so the lint and format rules
+  # always match what `uv run ruff …` does locally (single source of truth:
+  # uv.lock). Bumping ruff is done by `uv lock --upgrade-package ruff`.
+  - repo: local
     hooks:
-      # Run the linter.
       - id: ruff
+        name: ruff
+        entry: uv run --frozen --extra lint ruff check --fix
+        language: system
         types_or: [python, pyi]
-        args: [--fix]
-      # Run the formatter.
+        require_serial: true
       - id: ruff-format
+        name: ruff-format
+        entry: uv run --frozen --extra lint ruff format
+        language: system
         types_or: [python, pyi]
+        require_serial: true

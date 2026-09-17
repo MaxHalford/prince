@@ -226,7 +226,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         """
 
-        index = X.index if isinstance(X, pd.DataFrame) else None
+        index = X.index
         X_arr = np.array(self._scale(X), copy=self.copy)
         X_arr *= self.column_weight_
 
