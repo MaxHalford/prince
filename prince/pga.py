@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import sklearn.base
+from typing_extensions import override
 
 from prince import pca as _pca
 from prince import utils
@@ -236,12 +237,14 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     @property
     @utils.check_is_fitted
+    @override
     def eigenvalues_(self):
         """Eigenvalues from PCA in the tangent space."""
         return self.pca_.eigenvalues_
 
     @property
     @utils.check_is_fitted
+    @override
     def total_inertia_(self):
         """Total inertia from PCA in the tangent space."""
         return self.pca_.total_inertia_

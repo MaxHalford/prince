@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import sklearn.utils
 from sklearn import preprocessing
+from typing_extensions import override
 
 from prince import pca, utils
 
@@ -81,6 +82,7 @@ class FAMD(pca.PCA):
         self.handle_unknown = handle_unknown
         self.categorical_columns = categorical_columns
 
+    @override
     def _check_input(self, X):
         if self.check_input:
             # sklearn-stubs types `dtype` as `str`, but a list is valid at runtime
@@ -108,6 +110,7 @@ class FAMD(pca.PCA):
     def _active_cat_cols(self):
         return list(self.categories_)
 
+    @override
     @utils.check_is_dataframe_input
     def fit(self, X, y=None, sample_weight=None, column_weight=None, supplementary_columns=None):
         """Fit a Factor Analysis of Mixed Data (FAMD) model.
@@ -181,6 +184,7 @@ class FAMD(pca.PCA):
         return self
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def row_coordinates(self, X):
         active_num = self._active_num_cols()
@@ -209,21 +213,25 @@ class FAMD(pca.PCA):
         return super().row_coordinates(Z)
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def inverse_transform(self, X, as_array=False):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def row_standard_coordinates(self, X=None):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @utils.check_is_dataframe_input
+    @override
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @property
+    @override
     @utils.check_is_fitted
     def column_correlations(self):
         """Signed Pearson correlations for numerical variables, η² for categoricals.
@@ -238,11 +246,13 @@ class FAMD(pca.PCA):
         return pd.concat([num_corr, eta2])
 
     @property
+    @override
     @utils.check_is_fitted
     def column_cosine_similarities_(self):
         raise NotImplementedError("FAMD inherits from PCA, but this method is not implemented yet")
 
     @property
+    @override
     def column_contributions_(self):
         """Per-preprocessed-column contribution to each component: ``f² / λ``.
 

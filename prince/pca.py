@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import functools
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
 
 import altair as alt
 import numpy as np
@@ -10,18 +12,26 @@ import pandas as pd
 import sklearn.base
 import sklearn.utils
 from sklearn import preprocessing
+from typing_extensions import override
 
 from prince import svd, utils
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
-def select_active_variables(method):
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def select_active_variables(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
-    def _impl(self, X=None, *method_args, **method_kwargs):
+    def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
         if hasattr(self, "feature_names_in_") and isinstance(X, pd.DataFrame):
             return method(self, X[self.feature_names_in_], *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
-    return _impl
+    return cast(Callable[P, R], _impl)
 
 
 class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.EigenvaluesMixin):
@@ -68,8 +78,9 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if self.check_input:
             sklearn.utils.check_array(X)
 
+    @utils.check_is_fitted
     def get_feature_names_out(self, input_features=None):
-        return np.arange(self.n_components_)
+        return np.arange(len(self.svd_.s))
 
     @utils.check_is_dataframe_input
     def fit(
@@ -95,6 +106,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         self.n_features_in_ = len(active_variables)
 
         X_active = X[active_variables].to_numpy(dtype=np.float64, copy=self.copy)
+        X_sup: npt.NDArray[np.float64] = np.empty((len(X), 0), dtype=np.float64)
         if supplementary_columns:
             X_sup = X[supplementary_columns].to_numpy(dtype=np.float64, copy=self.copy)
 
@@ -172,6 +184,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     @property
     @utils.check_is_fitted
+    @override
     def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         return np.square(self.svd_.s)
@@ -213,12 +226,11 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         """
 
-        index = X.index if isinstance(X, pd.DataFrame) else None
-        X = self._scale(X)
-        X = np.array(X, copy=self.copy)
-        X *= self.column_weight_
+        index = X.index
+        X_arr = np.array(self._scale(X), copy=self.copy)
+        X_arr *= self.column_weight_
 
-        coord = pd.DataFrame(data=X.dot(self.svd_.V.T), index=index)
+        coord = pd.DataFrame(data=X_arr.dot(self.svd_.V.T), index=index)
         coord.columns.name = "component"
         return coord
 
@@ -236,7 +248,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         return rc.to_numpy() if as_array else rc
 
     @utils.check_is_dataframe_input
-    def fit_transform(self, X, y=None, as_array=False):
+    @override
+    def fit_transform(self, X, y=None, as_array=False, **fit_params):
         """A faster way to fit/transform.
 
         This methods produces exactly the same result as calling `fit(X)` followed
@@ -273,7 +286,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def row_standard_coordinates(self, X: pd.DataFrame = None):
+    def row_standard_coordinates(self, X: pd.DataFrame):
         """Returns the row standard coordinates.
 
         The row standard coordinates are obtained by dividing each row principal coordinate by it's
@@ -342,7 +355,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         show_column_labels=False,
         row_labels_column=None,
     ):
-        row_params = {
+        row_params: dict[str, Any] = {
             "tooltip": (
                 X.index.names
                 if isinstance(X.index, pd.MultiIndex)
@@ -363,60 +376,65 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         column_chart_markers = None
         column_chart_labels = None
 
-        if show_row_markers or show_row_labels:
+        # Row coordinates are needed both to draw the row chart and to scale the column
+        # coordinates into the same space for the biplot, so they are computed once
+        # whenever either chart is drawn.
+        if show_row_markers or show_row_labels or show_column_markers or show_column_labels:
             row_coords = self.row_coordinates(X)
             row_coords.columns = [f"component {i}" for i in row_coords.columns]
-            row_labels = (
-                pd.Series(
-                    row_coords.index.get_level_values(
-                        row_labels_column or row_coords.index.names[0]
-                    ),
-                    index=row_coords.index,
+
+            if show_row_markers or show_row_labels:
+                row_labels = (
+                    pd.Series(
+                        row_coords.index.get_level_values(
+                            row_labels_column or row_coords.index.names[0]
+                        ),
+                        index=row_coords.index,
+                    )
+                    if isinstance(row_coords.index, pd.MultiIndex)
+                    else pd.Series(row_coords.index, index=row_coords.index)
                 )
-                if isinstance(row_coords.index, pd.MultiIndex)
-                else pd.Series(row_coords.index, index=row_coords.index)
-            )
 
-            row_chart = alt.Chart(row_coords.assign(label=row_labels).reset_index()).encode(
-                alt.X(
-                    f"component {x_component}",
-                    scale=alt.Scale(zero=False),
-                    axis=alt.Axis(
-                        title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                row_chart = alt.Chart(row_coords.assign(label=row_labels).reset_index()).encode(
+                    alt.X(
+                        f"component {x_component}",
+                        scale=alt.Scale(zero=False),
+                        axis=alt.Axis(
+                            title=f"component {x_component} — {eig[x_component]['% of variance'] / 100:.2%}"
+                        ),
                     ),
-                ),
-                alt.Y(
-                    f"component {y_component}",
-                    scale=alt.Scale(zero=False),
-                    axis=alt.Axis(
-                        title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                    alt.Y(
+                        f"component {y_component}",
+                        scale=alt.Scale(zero=False),
+                        axis=alt.Axis(
+                            title=f"component {y_component} — {eig[y_component]['% of variance'] / 100:.2%}"
+                        ),
                     ),
-                ),
-                **row_params,
-            )
-            row_chart_markers = row_chart.mark_circle(size=50 if show_row_markers else 0)
-            if show_row_labels:
-                row_chart_labels = row_chart.mark_text().encode(text="label:N")
+                    **row_params,
+                )
+                row_chart_markers = row_chart.mark_circle(size=50 if show_row_markers else 0)
+                if show_row_labels:
+                    row_chart_labels = row_chart.mark_text().encode(text="label:N")
 
-        if show_column_markers or show_column_labels:
-            column_coords = self.column_coordinates_.copy()
-            column_coords.columns = [f"component {i}" for i in column_coords.columns]
-            # Scale the column coordinates to the row coordinates
-            column_coords = column_coords * row_coords.abs().max()
-            column_labels = pd.Series(column_coords.index, index=column_coords.index)
+            if show_column_markers or show_column_labels:
+                column_coords = self.column_coordinates_.copy()
+                column_coords.columns = [f"component {i}" for i in column_coords.columns]
+                # Scale the column coordinates into the row coordinate space for the biplot.
+                column_coords = column_coords * row_coords.abs().max()
+                column_labels = pd.Series(column_coords.index, index=column_coords.index)
 
-            column_chart = alt.Chart(
-                column_coords.assign(label=column_labels).reset_index()
-            ).encode(
-                alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
-                alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
-                tooltip=["variable"],
-            )
-            column_chart_markers = column_chart.mark_square(
-                color="green", size=50 if show_column_markers else 0
-            )
-            if show_column_labels:
-                column_chart_labels = column_chart.mark_text().encode(text="label:N")
+                column_chart = alt.Chart(
+                    column_coords.assign(label=column_labels).reset_index()
+                ).encode(
+                    alt.X(f"component {x_component}", scale=alt.Scale(zero=False)),
+                    alt.Y(f"component {y_component}", scale=alt.Scale(zero=False)),
+                    tooltip=["variable"],
+                )
+                column_chart_markers = column_chart.mark_square(
+                    color="green", size=50 if show_column_markers else 0
+                )
+                if show_column_labels:
+                    column_chart_labels = column_chart.mark_text().encode(text="label:N")
 
         charts = filter(
             None,

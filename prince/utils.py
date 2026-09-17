@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import functools
+from collections.abc import Callable
+from typing import ParamSpec, TypeVar
 
 import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.utils import validation
 
+P = ParamSpec("P")
+R = TypeVar("R")
 
-def check_is_fitted(method):
+
+def check_is_fitted(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
     def _impl(self, *method_args, **method_kwargs):
         validation.check_is_fitted(self)
@@ -17,7 +22,7 @@ def check_is_fitted(method):
     return _impl
 
 
-def check_is_dataframe_input(func):
+def check_is_dataframe_input(func: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         X = args[1]  # Assuming the first argument is 'self' or an instance
@@ -46,6 +51,12 @@ def make_labels_and_names(X):
 
 
 class EigenvaluesMixin:
+    # These attributes are populated by the concrete estimator subclasses (e.g. PCA, CA),
+    # not by the mixin itself. Declared here (without assignment) so the type checker can
+    # resolve them; runtime behavior is unchanged.
+    eigenvalues_: np.ndarray
+    total_inertia_: float
+
     @property
     @check_is_fitted
     def percentage_of_variance_(self):

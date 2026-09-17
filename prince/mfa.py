@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import collections
 import enum
+from typing import Any
 
 import altair as alt
 import numpy as np
 import pandas as pd
+from typing_extensions import override
 
 from prince import mca, pca, utils
 
@@ -23,7 +25,13 @@ class GroupType(enum.Enum):
     CATEGORICAL = "categorical"
 
 
-class MFA(pca.PCA, collections.UserDict):
+# A group's name and the list of (output) column names it maps to. The per-group
+# preprocessing dict mixes value types (enums, ndarrays, name lists, ints), so it is
+# typed loosely as ``dict[str, Any]``.
+Preprocessing = dict[str, Any]
+
+
+class MFA(pca.PCA, collections.UserDict[Any, Any]):
     def __init__(
         self,
         rescale_with_mean=True,
@@ -47,6 +55,7 @@ class MFA(pca.PCA, collections.UserDict):
         )
         collections.UserDict.__init__(self)
 
+    @override
     @utils.check_is_dataframe_input
     def fit(self, X, y=None, groups=None, supplementary_groups=None):
         # Checks groups are provided
@@ -73,9 +82,10 @@ class MFA(pca.PCA, collections.UserDict):
         # Numeric groups use PCA (centering / standardization controlled by self.rescale_*).
         # Categorical groups use MCA on an indicator matrix; the corresponding block of Z is
         # built by centering each indicator column and dividing by sqrt(p_j), as in FactoMineR.
-        self._group_preprocessing_ = {}
+        self._group_preprocessing_: dict[Any, Preprocessing] = {}
         for group, cols in sorted(self.groups_.items()):
             X_g = X.loc[:, cols]
+            base_names = [self._strip_group_level(c) for c in cols]
             if self.group_types_[group] is GroupType.NUMERICAL:
                 fa = pca.PCA(
                     rescale_with_mean=self.rescale_with_mean,
@@ -97,7 +107,7 @@ class MFA(pca.PCA, collections.UserDict):
                     "cols": list(cols),
                     "mean": np.asarray(mean, dtype=np.float64),
                     "scale": np.asarray(scale, dtype=np.float64),
-                    "output_names": list(cols),
+                    "output_names": [(group, b) for b in base_names],
                 }
             else:
                 fa = mca.MCA(
@@ -107,8 +117,14 @@ class MFA(pca.PCA, collections.UserDict):
                     random_state=self.random_state,
                     engine=self.engine,
                 ).fit(X_g)
+                # Build the indicator with within-group feature names as the one-hot prefix,
+                # so columns read ``var__category`` (matching MCA's convention) rather than a
+                # stringified ``(group, var)`` tuple prefix when X has MultiIndex columns (#242).
                 indicator = pd.get_dummies(
-                    X_g, columns=list(X_g.columns), prefix_sep="__", dtype=float
+                    X_g.set_axis(base_names, axis="columns"),
+                    columns=base_names,
+                    prefix_sep="__",
+                    dtype=float,
                 )
                 prop = indicator.mean(axis=0).to_numpy(dtype=np.float64)
                 # FactoMineR's "type='n'" normalization: each indicator column is centered
@@ -118,12 +134,13 @@ class MFA(pca.PCA, collections.UserDict):
                 self._group_preprocessing_[group] = {
                     "type": GroupType.CATEGORICAL,
                     "cols": list(cols),
+                    "base_names": base_names,
                     "indicator_columns": list(indicator.columns),
                     "prop": prop,
                     "mean": prop,
                     "scale": scale,
                     "n_vars": len(cols),
-                    "output_names": list(indicator.columns),
+                    "output_names": [(group, c) for c in indicator.columns],
                 }
             self[group] = fa
 
@@ -132,8 +149,13 @@ class MFA(pca.PCA, collections.UserDict):
         Z = self._build_Z(X)
 
         sup_groups = getattr(self, "supplementary_groups_", [])
+        # Iterate in ``self.groups_`` order (not user-provided ``sup_groups`` order) so this
+        # matches the supplementary block order produced by ``_build_Z``.
         sup_columns = [
-            name for g in sup_groups for name in self._group_preprocessing_[g]["output_names"]
+            name
+            for g in self.groups_
+            if g in sup_groups
+            for name in self._group_preprocessing_[g]["output_names"]
         ]
 
         # Column weights make each group contribute the same first-eigenvalue inertia (1).
@@ -192,6 +214,19 @@ class MFA(pca.PCA, collections.UserDict):
             self.rescale_with_mean = prev_rescale_mean
             self.rescale_with_std = prev_rescale_std
 
+        # PCA flattens the MultiIndex columns of Z to a plain list of ``(group, feature)``
+        # tuples (``Index.difference(...).tolist()``), so the column outputs come back with a
+        # flat Index of tuples. Relabel them with a proper 2-level MultiIndex so every column
+        # output is consistent with the partial outputs (#242). ``feature_names_in_`` keeps the
+        # active columns in Z order and ``column_coordinates_`` lists active rows then
+        # supplementary rows, so concatenating the two reproduces the row order exactly.
+        self._column_index_ = pd.MultiIndex.from_tuples(
+            [tuple(c) for c in self.feature_names_in_] + [tuple(c) for c in sup_columns],
+            names=["group", "variable"],
+        )
+        self.column_coordinates_.index = self._column_index_
+        self._column_dist.index = self._column_index_
+
         # Precompute integer column positions for fast slicing in transform methods.
         # Z is built group-by-group in self.groups_ order, so this matches Z's layout.
         all_z_cols = [
@@ -210,7 +245,9 @@ class MFA(pca.PCA, collections.UserDict):
 
         return self
 
-    def _determine_groups(self, X: pd.DataFrame, groups: dict | list | None) -> dict:
+    def _determine_groups(
+        self, X: pd.DataFrame, groups: dict[Any, Any] | list[Any] | None
+    ) -> dict[Any, Any]:
         if groups is None:
             if isinstance(X.columns, pd.MultiIndex):
                 groups = X.columns.get_level_values(0).unique().tolist()
@@ -233,6 +270,18 @@ class MFA(pca.PCA, collections.UserDict):
             }
         return groups
 
+    @staticmethod
+    def _strip_group_level(col):
+        """Return a column label's within-group portion (the group level removed).
+
+        For MultiIndex columns ``(group, var)`` this is ``var``; for flat columns it is
+        the label itself. Higher-arity MultiIndex labels keep the trailing levels as a tuple.
+        """
+        if isinstance(col, tuple):
+            rest = col[1:]
+            return rest[0] if len(rest) == 1 else rest
+        return col
+
     def _build_Z(self, X):
         """Build the global pre-scaled Z block by applying each group's preprocessing.
 
@@ -253,13 +302,23 @@ class MFA(pca.PCA, collections.UserDict):
         if preprocessing["type"] is GroupType.NUMERICAL:
             arr = (X_g.to_numpy(dtype=np.float64) - preprocessing["mean"]) / preprocessing["scale"]
         else:
+            base_names = preprocessing["base_names"]
             indicator = pd.get_dummies(
-                X_g.astype(str), columns=list(X_g.columns), prefix_sep="__", dtype=float
+                X_g.astype(str).set_axis(base_names, axis="columns"),
+                columns=base_names,
+                prefix_sep="__",
+                dtype=float,
             ).reindex(columns=preprocessing["indicator_columns"], fill_value=0.0)
             arr = (indicator.to_numpy(dtype=np.float64) - preprocessing["mean"]) / preprocessing[
                 "scale"
             ]
-        return pd.DataFrame(arr, index=X.index, columns=preprocessing["output_names"])
+        return pd.DataFrame(
+            arr,
+            index=X.index,
+            columns=pd.MultiIndex.from_tuples(
+                preprocessing["output_names"], names=["group", "variable"]
+            ),
+        )
 
     def _extract_Z_numpy(self, X):
         """Extract the pre-scaled Z as a numpy array, in active-then-supplementary order."""
@@ -270,6 +329,7 @@ class MFA(pca.PCA, collections.UserDict):
         n_active = len(self.feature_names_in_)
         return Z_np[:, :n_active]
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_coordinates(self, X):
@@ -286,7 +346,7 @@ class MFA(pca.PCA, collections.UserDict):
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def partial_row_coordinates(self, X):
+    def partial_row_coordinates(self, X) -> pd.DataFrame:
         """Returns the partial row principal coordinates."""
         Z_np = self._extract_Z_numpy(X)
         Z_scaled = self._scale_active_numpy(Z_np)
@@ -315,19 +375,24 @@ class MFA(pca.PCA, collections.UserDict):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def column_coordinates(self, X):
-        Z = self._build_Z(X)
-        return super().column_coordinates(Z)
+        raise NotImplementedError(
+            "MFA.column_coordinates is not implemented yet; use the column_coordinates_ "
+            "attribute for the global-PCA column loadings."
+        )
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def inverse_transform(self, X):
         raise NotImplementedError("MFA inherits from PCA, but this method is not implemented yet")
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
         return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_cosine_similarities(self, X):
@@ -547,6 +612,7 @@ class MFA(pca.PCA, collections.UserDict):
             .interactive()
         )
 
+    @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def plot(self, X, x_component=0, y_component=1, show_partial_rows=False, **params):
@@ -565,6 +631,7 @@ class MFA(pca.PCA, collections.UserDict):
         row_plot = None
         partial_row_plot = None
         edges_plot = None
+        partial_row_coords = None
 
         # Barycenters
         row_coords = self.row_coordinates(X)
@@ -613,6 +680,9 @@ class MFA(pca.PCA, collections.UserDict):
 
         # Edges to connect the main markers to the partial markers
         if show_partial_rows:
+            # ``partial_row_coords`` is always assigned in the preceding
+            # ``if show_partial_rows`` block; narrow it away from ``None``.
+            assert partial_row_coords is not None
             edges = pd.merge(
                 left=row_coords[
                     [index_name, f"component {x_component}", f"component {y_component}"]

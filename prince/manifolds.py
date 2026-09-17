@@ -6,6 +6,7 @@ import abc
 
 import numpy as np
 from scipy.spatial.transform import Rotation
+from typing_extensions import override
 
 
 class Manifold(abc.ABC):
@@ -81,6 +82,7 @@ class SO3(Manifold):
     """
 
     @property
+    @override
     def tangent_dim(self):
         return 3
 
@@ -96,6 +98,7 @@ class SO3(Manifold):
         signs = np.where(dots >= 0, 1.0, -1.0)
         return quats * signs[:, np.newaxis]
 
+    @override
     def log(self, base, points):
         """Log map: compute rotation vectors of base^{-1} * points.
 
@@ -117,6 +120,7 @@ class SO3(Manifold):
         relative = base_rot.inv() * point_rots
         return relative.as_rotvec()
 
+    @override
     def exp(self, base, tangent_vectors):
         """Exp map: apply rotation vectors to base.
 
@@ -138,6 +142,7 @@ class SO3(Manifold):
         q = result.as_quat()  # scalar-last (x, y, z, w)
         return q[:, [3, 0, 1, 2]]  # convert to scalar-first (w, x, y, z)
 
+    @override
     def frechet_mean(self, points, weights=None, max_iter=50, tol=1e-7):
         """Compute the Fréchet mean via iterative Riemannian gradient descent.
 

@@ -9,9 +9,10 @@ dependencies = [
     "scikit-learn>=1.5.1",
     "pandas>=2.2.0",
     "altair>=5.0.0",
+    "typing-extensions>=4.6",
 ]
 name = "prince"
-version = "0.19.0"
+version = "0.20.2"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA, PGA"
 
 [project.optional-dependencies]

@@ -10,6 +10,7 @@ import sklearn.utils.estimator_checks
 import sklearn.utils.validation
 from rpy2.robjects import numpy2ri
 from sklearn import decomposition, pipeline, preprocessing
+from sklearn.exceptions import NotFittedError
 
 import prince
 from tests import load_df_from_R
@@ -192,3 +193,46 @@ class TestPCA:
             F = pd.concat((F, load_df_from_R("pca$quanti.sup$cor")))
         P = self.pca.column_correlations
         np.testing.assert_allclose(F.abs(), P.abs())
+
+
+@pytest.mark.parametrize(
+    "show_row_markers, show_row_labels, show_column_markers, show_column_labels",
+    [
+        (True, False, True, False),  # default biplot
+        (True, False, False, False),  # rows only
+        (False, False, True, False),  # columns only (used to raise on row scaling)
+        (False, True, False, True),  # labels only, no markers
+    ],
+)
+def test_plot_marker_combinations(
+    show_row_markers, show_row_labels, show_column_markers, show_column_labels
+):
+    """`plot` should not require rows to be drawn in order to draw columns.
+
+    The column coordinates are scaled into the row coordinate space, so the row
+    coordinates must be available whenever the column chart is drawn — even when row
+    markers and labels are both disabled.
+    """
+    pca = prince.PCA(n_components=2)
+    pca.fit(prince.datasets.load_decathlon())
+    chart = pca.plot(
+        prince.datasets.load_decathlon(),
+        show_row_markers=show_row_markers,
+        show_row_labels=show_row_labels,
+        show_column_markers=show_column_markers,
+        show_column_labels=show_column_labels,
+    )
+    assert chart is not None
+
+
+def test_get_feature_names_out():
+    """get_feature_names_out returns one label per fitted component (sklearn transformer API)."""
+    X = pd.DataFrame(np.arange(40, dtype=float).reshape(10, 4), columns=list("abcd"))
+    pca = prince.PCA(n_components=3).fit(X)
+    assert pca.get_feature_names_out().tolist() == list(range(len(pca.svd_.s)))
+    assert len(pca.get_feature_names_out()) == pca.transform(X).shape[1] == 3
+
+
+def test_get_feature_names_out_checks_is_fitted():
+    with pytest.raises(NotFittedError):
+        prince.PCA().get_feature_names_out()
