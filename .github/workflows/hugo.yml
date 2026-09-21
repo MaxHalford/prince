@@ -48,11 +48,11 @@ jobs:
       - name: Execute notebooks
         run: make execute-notebooks
 
+      - name: Test notebook HTML rendering
+        run: uv run pytest docs/test_rendering.py
+
       - name: Convert notebooks
         run: make render-notebooks
-
-      - name: Clean MarkDown
-        run: (for f in docs/content/*.md; do sed -e '/<script/,/<\/script>/{/^$/d;}' ${f} > ${f}.tmp; mv ${f}.tmp ${f}; done)
 
       - name: Setup Pages
         id: pages

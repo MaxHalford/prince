@@ -1,0 +1,8 @@
+{% extends 'markdown/index.md.j2' %}
+
+{# Keep rich outputs out of Markdown parsing, including blank lines in HTML/JS. #}
+{% block data_html scoped %}
+{{ '{{< notebook-html >}}' }}
+{{ output.data['text/html'] }}
+{{ '{{< /notebook-html >}}' }}
+{% endblock data_html %}
