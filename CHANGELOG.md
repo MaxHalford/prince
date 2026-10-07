@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- **MCA: Greenacre-corrected `percentage_of_variance_` depended on `n_components`**. The adjusted total inertia summed the squares of the computed eigenvalues only, instead of all the principal inertias, so the percentages were wrong (even above 100% or negative) whenever `n_components` was smaller than the number of dimensions. The sum now covers all the principal inertias. Fixes [#253](https://github.com/MaxHalford/prince/pull/253).
+
 ## 0.21.0 — 2026-09-17
 
 ### Bug fixes
