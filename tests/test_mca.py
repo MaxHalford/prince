@@ -400,3 +400,23 @@ def test_get_feature_names_out():
 def test_get_feature_names_out_checks_is_fitted():
     with pytest.raises(NotFittedError):
         prince.MCA().get_feature_names_out()
+
+
+def test_duplicate_row_labels():
+    """Duplicated row labels, as left by pd.concat, don't change the results."""
+    dataset = prince.datasets.load_hearthstone_cards().head(100)
+    mca = prince.MCA(n_components=2, random_state=42).fit(dataset)
+
+    duplicated = pd.concat((dataset.iloc[:50], dataset.iloc[50:]))
+    duplicated.index = np.arange(len(duplicated)) % 50
+    mca_dup = prince.MCA(n_components=2, random_state=42).fit(duplicated)
+    for method in (
+        "row_coordinates",
+        "row_cosine_similarities",
+        "column_coordinates",
+        "column_cosine_similarities",
+    ):
+        np.testing.assert_allclose(
+            getattr(mca_dup, method)(duplicated).to_numpy(),
+            getattr(mca, method)(dataset).to_numpy(),
+        )

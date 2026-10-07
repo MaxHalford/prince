@@ -34,7 +34,12 @@ def select_active_rows(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
     def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
         if hasattr(self, "active_rows_") and isinstance(X, pd.DataFrame):
-            return method(self, X.loc[self.active_rows_], *method_args, **method_kwargs)
+            if X.index.is_unique:
+                X = X.loc[self.active_rows_]
+            else:
+                # .loc would group rows that share a label and break the row order
+                X = X[X.index.isin(self.active_rows_)]
+            return method(self, X, *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
     return cast(Callable[P, R], _impl)
@@ -190,22 +195,27 @@ class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
 
     @select_active_columns
     def _row_cosine_similarities(self, X, F):
+        # Keep the rows in the order of X, which is the order of F
+        is_active = X.index.isin(self.active_rows_)
+
         # Active
-        X_act = X.loc[self.active_rows_]
+        X_act = X[is_active]
         X_act = X_act / X_act.sum().sum()
         marge_col = X_act.sum(axis=0)
         Tc = X_act.div(X_act.sum(axis=1), axis=0).div(marge_col, axis=1) - 1
-        dist2_row = (Tc**2).mul(marge_col, axis=1).sum(axis=1)
+        dist2_row_act = (Tc**2).mul(marge_col, axis=1).sum(axis=1)
 
         # Supplementary
-        X_sup = X.loc[X.index.difference(self.active_rows_, sort=False)]
+        X_sup = X[~is_active]
         X_sup = X_sup.div(X_sup.sum(axis=1), axis=0)
         dist2_row_sup = ((X_sup - marge_col) ** 2).div(marge_col, axis=1).sum(axis=1)
 
-        dist2_row = pd.concat((dist2_row, dist2_row_sup))
+        dist2_row = np.empty(len(X))
+        dist2_row[is_active] = dist2_row_act.to_numpy()
+        dist2_row[~is_active] = dist2_row_sup.to_numpy()
 
         # Can't use pandas.div method because it doesn't support duplicate indices
-        return F**2 / dist2_row.to_numpy()[:, None]
+        return F**2 / dist2_row[:, None]
 
     @utils.check_is_dataframe_input
     @select_active_rows

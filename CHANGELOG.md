@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- **CA and MCA: row-dependent outputs were misaligned when the rows were reordered or had duplicated labels**. `row_cosine_similarities` divided by squared distances computed in the fitted row order, so passing the rows in another order gave wrong values. With duplicated row labels (as left by `pd.concat`), `column_coordinates`, `column_cosine_similarities`, and `row_cosine_similarities` were also wrong, because `.loc` grouped rows sharing a label. Rows now keep the order of the input.
+
 ## 0.21.0 — 2026-09-17
 
 ### Bug fixes

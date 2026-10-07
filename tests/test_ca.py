@@ -141,3 +141,29 @@ class TestCA:
             F = pd.concat((F, load_df_from_R(f"ca${self._col_name}.sup$cos2")))
         P = self.ca.column_cosine_similarities(self.dataset)
         np.testing.assert_allclose(F, P)
+
+
+def test_row_order_and_duplicate_row_labels():
+    """Row outputs follow the order of X, even with duplicated row labels."""
+    dataset = prince.datasets.load_french_elections()
+    ca = prince.CA(n_components=2, random_state=42).fit(dataset)
+
+    shuffled = dataset.sample(frac=1, random_state=42)
+    pd.testing.assert_frame_equal(
+        ca.row_cosine_similarities(shuffled),
+        ca.row_cosine_similarities(dataset).loc[shuffled.index],
+    )
+
+    duplicated = dataset.reset_index(drop=True)
+    duplicated.index = duplicated.index % 3
+    ca_dup = prince.CA(n_components=2, random_state=42).fit(duplicated)
+    for method in (
+        "row_coordinates",
+        "row_cosine_similarities",
+        "column_coordinates",
+        "column_cosine_similarities",
+    ):
+        np.testing.assert_allclose(
+            getattr(ca_dup, method)(duplicated).to_numpy(),
+            getattr(ca, method)(dataset).to_numpy(),
+        )
