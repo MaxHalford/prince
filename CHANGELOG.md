@@ -10,6 +10,7 @@
 - PCA and MFA row standard coordinates now divide principal coordinates by the square roots of the eigenvalues, giving unit variance along nonzero components.
 - PCA can be fitted again with a different number of observations. Row contributions now use the current input index instead of the previous fit index.
 - **PCA, FAMD, and MFA: `fit_transform` ignored fit parameters**. `fit_transform(X, **fit_params)` called `fit(X)` without them, so `sample_weight`, `column_weight`, and `supplementary_columns` were silently dropped and `MFA.fit_transform(X, groups=...)` raised `ValueError`. They are now passed on to `fit`. Fixes [#252](https://github.com/MaxHalford/prince/pull/252).
+- **MCA: Greenacre-corrected `percentage_of_variance_` depended on `n_components`**. The adjusted total inertia summed the squares of the computed eigenvalues only, instead of all the principal inertias, so the percentages were wrong (even above 100% or negative) whenever `n_components` was smaller than the number of dimensions. The sum now covers all the principal inertias. Fixes [#253](https://github.com/MaxHalford/prince/pull/253).
 
 ## 0.21.0 — 2026-09-17
 
