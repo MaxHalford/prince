@@ -259,7 +259,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         """
         self._check_input(X)
-        self.fit(X)
+        self.fit(X, y, **fit_params)
         rc = self.row_coordinates(X)
         return rc.to_numpy() if as_array else rc
 

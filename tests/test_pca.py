@@ -236,3 +236,19 @@ def test_get_feature_names_out():
 def test_get_feature_names_out_checks_is_fitted():
     with pytest.raises(NotFittedError):
         prince.PCA().get_feature_names_out()
+
+
+@pytest.mark.parametrize(
+    "fit_params",
+    [
+        pytest.param({"sample_weight": np.linspace(0.5, 2, 20)}, id="sample_weight"),
+        pytest.param({"column_weight": np.array([1.0, 2.0, 0.5, 1.0])}, id="column_weight"),
+        pytest.param({"supplementary_columns": ["d"]}, id="supplementary_columns"),
+    ],
+)
+def test_fit_transform_uses_fit_params(fit_params):
+    """fit_transform passes its fit parameters on to fit, like fit(X).transform(X)."""
+    X = pd.DataFrame(np.random.default_rng(0).normal(size=(20, 4)), columns=list("abcd"))
+    expected = prince.PCA(n_components=2).fit(X, **fit_params).transform(X)
+    actual = prince.PCA(n_components=2).fit_transform(X, **fit_params)
+    np.testing.assert_allclose(actual.abs(), expected.abs())

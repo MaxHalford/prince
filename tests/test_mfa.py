@@ -442,3 +442,12 @@ class TestMFACategorical:
         P = self.mfa.partial_correlations_
         assert F.shape == P.shape
         np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-4)
+
+
+def test_fit_transform_with_groups():
+    """fit_transform passes groups on to fit instead of raising."""
+    X = pd.DataFrame(np.random.default_rng(0).normal(size=(20, 4)), columns=list("abcd"))
+    groups = {"first": ["a", "b"], "second": ["c", "d"]}
+    expected = prince.MFA(n_components=2).fit(X, groups=groups).transform(X)
+    actual = prince.MFA(n_components=2).fit_transform(X, groups=groups)
+    np.testing.assert_allclose(actual.abs(), expected.abs())
