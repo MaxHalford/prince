@@ -309,6 +309,23 @@ def test_non_subset_correction_matches_ca_mjca():
     )
 
 
+def test_greenacre_percentages_with_few_components():
+    """Greenacre percentages don't depend on how many components are computed.
+
+    The adjusted total inertia has to use the squares of all the principal inertias, not
+    only the ones of the computed components, otherwise the percentages can turn negative.
+    """
+    wines = prince.datasets.load_burgundy_wines().drop(columns=["Oak type"], level=0)
+    wines.columns = [f"{a}_{b}" for a, b in wines.columns]
+
+    full = prince.MCA(n_components=4, correction="greenacre").fit(wines)
+    for n_components in (1, 2):
+        mca = prince.MCA(n_components=n_components, correction="greenacre").fit(wines)
+        np.testing.assert_allclose(
+            mca.percentage_of_variance_, full.percentage_of_variance_[:n_components]
+        )
+
+
 def test_subset_greenacre_matches_ca_mjca():
     """Subset-MCA Greenacre correction matches R's ``ca::mjca(lambda='adjusted', subsetcat=...)``.
 
