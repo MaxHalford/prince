@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- **PCA, FAMD, and MFA: `fit_transform` ignored fit parameters**. `fit_transform(X, **fit_params)` called `fit(X)` without them, so `sample_weight`, `column_weight`, and `supplementary_columns` were silently dropped and `MFA.fit_transform(X, groups=...)` raised `ValueError`. They are now passed on to `fit`. Fixes [#252](https://github.com/MaxHalford/prince/pull/252).
+
 ## 0.21.0 — 2026-09-17
 
 ### Bug fixes
