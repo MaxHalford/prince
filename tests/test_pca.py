@@ -13,7 +13,7 @@ from sklearn import decomposition, pipeline, preprocessing
 from sklearn.exceptions import NotFittedError
 
 import prince
-from tests import load_df_from_R
+from tests import assert_allclose_to_factominer, load_df_from_R
 
 
 @pytest.mark.parametrize(
@@ -42,20 +42,17 @@ class TestPCA:
         self.scale = scale
 
         n_components = 5
+        rng = np.random.default_rng(42)
 
         # Fit Prince
         self.dataset = prince.datasets.load_decathlon()
         self.active = self.dataset.copy()
         if self.sup_rows:
             self.active = self.active.query('competition == "Decastar"')
-        self.sample_weights = (
-            np.random.default_rng().dirichlet([1] * len(self.active)) if sample_weights else None
-        )
+        self.sample_weights = rng.dirichlet([1] * len(self.active)) if sample_weights else None
         supplementary_columns = ["rank", "points"] if self.sup_cols else []
         self.column_weights = (
-            np.random.default_rng().random(
-                len(self.active.columns.difference(supplementary_columns))
-            )
+            rng.random(len(self.active.columns.difference(supplementary_columns)))
             if column_weights
             else None
         )
@@ -128,9 +125,9 @@ class TestPCA:
         P = self.pca._eigenvalues_summary
         # Test against FactoMineR
         F = load_df_from_R("pca$eig")[: self.pca.n_components]
-        np.testing.assert_allclose(F["eigenvalue"], P["eigenvalue"])
-        np.testing.assert_allclose(F["percentage of variance"], P["% of variance"])
-        np.testing.assert_allclose(
+        assert_allclose_to_factominer(F["eigenvalue"], P["eigenvalue"])
+        assert_allclose_to_factominer(F["percentage of variance"], P["% of variance"])
+        assert_allclose_to_factominer(
             F["cumulative percentage of variance"], P["% of variance (cumulative)"]
         )
         # Test against scikit-learn
@@ -150,7 +147,7 @@ class TestPCA:
         F = load_df_from_R("pca$ind$coord")
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$coord")))
-        np.testing.assert_allclose(F.abs(), P.abs())
+        assert_allclose_to_factominer(F.abs(), P.abs())
         # Test against scikit-learn
         if self.sample_weights is None and self.column_weights is None:
             S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
@@ -161,38 +158,38 @@ class TestPCA:
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$cos2")))
         P = self.pca.row_cosine_similarities(self.dataset)
-        np.testing.assert_allclose(F, P)
+        assert_allclose_to_factominer(F, P)
 
     def test_row_contrib(self):
         F = load_df_from_R("pca$ind$contrib")
         P = self.pca.row_contributions_
-        np.testing.assert_allclose(F, P * 100)
+        assert_allclose_to_factominer(F, P * 100)
 
     def test_col_coords(self):
         F = load_df_from_R("pca$var$coord")
         if self.sup_cols:
             F = pd.concat((F, load_df_from_R("pca$quanti.sup$coord")))
         P = self.pca.column_coordinates_
-        np.testing.assert_allclose(F.abs(), P.abs())
+        assert_allclose_to_factominer(F.abs(), P.abs())
 
     def test_col_cos2(self):
         F = load_df_from_R("pca$var$cos2")
         if self.sup_cols:
             F = pd.concat((F, load_df_from_R("pca$quanti.sup$cos2")))
         P = self.pca.column_cosine_similarities_
-        np.testing.assert_allclose(F, P)
+        assert_allclose_to_factominer(F, P)
 
     def test_col_contrib(self):
         F = load_df_from_R("pca$var$contrib")
         P = self.pca.column_contributions_
-        np.testing.assert_allclose(F, P * 100)
+        assert_allclose_to_factominer(F, P * 100)
 
     def test_col_cor(self):
         F = load_df_from_R("pca$var$cor")
         if self.sup_cols:
             F = pd.concat((F, load_df_from_R("pca$quanti.sup$cor")))
         P = self.pca.column_correlations
-        np.testing.assert_allclose(F.abs(), P.abs())
+        assert_allclose_to_factominer(F.abs(), P.abs())
 
 
 @pytest.mark.parametrize(

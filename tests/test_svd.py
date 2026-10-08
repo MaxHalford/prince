@@ -6,7 +6,7 @@ import rpy2.robjects as robjects
 from rpy2.robjects import numpy2ri
 
 from prince import svd
-from tests import load_df_from_R
+from tests import assert_allclose_to_factominer, load_df_from_R
 
 
 @pytest.mark.parametrize(
@@ -30,10 +30,11 @@ class TestSVD:
         self.are_rows_weighted = are_rows_weighted
         self.are_columns_weighted = are_columns_weighted
 
-        self.dataset = np.random.rand(100, 10)
-        self.row_weights = np.random.rand(100)
+        rng = np.random.default_rng(42)
+        self.dataset = rng.random((100, 10))
+        self.row_weights = rng.random(100)
         self.row_weights /= self.row_weights.sum()
-        self.column_weights = np.random.rand(10)
+        self.column_weights = rng.random(10)
 
         # Fit Prince
         self.svd = svd.compute_svd(
@@ -65,20 +66,20 @@ class TestSVD:
         if self.are_rows_weighted:
             P = self.svd.U
             F = load_df_from_R("svd$U")
-            np.testing.assert_allclose(np.abs(F), np.abs(P))
+            assert_allclose_to_factominer(np.abs(F), np.abs(P))
 
     def test_s(self):
         assert self.svd.s.shape == (self.n_components,)
         if self.are_rows_weighted:
             P = self.svd.s
             F = robjects.r("svd$vs")[: self.n_components]
-            np.testing.assert_allclose(np.abs(F), np.abs(P))
+            assert_allclose_to_factominer(np.abs(F), np.abs(P))
 
     def test_V(self):
         assert self.svd.V.shape == (self.n_components, 10)
         P = self.svd.V
         F = load_df_from_R("svd$V").T
-        np.testing.assert_allclose(np.abs(F), np.abs(P))
+        assert_allclose_to_factominer(np.abs(F), np.abs(P))
 
 
 @pytest.mark.parametrize("engine", ["fbpca", "sklearn"])
