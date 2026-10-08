@@ -33,7 +33,7 @@ pip install prince
 
 ## Correctness
 
-Prince is tested against scikit-learn and [FactoMineR](http://factominer.free.fr/). For the latter, [rpy2](https://rpy2.github.io/) is used to run code in R, and convert the results to Python, which allows running automated tests. PGA is tested against [geomstats](https://geomstats.github.io/). See more in the [`tests`](https://github.com/MaxHalford/prince/tree/master/tests) directory.
+Prince is tested against scikit-learn and [FactoMineR](http://factominer.free.fr/). For the latter, [rpy2](https://rpy2.github.io/) is used to run code in R, and convert the results to Python, which allows running automated tests. PGA is tested against [geomstats](https://geomstats.github.io/). See more in the [`tests`](https://github.com/MaxHalford/prince/tree/main/tests) directory.
 
 ## Citation
 
@@ -54,4 +54,4 @@ I made Prince when I was at university, back in 2016. We used [FactoMineR](http:
 
 ## License
 
-The MIT License (MIT). Please see the [license file](https://github.com/MaxHalford/prince/blob/master/LICENSE) for more information.
+The MIT License (MIT). Please see the [license file](https://github.com/MaxHalford/prince/blob/main/LICENSE) for more information.
