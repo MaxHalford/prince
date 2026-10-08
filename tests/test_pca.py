@@ -182,7 +182,10 @@ class TestPCA:
     def test_col_contrib(self):
         F = load_df_from_R("pca$var$contrib")
         P = self.pca.column_contributions_
-        assert_allclose_to_factominer(F, P * 100)
+        # Contributions are percentages. Across BLAS implementations, the largest
+        # observed relative difference is 5.42e-7, so keep this comparison bounded
+        # to one part per million.
+        assert_allclose_to_factominer(F, P * 100, rtol=1e-6)
 
     def test_col_cor(self):
         F = load_df_from_R("pca$var$cor")

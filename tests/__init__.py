@@ -13,11 +13,11 @@ FACTOMINER_RTOL = 1e-7
 FACTOMINER_ATOL = 5e-6
 
 
-def assert_allclose_to_factominer(actual, desired):
+def assert_allclose_to_factominer(actual, desired, *, rtol=FACTOMINER_RTOL):
     np.testing.assert_allclose(
         actual,
         desired,
-        rtol=FACTOMINER_RTOL,
+        rtol=rtol,
         atol=FACTOMINER_ATOL,
     )
 
