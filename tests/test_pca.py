@@ -236,3 +236,14 @@ def test_get_feature_names_out():
 def test_get_feature_names_out_checks_is_fitted():
     with pytest.raises(NotFittedError):
         prince.PCA().get_feature_names_out()
+
+
+@pytest.mark.parametrize("size", [12, 41])
+def test_refit_with_different_row_count(size):
+    dataset = prince.datasets.load_decathlon()
+    pca = prince.PCA(n_components=3, engine="scipy").fit(dataset.iloc[:20])
+    current = dataset.iloc[:size]
+    assert pca.fit(current) is pca
+    fresh = prince.PCA(n_components=3, engine="scipy").fit(current)
+    pd.testing.assert_frame_equal(pca.row_contributions_, fresh.row_contributions_)
+    pd.testing.assert_frame_equal(pca.transform(current), fresh.transform(current))
