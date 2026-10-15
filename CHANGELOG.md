@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- PCA and MFA row standard coordinates now divide principal coordinates by the square roots of the eigenvalues, giving unit variance along nonzero components.
+
 ## 0.21.0 — 2026-09-17
 
 ### Bug fixes

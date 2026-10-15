@@ -236,3 +236,16 @@ def test_get_feature_names_out():
 def test_get_feature_names_out_checks_is_fitted():
     with pytest.raises(NotFittedError):
         prince.PCA().get_feature_names_out()
+
+
+@pytest.mark.parametrize("weighted", [False, True])
+def test_row_standard_coordinates_have_unit_variance(weighted):
+    dataset = prince.datasets.load_decathlon()
+    weights = np.arange(1, len(dataset) + 1, dtype=float) if weighted else np.ones(len(dataset))
+    weights /= weights.sum()
+    pca = prince.PCA(n_components=3, engine="scipy").fit(dataset, sample_weight=weights)
+    coordinates = pca.row_standard_coordinates(dataset)
+    np.testing.assert_allclose(
+        coordinates.T @ (weights[:, None] * coordinates), np.eye(3), atol=1e-14
+    )
+    pd.testing.assert_index_equal(coordinates.index, dataset.index)
