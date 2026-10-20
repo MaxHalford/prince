@@ -4,6 +4,7 @@ import math
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 import rpy2.robjects as robjects
 import sklearn.utils.estimator_checks
@@ -276,3 +277,58 @@ def test_fit_transform_uses_fit_params(fit_params):
     expected = prince.PCA(n_components=2).fit(X, **fit_params).transform(X)
     actual = prince.PCA(n_components=2).fit_transform(X, **fit_params)
     np.testing.assert_allclose(actual.abs(), expected.abs())
+
+
+@sklearn.utils.estimator_checks.parametrize_with_checks([prince.PCA()])
+def test_sklearn_estimator_compatibility(estimator, check):
+    check(estimator)
+
+
+@pytest.mark.parametrize("container", ["numpy", "polars"])
+def test_non_pandas_inputs_match_pandas(container):
+    X_pandas = prince.datasets.load_decathlon()
+    X = X_pandas.to_numpy() if container == "numpy" else pl.from_pandas(X_pandas)
+
+    expected = prince.PCA(n_components=3, engine="scipy").fit_transform(X_pandas)
+    pca = prince.PCA(n_components=3, engine="scipy")
+    actual = pca.fit_transform(X)
+
+    assert isinstance(actual, pd.DataFrame)
+    assert actual.index.equals(pd.RangeIndex(len(X_pandas)))
+    np.testing.assert_allclose(actual.abs(), expected.reset_index(drop=True).abs())
+
+
+def test_polars_supplementary_columns_match_pandas():
+    X_pandas = prince.datasets.load_decathlon()
+    X_polars = pl.from_pandas(X_pandas)
+    supplementary_columns = ["rank", "points"]
+
+    expected = prince.PCA(n_components=3, engine="scipy").fit_transform(
+        X_pandas,
+        supplementary_columns=supplementary_columns,
+    )
+    pca = prince.PCA(n_components=3, engine="scipy")
+    actual = pca.fit_transform(X_polars, supplementary_columns=supplementary_columns)
+
+    assert pca.feature_names_in_ == [
+        column for column in X_pandas.columns if column not in supplementary_columns
+    ]
+    np.testing.assert_allclose(actual.abs(), expected.reset_index(drop=True).abs())
+
+
+@pytest.mark.parametrize("container", ["numpy", "pandas", "polars"])
+def test_set_output_polars(container):
+    X_pandas = prince.datasets.load_decathlon()
+    if container == "numpy":
+        X = X_pandas.to_numpy()
+    elif container == "polars":
+        X = pl.from_pandas(X_pandas)
+    else:
+        X = X_pandas
+
+    result = (
+        prince.PCA(n_components=3, engine="scipy").set_output(transform="polars").fit_transform(X)
+    )
+
+    assert isinstance(result, pl.DataFrame)
+    assert result.columns == ["0", "1", "2"]
