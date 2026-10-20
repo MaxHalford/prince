@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### New features
+
+- PCA accepts pandas DataFrames, Polars DataFrames, and NumPy arrays through Narwhals. Existing
+  calls still return pandas DataFrames by default; use `set_output(transform="polars")` for Polars
+  results.
+
 ### Bug fixes
 
 - CA and MCA row cosine similarities now keep input row order and support duplicate labels.
