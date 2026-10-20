@@ -169,10 +169,9 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
             return 100 * eigenvalues / eigenvalues.sum()
         # Greenacre correction
         if self.correction == "greenacre":
-            eigenvalues = super().eigenvalues_
             benzecris = self.eigenvalues_
             K, J = (self.K_, self.J_)
-            average_inertia = (K / (K - 1)) * ((eigenvalues**2).sum() - (J - K) / K**2)
+            average_inertia = (K / (K - 1)) * (self._sum_squared_eigenvalues_ - (J - K) / K**2)
             return 100 * benzecris / average_inertia
         # No correction
         return super().percentage_of_variance_
@@ -263,6 +262,19 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         one_hot = pd.DataFrame(one_hot_dense, index=X.index, columns=kept_columns)
 
         super().fit(one_hot)
+
+        if self.correction == "greenacre" and self.one_hot_columns_to_drop is None:
+            # Greenacre's adjusted total inertia needs the sum of the squares of all the
+            # principal inertias, not only of the n_components that were computed. That
+            # sum is the squared Frobenius norm of either Gram matrix (SᵀS or SSᵀ), S
+            # being the standardised residuals. Use whichever Gram matrix is smaller.
+            r = self.row_masses_.to_numpy()
+            c = self.col_masses_.to_numpy()
+            P = ca._to_correspondence_matrix(one_hot_dense)
+            S = ca._standardized_residuals(P, r, c)
+            gram = ca._smallest_gram_matrix(S)
+            self._sum_squared_eigenvalues_ = np.einsum("ij,ij->", gram, gram)
+
         return self
 
     @utils.check_is_dataframe_input
