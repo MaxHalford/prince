@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -1554,6 +1554,14 @@ dev = [
     { name = "xarray", version = "2025.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "xarray", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
+docs = [
+    { name = "fbpca" },
+    { name = "ipykernel" },
+    { name = "nbconvert" },
+    { name = "pytest" },
+    { name = "xarray", version = "2025.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "xarray", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
 lint = [
     { name = "ruff" },
 ]
@@ -1561,20 +1569,20 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "altair", specifier = ">=5.0.0" },
-    { name = "fbpca", marker = "extra == 'dev'", specifier = ">=1.0" },
+    { name = "fbpca", marker = "extra == 'docs'", specifier = ">=1.0" },
     { name = "geomstats", marker = "extra == 'dev'", specifier = ">=2.8.0" },
-    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.13.0" },
-    { name = "nbconvert", marker = "extra == 'dev'", specifier = ">=7.16.5" },
+    { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.13.0" },
+    { name = "nbconvert", marker = "extra == 'docs'", specifier = ">=7.16.5" },
     { name = "pandas", specifier = ">=2.2.0" },
-    { name = "prince", extras = ["lint"], marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
+    { name = "prince", extras = ["docs", "lint"], marker = "extra == 'dev'" },
+    { name = "pytest", marker = "extra == 'docs'", specifier = ">=8.3.4" },
     { name = "rpy2", marker = "extra == 'dev'", specifier = ">=3.5.2" },
     { name = "ruff", marker = "extra == 'lint'", specifier = ">=0.8.8" },
     { name = "scikit-learn", specifier = ">=1.5.1" },
     { name = "typing-extensions", specifier = ">=4.6" },
-    { name = "xarray", marker = "extra == 'dev'", specifier = ">=2025.1.0" },
+    { name = "xarray", marker = "extra == 'docs'", specifier = ">=2025.1.0" },
 ]
-provides-extras = ["lint", "dev"]
+provides-extras = ["lint", "docs", "dev"]
 
 [[package]]
 name = "prompt-toolkit"

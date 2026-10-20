@@ -42,8 +42,16 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Install environment
-        uses: ./.github/actions/install-env
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install documentation dependencies
+        run: uv sync --locked --extra docs
 
       - name: Execute notebooks
         run: make execute-notebooks

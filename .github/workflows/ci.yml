@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -43,4 +47,14 @@ jobs:
       - uses: ./.github/actions/install-env
       - run: uv pip install 'pandas${{ matrix.pandas-version }}'
       - run: uv run pytest
+
+  notebooks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: "pyproject.toml"
+      - run: uv sync --locked --extra docs
       - run: make execute-notebooks
