@@ -442,3 +442,11 @@ class TestMFACategorical:
         P = self.mfa.partial_correlations_
         assert F.shape == P.shape
         np.testing.assert_allclose(F.abs().values, P.abs().values, atol=1e-4)
+
+
+def test_row_standard_coordinates_have_unit_variance():
+    dataset = prince.datasets.load_premier_league()
+    mfa = prince.MFA(n_components=3, engine="scipy").fit(dataset)
+    coordinates = mfa.row_standard_coordinates(dataset)
+    np.testing.assert_allclose(coordinates.T @ coordinates / len(dataset), np.eye(3), atol=1e-14)
+    pd.testing.assert_index_equal(coordinates.index, dataset.index)

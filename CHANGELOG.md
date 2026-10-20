@@ -7,6 +7,7 @@
 - CA and MCA row cosine similarities now keep input row order and support duplicate labels.
   Column outputs support duplicate labels when fitted rows keep their original order. Ambiguous
   row alignments now raise an error.
+- PCA and MFA row standard coordinates now divide principal coordinates by the square roots of the eigenvalues, giving unit variance along nonzero components.
 - PCA can be fitted again with a different number of observations. Row contributions now use the current input index instead of the previous fit index.
 
 ## 0.21.0 — 2026-09-17

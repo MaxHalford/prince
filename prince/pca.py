@@ -286,11 +286,11 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
     def row_standard_coordinates(self, X: pd.DataFrame):
         """Returns the row standard coordinates.
 
-        The row standard coordinates are obtained by dividing each row principal coordinate by it's
-        associated eigenvalue.
+        The row standard coordinates are obtained by dividing each row principal coordinate
+        by the square root of the associated eigenvalue.
 
         """
-        return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
+        return self.row_coordinates(X).div(self.eigenvalues_**0.5, axis="columns")
 
     @utils.check_is_dataframe_input
     @utils.check_is_fitted

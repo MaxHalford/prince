@@ -390,7 +390,7 @@ class MFA(pca.PCA, collections.UserDict[Any, Any]):
     @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
-        return self.row_coordinates(X).div(self.eigenvalues_, axis="columns")
+        return self.row_coordinates(X).div(self.eigenvalues_**0.5, axis="columns")
 
     @override
     @utils.check_is_dataframe_input
