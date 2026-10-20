@@ -33,7 +33,7 @@ jobs:
       - run: uvx ty check
 
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         pandas-version: ["<3", ">=3,<4"]
