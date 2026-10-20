@@ -65,7 +65,7 @@ class TestCA:
             active = active.drop("Île-de-France")
         if self.sup_cols:
             active = active.drop(columns=["Abstention", "Blank"])
-        self.ca = prince.CA(n_components=n_components)
+        self.ca = prince.CA(n_components=n_components, random_state=42)
         self.ca.fit(active)
 
         # Fit FactoMineR
