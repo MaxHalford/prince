@@ -20,6 +20,20 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+def _to_correspondence_matrix(X):
+    return X.astype(float) / np.sum(X)
+
+
+def _standardized_residuals(X, row_masses, column_masses):
+    expected = np.outer(row_masses, column_masses)
+    return (X - expected) / np.sqrt(expected)
+
+
+def _smallest_gram_matrix(X):
+    """Return the Gram matrix with the smaller of the two possible dimensions."""
+    return X.T @ X if X.shape[1] <= X.shape[0] else X @ X.T
+
+
 def select_active_columns(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
     def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
@@ -95,7 +109,7 @@ class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
             X = np.copy(X)
 
         # Compute the correspondence matrix which contains the relative frequencies
-        X = X.astype(float) / np.sum(X)
+        X = _to_correspondence_matrix(X)
 
         # Compute row and column masses
         self.row_masses_ = pd.Series(X.sum(axis=1), index=row_names)
@@ -107,7 +121,7 @@ class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
         # Compute standardised residuals
         r = self.row_masses_.to_numpy()
         c = self.col_masses_.to_numpy()
-        S = sparse.diags(r**-0.5) @ (X - np.outer(r, c)) @ sparse.diags(c**-0.5)
+        S = _standardized_residuals(X, r, c)
 
         # Compute SVD on the standardised residuals
         self.svd_ = svd.compute_svd(

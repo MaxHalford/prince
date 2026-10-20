@@ -266,12 +266,14 @@ class MCA(ca.CA, sklearn.base.TransformerMixin):
         if self.correction == "greenacre" and self.one_hot_columns_to_drop is None:
             # Greenacre's adjusted total inertia needs the sum of the squares of all the
             # principal inertias, not only of the n_components that were computed. That
-            # sum is the squared Frobenius norm of SᵀS, S being the standardised residuals.
+            # sum is the squared Frobenius norm of either Gram matrix (SᵀS or SSᵀ), S
+            # being the standardised residuals. Use whichever Gram matrix is smaller.
             r = self.row_masses_.to_numpy()
             c = self.col_masses_.to_numpy()
-            P = one_hot_dense / one_hot_dense.sum()
-            S = (P - np.outer(r, c)) / np.sqrt(np.outer(r, c))
-            self._sum_squared_eigenvalues_ = np.square(S.T @ S).sum()
+            P = ca._to_correspondence_matrix(one_hot_dense)
+            S = ca._standardized_residuals(P, r, c)
+            gram = ca._smallest_gram_matrix(S)
+            self._sum_squared_eigenvalues_ = np.einsum("ij,ij->", gram, gram)
 
         return self
 

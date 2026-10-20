@@ -13,7 +13,24 @@ from rpy2.robjects import r as R
 from scipy import sparse
 
 import prince
+from prince import ca
 from tests import load_df_from_R
+
+
+@pytest.mark.parametrize("shape", [(12, 4), (4, 12)], ids=["tall", "wide"])
+def test_smallest_gram_matrix(shape):
+    rng = np.random.default_rng(42)
+    residuals = rng.normal(size=shape)
+
+    gram = ca._smallest_gram_matrix(residuals)
+
+    smallest_dimension = min(shape)
+    assert gram.shape == (smallest_dimension, smallest_dimension)
+    singular_values = np.linalg.svd(residuals, compute_uv=False)
+    np.testing.assert_allclose(
+        np.einsum("ij,ij->", gram, gram),
+        np.sum(singular_values**4),
+    )
 
 
 @pytest.mark.parametrize(
