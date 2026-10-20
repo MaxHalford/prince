@@ -25,8 +25,11 @@ def _to_correspondence_matrix(X):
 
 
 def _standardized_residuals(X, row_masses, column_masses):
-    expected = np.outer(row_masses, column_masses)
-    return (X - expected) / np.sqrt(expected)
+    return (
+        sparse.diags(row_masses**-0.5)
+        @ (X - np.outer(row_masses, column_masses))
+        @ sparse.diags(column_masses**-0.5)
+    )
 
 
 def _smallest_gram_matrix(X):
