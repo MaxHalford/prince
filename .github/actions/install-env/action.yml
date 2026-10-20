@@ -2,20 +2,38 @@ name: Install env
 runs:
   using: "composite"
   steps:
-    - name: Check out repository
-      uses: actions/checkout@v6
-
     - name: Install R
+      id: setup-r
       uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: "4.6.1"
 
     - name: Set LD_LIBRARY_PATH for R
       shell: bash
       run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib" >> $GITHUB_ENV
 
+    - name: Configure R package library
+      shell: bash
+      run: |
+        mkdir -p "${RUNNER_TEMP}/R/library"
+        echo "R_LIBS_SITE=${RUNNER_TEMP}/R/library" >> "$GITHUB_ENV"
+        echo "R_LIBS_USER=${RUNNER_TEMP}/R/library" >> "$GITHUB_ENV"
+        echo "R_LIB_FOR_PAK=${RUNNER_TEMP}/R/library" >> "$GITHUB_ENV"
+
+    # setup-r-dependencies still resolves and validates packages on its own cache
+    # hit. Cache the ready-to-use library so warm jobs can skip that action.
+    - name: Restore R package library
+      id: r-package-cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/R/library
+        key: r-packages-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.setup-r.outputs.installed-r-version }}-${{ hashFiles('tests/DESCRIPTION') }}
+
     - name: Install R packages
+      if: steps.r-package-cache.outputs.cache-hit != 'true'
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
-        cache-version: 2
+        cache: false
         working-directory: tests
 
     - name: Install uv
