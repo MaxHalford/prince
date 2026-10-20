@@ -167,3 +167,42 @@ def test_row_order_and_duplicate_row_labels():
             getattr(ca_dup, method)(duplicated).to_numpy(),
             getattr(ca, method)(dataset).to_numpy(),
         )
+
+    permutation = np.random.default_rng(42).permutation(len(duplicated))
+    reordered = duplicated.iloc[permutation]
+    np.testing.assert_allclose(
+        ca_dup.row_cosine_similarities(reordered).to_numpy(),
+        ca_dup.row_cosine_similarities(duplicated).to_numpy()[permutation],
+    )
+    for method in ("column_coordinates", "column_cosine_similarities"):
+        with pytest.raises(ValueError, match="Cannot align active rows"):
+            getattr(ca_dup, method)(reordered)
+
+
+def test_duplicate_labels_across_active_and_supplementary_rows():
+    dataset = prince.datasets.load_french_elections().reset_index(drop=True)
+    split = len(dataset) // 2
+    ca = prince.CA(n_components=2, random_state=42).fit(dataset.iloc[:split])
+
+    expected = ca.row_cosine_similarities(dataset)
+    duplicated = dataset.copy()
+    duplicated.index = duplicated.index % split
+    np.testing.assert_allclose(ca.row_cosine_similarities(duplicated), expected)
+    np.testing.assert_allclose(
+        ca.column_coordinates(duplicated),
+        ca.column_coordinates(dataset),
+    )
+    np.testing.assert_allclose(
+        ca.column_cosine_similarities(duplicated),
+        ca.column_cosine_similarities(dataset),
+    )
+
+    permutation = np.arange(len(duplicated)).reshape(2, -1).T.ravel()
+    interleaved = duplicated.iloc[permutation]
+    np.testing.assert_allclose(
+        ca.row_cosine_similarities(interleaved),
+        expected.iloc[permutation],
+    )
+    for method in ("column_coordinates", "column_cosine_similarities"):
+        with pytest.raises(ValueError, match="Cannot align active rows"):
+            getattr(ca, method)(interleaved)
