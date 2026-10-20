@@ -9,6 +9,7 @@
   row alignments now raise an error.
 - PCA and MFA row standard coordinates now divide principal coordinates by the square roots of the eigenvalues, giving unit variance along nonzero components.
 - PCA can be fitted again with a different number of observations. Row contributions now use the current input index instead of the previous fit index.
+- **PCA, FAMD, and MFA: `fit_transform` ignored fit parameters**. `fit_transform(X, **fit_params)` called `fit(X)` without them, so `sample_weight`, `column_weight`, and `supplementary_columns` were silently dropped and `MFA.fit_transform(X, groups=...)` raised `ValueError`. They are now passed on to `fit`. Fixes [#252](https://github.com/MaxHalford/prince/pull/252).
 
 ## 0.21.0 — 2026-09-17
 

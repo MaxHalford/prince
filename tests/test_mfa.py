@@ -450,3 +450,12 @@ def test_row_standard_coordinates_have_unit_variance():
     coordinates = mfa.row_standard_coordinates(dataset)
     np.testing.assert_allclose(coordinates.T @ coordinates / len(dataset), np.eye(3), atol=1e-14)
     pd.testing.assert_index_equal(coordinates.index, dataset.index)
+
+
+def test_fit_transform_with_groups():
+    """fit_transform passes groups on to fit instead of raising."""
+    X = pd.DataFrame(np.random.default_rng(0).normal(size=(20, 4)), columns=list("abcd"))
+    groups = {"first": ["a", "b"], "second": ["c", "d"]}
+    expected = prince.MFA(n_components=2).fit(X, groups=groups).transform(X)
+    actual = prince.MFA(n_components=2).fit_transform(X, groups=groups)
+    np.testing.assert_allclose(actual.abs(), expected.abs())
