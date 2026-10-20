@@ -141,7 +141,7 @@ class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
     @property
     @utils.check_is_fitted
     @override
-    def eigenvalues_(self):  # ty: ignore[invalid-property-type-override]
+    def eigenvalues_(self):
         """Returns the eigenvalues associated with each principal component."""
         return np.square(self.svd_.s)
 
