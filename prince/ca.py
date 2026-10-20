@@ -34,7 +34,26 @@ def select_active_rows(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
     def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
         if hasattr(self, "active_rows_") and isinstance(X, pd.DataFrame):
-            return method(self, X.loc[self.active_rows_], *method_args, **method_kwargs)
+            fitted_index = self.row_masses_.index
+            n_active_rows = len(fitted_index)
+            if X.index[:n_active_rows].equals(fitted_index):
+                X = X.iloc[:n_active_rows]
+            elif fitted_index.is_unique:
+                duplicated_active_rows = X.index[
+                    X.index.duplicated(keep=False) & X.index.isin(fitted_index)
+                ]
+                if len(duplicated_active_rows):
+                    raise ValueError(
+                        "Cannot align active rows because X contains duplicate labels "
+                        "that were used during fit"
+                    )
+                X = X.loc[fitted_index]
+            else:
+                raise ValueError(
+                    "Cannot align active rows from a non-unique fitted index unless X has "
+                    "the fitted rows first and in the same order as the data used during fit"
+                )
+            return method(self, X, *method_args, **method_kwargs)
         return method(self, X, *method_args, **method_kwargs)
 
     return cast(Callable[P, R], _impl)
@@ -190,19 +209,10 @@ class CA(sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
 
     @select_active_columns
     def _row_cosine_similarities(self, X, F):
-        # Active
-        X_act = X.loc[self.active_rows_]
-        X_act = X_act / X_act.sum().sum()
-        marge_col = X_act.sum(axis=0)
-        Tc = X_act.div(X_act.sum(axis=1), axis=0).div(marge_col, axis=1) - 1
-        dist2_row = (Tc**2).mul(marge_col, axis=1).sum(axis=1)
-
-        # Supplementary
-        X_sup = X.loc[X.index.difference(self.active_rows_, sort=False)]
-        X_sup = X_sup.div(X_sup.sum(axis=1), axis=0)
-        dist2_row_sup = ((X_sup - marge_col) ** 2).div(marge_col, axis=1).sum(axis=1)
-
-        dist2_row = pd.concat((dist2_row, dist2_row_sup))
+        row_profiles = X.div(X.sum(axis=1), axis=0)
+        dist2_row = (
+            ((row_profiles - self.col_masses_) ** 2).div(self.col_masses_, axis=1).sum(axis=1)
+        )
 
         # Can't use pandas.div method because it doesn't support duplicate indices
         return F**2 / dist2_row.to_numpy()[:, None]
