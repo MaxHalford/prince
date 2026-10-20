@@ -238,14 +238,14 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
     @property
     @utils.check_is_fitted
     @override
-    def eigenvalues_(self):
+    def eigenvalues_(self):  # ty: ignore[invalid-property-type-override]
         """Eigenvalues from PCA in the tangent space."""
         return self.pca_.eigenvalues_
 
     @property
     @utils.check_is_fitted
     @override
-    def total_inertia_(self):
+    def total_inertia_(self):  # ty: ignore[invalid-property-type-override]
         """Total inertia from PCA in the tangent space."""
         return self.pca_.total_inertia_
 
