@@ -170,15 +170,12 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         self.column_coordinates_.index.name = "variable"
         row_coords = pd.DataFrame(
             self.svd_.U * self.eigenvalues_**0.5,
-            # HACK: there's a circular dependency between row_contributions_
-            # and active_row_coordinates in self.__init__
-            index=self.row_contributions_.index if hasattr(self, "row_contributions_") else None,
+            index=X.index,
         )
         row_coords.columns.name = "component"
         self.row_contributions_ = (row_coords**2 * sample_weight[:, np.newaxis]).div(
             self.eigenvalues_, axis=1
         )
-        self.row_contributions_.index = X.index
 
         return self
 

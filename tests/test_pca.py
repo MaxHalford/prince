@@ -249,3 +249,14 @@ def test_row_standard_coordinates_have_unit_variance(weighted):
         coordinates.T @ (weights[:, None] * coordinates), np.eye(3), atol=1e-14
     )
     pd.testing.assert_index_equal(coordinates.index, dataset.index)
+
+
+@pytest.mark.parametrize("size", [12, 41])
+def test_refit_with_different_row_count(size):
+    dataset = prince.datasets.load_decathlon()
+    pca = prince.PCA(n_components=3, engine="scipy").fit(dataset.iloc[:20])
+    current = dataset.iloc[:size]
+    assert pca.fit(current) is pca
+    fresh = prince.PCA(n_components=3, engine="scipy").fit(current)
+    pd.testing.assert_frame_equal(pca.row_contributions_, fresh.row_contributions_)
+    pd.testing.assert_frame_equal(pca.transform(current), fresh.transform(current))
