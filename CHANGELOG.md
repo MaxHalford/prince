@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- PCA can be fitted again with a different number of observations. Row contributions now use the current input index instead of the previous fit index.
+
 ## 0.21.0 — 2026-09-17
 
 ### Bug fixes
