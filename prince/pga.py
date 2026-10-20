@@ -249,6 +249,11 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         """Total inertia from PCA in the tangent space."""
         return self.pca_.total_inertia_
 
+    @total_inertia_.setter
+    @override
+    def total_inertia_(self, value):
+        self.pca_.total_inertia_ = value
+
     @property
     @utils.check_is_fitted
     def column_coordinates_(self):

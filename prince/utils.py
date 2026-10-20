@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 
@@ -50,12 +51,23 @@ def make_labels_and_names(X):
     return row_label, row_names, col_label, col_names
 
 
-class EigenvaluesMixin:
-    # These attributes are populated by the concrete estimator subclasses (e.g. PCA, CA),
-    # not by the mixin itself. Declared here (without assignment) so the type checker can
-    # resolve them; runtime behavior is unchanged.
-    eigenvalues_: np.ndarray
-    total_inertia_: float
+class EigenvaluesMixin(ABC):
+    @property
+    @abstractmethod
+    def eigenvalues_(self) -> np.ndarray:
+        """Return the eigenvalues supplied by the concrete estimator."""
+
+    @property
+    def total_inertia_(self) -> float:
+        """Return the total inertia stored by the concrete estimator."""
+        try:
+            return self._total_inertia
+        except AttributeError as error:
+            raise AttributeError("total_inertia_ is not available before fitting") from error
+
+    @total_inertia_.setter
+    def total_inertia_(self, value: float) -> None:
+        self._total_inertia = value
 
     @property
     @check_is_fitted

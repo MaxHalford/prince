@@ -4,7 +4,10 @@
 
 ### Bug fixes
 
-- **CA and MCA: row-dependent outputs were misaligned when the rows were reordered or had duplicated labels**. `row_cosine_similarities` divided by squared distances computed in the fitted row order, so passing the rows in another order gave wrong values. With duplicated row labels (as left by `pd.concat`), `column_coordinates`, `column_cosine_similarities`, and `row_cosine_similarities` were also wrong, because `.loc` grouped rows sharing a label. Rows now keep the order of the input.
+- CA and MCA row cosine similarities now keep input row order and support duplicate labels.
+  Column outputs support duplicate labels when fitted rows keep their original order. Ambiguous
+  row alignments now raise an error.
+- PCA can be fitted again with a different number of observations. Row contributions now use the current input index instead of the previous fit index.
 
 ## 0.21.0 — 2026-09-17
 
