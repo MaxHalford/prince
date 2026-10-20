@@ -83,6 +83,7 @@ class PCA(sklearn.base.TransformerMixin, sklearn.base.BaseEstimator, utils.Eigen
         self.random_state = random_state
         self.engine = engine
 
+    @override
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         if tags.transformer_tags is not None:
