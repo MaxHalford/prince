@@ -36,6 +36,8 @@ jobs:
 
   tests:
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/r-hub/containers/ubuntu-release:latest
     strategy:
       matrix:
         pandas-version: ["<3", ">=3,<4"]
