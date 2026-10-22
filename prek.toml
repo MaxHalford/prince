@@ -1,0 +1,40 @@
+# Configuration file for `prek`, a git hook framework written in Rust.
+# See https://prek.j178.dev for more information.
+#:schema https://www.schemastore.org/prek.json
+
+files = "."
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "end-of-file-fixer" },
+  { id = "trailing-whitespace" },
+  { id = "mixed-line-ending" },
+]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "ruff"
+name = "ruff"
+entry = "uv run --frozen --extra dev ruff check --fix"
+language = "system"
+types_or = ["python", "pyi"]
+require_serial = true
+
+[[repos.hooks]]
+id = "ruff-format"
+name = "ruff-format"
+entry = "uv run --frozen --extra dev ruff format"
+language = "system"
+types_or = ["python", "pyi"]
+require_serial = true
+
+[[repos.hooks]]
+id = "ty"
+name = "ty"
+entry = "uv run --frozen --extra dev ty check"
+language = "system"
+types_or = ["python", "pyi"]
+pass_filenames = false

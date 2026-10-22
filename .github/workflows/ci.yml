@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v7
-      - uses: j178/prek-action@v2
+      - uses: ./.github/actions/install-env
+      - run: uv run --frozen --extra dev prek run --all-files
 
   typecheck:
     runs-on: ubuntu-latest
