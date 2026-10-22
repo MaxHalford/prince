@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation
 from sklearn.utils.validation import check_is_fitted
 
 import prince
-from tests import DATAFRAME_IMPLEMENTATIONS, as_dataframe_implementation
+from tests import DATAFRAME_IMPLEMENTATIONS, assert_dataframe_implementation_matches
 
 try:
     import geomstats.geometry.special_orthogonal as gso
@@ -47,12 +47,9 @@ def small_quats():
 @pytest.mark.parametrize("implementation", DATAFRAME_IMPLEMENTATIONS)
 def test_dataframe_input(implementation):
     X_pandas = prince.datasets.load_rotations().head(30).reset_index(drop=True)
-    X = as_dataframe_implementation(X_pandas, implementation)
-
-    expected = prince.PGA(n_components=2, engine="scipy").fit_transform(X_pandas)
-    actual = prince.PGA(n_components=2, engine="scipy").fit_transform(X)
-
-    np.testing.assert_allclose(actual.abs(), expected.abs())
+    assert_dataframe_implementation_matches(
+        prince.PGA(n_components=2, engine="scipy"), X_pandas, implementation
+    )
 
 
 class TestPGAFit:

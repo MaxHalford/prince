@@ -7,7 +7,6 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
 
 import altair as alt
-import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import sklearn.base
@@ -99,8 +98,7 @@ class PCA(sklearn.base.TransformerMixin, sklearn.base.BaseEstimator, utils.Eigen
         """Return an eager Narwhals dataframe, or ``None`` for non-dataframe input."""
         if isinstance(X, pd.DataFrame):
             return None
-        frame = nw.from_native(X, eager_only=True, pass_through=True)
-        return frame if isinstance(frame, nw.DataFrame) else None
+        return utils.as_narwhals_dataframe(X)
 
     @classmethod
     def _column_names(cls, X):

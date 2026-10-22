@@ -42,12 +42,18 @@ def check_is_dataframe_input(func: Callable[P, R]) -> Callable[P, R]:
     return wrapper
 
 
+def as_narwhals_dataframe(X):
+    """Return an eager Narwhals DataFrame for a supported native DataFrame."""
+    frame = nw.from_native(X, eager_only=True, pass_through=True)
+    return frame if isinstance(frame, nw.DataFrame) else None
+
+
 def as_pandas_dataframe(X):
     """Convert a supported eager DataFrame to pandas without requiring PyArrow."""
     if isinstance(X, pd.DataFrame):
         return X
-    frame = nw.from_native(X, eager_only=True, pass_through=True)
-    if not isinstance(frame, nw.DataFrame):
+    frame = as_narwhals_dataframe(X)
+    if frame is None:
         return None
     return pd.DataFrame({column: frame.get_column(column).to_numpy() for column in frame.columns})
 

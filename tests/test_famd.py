@@ -10,7 +10,7 @@ import sklearn.utils.validation
 from rpy2.robjects import r as R
 
 import prince
-from tests import DATAFRAME_IMPLEMENTATIONS, as_dataframe_implementation, load_df_from_R
+from tests import DATAFRAME_IMPLEMENTATIONS, assert_dataframe_implementation_matches, load_df_from_R
 
 
 @pytest.mark.parametrize("implementation", DATAFRAME_IMPLEMENTATIONS)
@@ -22,12 +22,9 @@ def test_dataframe_input(implementation):
             "group": ["a", "a", "b", "b", "c", "c"],
         }
     )
-    X = as_dataframe_implementation(X_pandas, implementation)
-
-    expected = prince.FAMD(n_components=2, engine="scipy").fit_transform(X_pandas)
-    actual = prince.FAMD(n_components=2, engine="scipy").fit_transform(X)
-
-    np.testing.assert_allclose(actual.abs(), expected.abs())
+    assert_dataframe_implementation_matches(
+        prince.FAMD(n_components=2, engine="scipy"), X_pandas, implementation
+    )
 
 
 @pytest.mark.parametrize(
