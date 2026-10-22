@@ -12,7 +12,27 @@ import sklearn.utils.validation
 from rpy2.robjects import r as R
 
 import prince
-from tests import load_df_from_R
+from tests import DATAFRAME_IMPLEMENTATIONS, as_dataframe_implementation, load_df_from_R
+
+
+@pytest.mark.parametrize("implementation", DATAFRAME_IMPLEMENTATIONS)
+def test_dataframe_input(implementation):
+    rng = np.random.default_rng(42)
+    X_pandas = pd.DataFrame(
+        {
+            "length": rng.normal(size=12),
+            "width": rng.normal(size=12),
+            "color": np.resize(["red", "blue", "green"], 12),
+            "shape": np.resize(["round", "square"], 12),
+        }
+    )
+    X = as_dataframe_implementation(X_pandas, implementation)
+    groups = {"measurements": ["length", "width"], "traits": ["color", "shape"]}
+
+    expected = prince.MFA(n_components=2, engine="scipy").fit_transform(X_pandas, groups=groups)
+    actual = prince.MFA(n_components=2, engine="scipy").fit_transform(X, groups=groups)
+
+    np.testing.assert_allclose(actual.abs(), expected.abs())
 
 
 @pytest.mark.parametrize(

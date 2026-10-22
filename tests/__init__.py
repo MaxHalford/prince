@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+import polars as pl
 import rpy2.rinterface_lib
 from rpy2.robjects import r as R
 
@@ -11,6 +13,16 @@ from rpy2.robjects import r as R
 # cross-backend numerical noise.
 FACTOMINER_RTOL = 1e-7
 FACTOMINER_ATOL = 5e-6
+
+DATAFRAME_IMPLEMENTATIONS = (nw.Implementation.PANDAS, nw.Implementation.POLARS)
+
+
+def as_dataframe_implementation(X, implementation):
+    if implementation is nw.Implementation.PANDAS:
+        return X
+    if implementation is nw.Implementation.POLARS:
+        return pl.DataFrame({column: X[column].to_numpy() for column in X.columns})
+    raise ValueError(f"Unsupported DataFrame implementation: {implementation}")
 
 
 def assert_allclose_to_factominer(actual, desired, *, rtol=FACTOMINER_RTOL):

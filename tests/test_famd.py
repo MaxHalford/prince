@@ -10,7 +10,24 @@ import sklearn.utils.validation
 from rpy2.robjects import r as R
 
 import prince
-from tests import load_df_from_R
+from tests import DATAFRAME_IMPLEMENTATIONS, as_dataframe_implementation, load_df_from_R
+
+
+@pytest.mark.parametrize("implementation", DATAFRAME_IMPLEMENTATIONS)
+def test_dataframe_input(implementation):
+    X_pandas = pd.DataFrame(
+        {
+            "height": [1.60, 1.72, 1.68, 1.81, 1.75, 1.65],
+            "weight": [52.0, 70.0, 63.0, 85.0, 76.0, 58.0],
+            "group": ["a", "a", "b", "b", "c", "c"],
+        }
+    )
+    X = as_dataframe_implementation(X_pandas, implementation)
+
+    expected = prince.FAMD(n_components=2, engine="scipy").fit_transform(X_pandas)
+    actual = prince.FAMD(n_components=2, engine="scipy").fit_transform(X)
+
+    np.testing.assert_allclose(actual.abs(), expected.abs())
 
 
 @pytest.mark.parametrize(
