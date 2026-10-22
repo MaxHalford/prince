@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.22.1 — 2026-10-22
+
+### API changes
+
+- Removed the unimplemented `MFA.column_coordinates(X)` method. Fitted MFA column coordinates
+  remain available through the `column_coordinates_` attribute. Closes
+  [#241](https://github.com/MaxHalford/prince/issues/241).
+
 ## 0.22.0 — 2026-10-22
 
 ### New features

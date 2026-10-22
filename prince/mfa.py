@@ -373,14 +373,6 @@ class MFA(pca.PCA, collections.UserDict[Any, Any]):
         result.columns.name = "component"
         return result
 
-    @utils.check_is_dataframe_input
-    @utils.check_is_fitted
-    def column_coordinates(self, X):
-        raise NotImplementedError(
-            "MFA.column_coordinates is not implemented yet; use the column_coordinates_ "
-            "attribute for the global-PCA column loadings."
-        )
-
     @override
     @utils.check_is_dataframe_input
     @utils.check_is_fitted

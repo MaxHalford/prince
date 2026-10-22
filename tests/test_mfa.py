@@ -444,11 +444,6 @@ class TestMFACategorical:
             assert isinstance(derived.index, pd.MultiIndex)
         assert isinstance(self.mfa.column_contributions_.index, pd.MultiIndex)
 
-    def test_column_coordinates_method_not_implemented(self):
-        """The X-taking column_coordinates method is not implemented yet (see #242)."""
-        with pytest.raises(NotImplementedError):
-            self.mfa.column_coordinates(self.dataset)
-
     def test_partial_axis_correlations(self):
         """Partial-axis correlations should match FactoMineR for the active groups.
 
