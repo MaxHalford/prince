@@ -17,27 +17,40 @@ import prince
 from tests import assert_allclose_to_factominer, load_df_from_R
 
 
+def as_container(X, container):
+    if container == "numpy":
+        return X.to_numpy()
+    if container == "polars":
+        return pl.from_pandas(X)
+    return X
+
+
 @pytest.mark.parametrize(
-    "sup_rows, sup_cols, scale, sample_weights, column_weights",
+    "container, sup_rows, sup_cols, scale, sample_weights, column_weights",
     [
         pytest.param(
+            container,
             sup_rows,
             sup_cols,
             scale,
             sample_weights,
             column_weights,
-            id=f"{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}:{column_weights=}",
+            id=(
+                f"{container=}:{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}:{column_weights=}"
+            ),
         )
+        for container in ["pandas", "numpy", "polars"]
         for sup_rows in [False, True]
         for sup_cols in [False, True]
         for scale in [False, True]
         for sample_weights in [False, True]
         for column_weights in [False, True]
+        if container != "numpy" or not sup_cols
     ],
 )
 class TestPCA:
     @pytest.fixture(autouse=True)
-    def _prepare(self, sup_rows, sup_cols, scale, sample_weights, column_weights):
+    def _prepare(self, container, sup_rows, sup_cols, scale, sample_weights, column_weights):
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
         self.scale = scale
@@ -50,16 +63,17 @@ class TestPCA:
         self.active = self.dataset.copy()
         if self.sup_rows:
             self.active = self.active.query('competition == "Decastar"')
+        self.dataset_input = as_container(self.dataset, container)
+        self.active_input = as_container(self.active, container)
         self.sample_weights = rng.dirichlet([1] * len(self.active)) if sample_weights else None
         supplementary_columns = ["rank", "points"] if self.sup_cols else []
-        self.column_weights = (
-            rng.random(len(self.active.columns.difference(supplementary_columns)))
-            if column_weights
-            else None
-        )
+        self.active_columns = [
+            column for column in self.active.columns if column not in supplementary_columns
+        ]
+        self.column_weights = rng.random(len(self.active_columns)) if column_weights else None
         self.pca = prince.PCA(n_components=n_components, rescale_with_std=self.scale)
         self.pca.fit(
-            self.active,
+            self.active_input,
             sample_weight=self.sample_weights,
             column_weight=self.column_weights,
             supplementary_columns=supplementary_columns,
@@ -76,7 +90,7 @@ class TestPCA:
                 decomposition.PCA(n_components=n_components),
             )
         # sklearn's PCA doesn't support sample weights
-        self.sk_pca.fit(self.active[self.pca.feature_names_in_])
+        self.sk_pca.fit(self.active[self.active_columns])
 
         # Fit FactoMineR
         robjects.r(
@@ -143,7 +157,7 @@ class TestPCA:
     @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
     def test_row_coords(self, method_name):
         method = getattr(self.pca, method_name)
-        P = method(self.dataset)
+        P = method(self.dataset_input)
         # Test againt FactoMineR
         F = load_df_from_R("pca$ind$coord")
         if self.sup_rows:
@@ -151,14 +165,14 @@ class TestPCA:
         assert_allclose_to_factominer(F.abs(), P.abs())
         # Test against scikit-learn
         if self.sample_weights is None and self.column_weights is None:
-            S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
+            S = self.sk_pca.transform(self.dataset[self.active_columns])
             np.testing.assert_allclose(np.abs(S), P.abs())
 
     def test_row_cosine_similarities(self):
         F = load_df_from_R("pca$ind$cos2")
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$cos2")))
-        P = self.pca.row_cosine_similarities(self.dataset)
+        P = self.pca.row_cosine_similarities(self.dataset_input)
         assert_allclose_to_factominer(F, P)
 
     def test_row_contrib(self):
