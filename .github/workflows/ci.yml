@@ -19,8 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/install-env
-      - run: uv run --frozen --extra dev prek run --all-files
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked
+      - run: uv run --frozen prek run --all-files
 
   typecheck:
     runs-on: ubuntu-latest
@@ -28,13 +29,10 @@ jobs:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
       # ty resolves imports from the installed environment, so the project's
-      # dependencies must be present. We sync the locked base dependencies plus
-      # fbpca (the optional SVD engine imported in prince/svd.py). The heavier
-      # `dev` extra is deliberately avoided here because it pulls rpy2, which
-      # requires a full R toolchain that type-checking does not need.
+      # dependencies and optional SVD engine must be present. Both are included
+      # in the default dev group; the heavier test group requires R and is not needed.
       - run: uv sync --locked
-      - run: uv pip install fbpca
-      - run: uvx ty check
+      - run: uv run --frozen ty check
 
   tests:
     runs-on: ubuntu-24.04

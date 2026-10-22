@@ -1589,20 +1589,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-dev = [
-    { name = "fbpca" },
-    { name = "geomstats" },
-    { name = "ipykernel" },
-    { name = "nbconvert" },
-    { name = "polars" },
-    { name = "prek" },
-    { name = "pytest" },
-    { name = "rpy2" },
-    { name = "ruff" },
-    { name = "ty" },
-    { name = "xarray", version = "2025.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "xarray", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
 docs = [
     { name = "fbpca" },
     { name = "ipykernel" },
@@ -1613,27 +1599,47 @@ docs = [
     { name = "xarray", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "fbpca" },
+    { name = "prek" },
+    { name = "ruff" },
+    { name = "ty" },
+]
+test = [
+    { name = "geomstats" },
+    { name = "prince", extra = ["docs"] },
+    { name = "rpy2" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "altair", specifier = ">=5.0.0" },
     { name = "fbpca", marker = "extra == 'docs'", specifier = ">=1.0" },
-    { name = "geomstats", marker = "extra == 'dev'", specifier = ">=2.8.0" },
     { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.13.0" },
     { name = "narwhals", specifier = ">=2.0.0" },
     { name = "nbconvert", marker = "extra == 'docs'", specifier = ">=7.16.5" },
     { name = "pandas", specifier = ">=2.2.0" },
     { name = "polars", marker = "extra == 'docs'", specifier = ">=1.0.0" },
-    { name = "prek", marker = "extra == 'dev'", specifier = ">=0.5.7" },
-    { name = "prince", extras = ["docs"], marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'docs'", specifier = ">=8.3.4" },
-    { name = "rpy2", marker = "extra == 'dev'", specifier = ">=3.5.2" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.4" },
     { name = "scikit-learn", specifier = ">=1.5.1" },
-    { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.90" },
     { name = "typing-extensions", specifier = ">=4.6" },
     { name = "xarray", marker = "extra == 'docs'", specifier = ">=2025.1.0" },
 ]
-provides-extras = ["docs", "dev"]
+provides-extras = ["docs"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "fbpca", specifier = ">=1.0" },
+    { name = "prek", specifier = ">=0.5.7" },
+    { name = "ruff", specifier = ">=0.15.4" },
+    { name = "ty", specifier = ">=0.0.90" },
+]
+test = [
+    { name = "geomstats", specifier = ">=2.8.0" },
+    { name = "prince", extras = ["docs"] },
+    { name = "rpy2", specifier = ">=3.5.2" },
+]
 
 [[package]]
 name = "prompt-toolkit"

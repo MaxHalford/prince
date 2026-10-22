@@ -18,7 +18,7 @@ repo = "local"
 [[repos.hooks]]
 id = "ruff"
 name = "ruff"
-entry = "uv run --frozen --extra dev ruff check --fix"
+entry = "uv run --frozen ruff check --fix"
 language = "system"
 types_or = ["python", "pyi"]
 require_serial = true
@@ -26,7 +26,7 @@ require_serial = true
 [[repos.hooks]]
 id = "ruff-format"
 name = "ruff-format"
-entry = "uv run --frozen --extra dev ruff format"
+entry = "uv run --frozen ruff format"
 language = "system"
 types_or = ["python", "pyi"]
 require_serial = true
@@ -34,7 +34,7 @@ require_serial = true
 [[repos.hooks]]
 id = "ty"
 name = "ty"
-entry = "uv run --frozen --extra dev ty check"
+entry = "uv run --frozen ty check"
 language = "system"
 types_or = ["python", "pyi"]
 pass_filenames = false
