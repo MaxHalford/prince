@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -18,9 +19,9 @@ from tests import assert_allclose_to_factominer, load_df_from_R
 
 
 def as_container(X, container):
-    if container == "numpy":
+    if container is np.ndarray:
         return X.to_numpy()
-    if container == "polars":
+    if container is nw.Implementation.POLARS:
         return pl.from_pandas(X)
     return X
 
@@ -36,16 +37,21 @@ def as_container(X, container):
             sample_weights,
             column_weights,
             id=(
-                f"{container=}:{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}:{column_weights=}"
+                f"container={container.__name__ if container is np.ndarray else container}:"
+                f"{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}:{column_weights=}"
             ),
         )
-        for container in ["pandas", "numpy", "polars"]
+        for container in [
+            nw.Implementation.PANDAS,
+            np.ndarray,
+            nw.Implementation.POLARS,
+        ]
         for sup_rows in [False, True]
         for sup_cols in [False, True]
         for scale in [False, True]
         for sample_weights in [False, True]
         for column_weights in [False, True]
-        if container != "numpy" or not sup_cols
+        if container is not np.ndarray or not sup_cols
     ],
 )
 class TestPCA:
@@ -298,10 +304,16 @@ def test_sklearn_estimator_compatibility(estimator, check):
     check(estimator)
 
 
-@pytest.mark.parametrize("container", ["numpy", "polars"])
+@pytest.mark.parametrize(
+    "container",
+    [
+        pytest.param(np.ndarray, id="numpy"),
+        pytest.param(nw.Implementation.POLARS, id="polars"),
+    ],
+)
 def test_non_pandas_inputs_match_pandas(container):
     X_pandas = prince.datasets.load_decathlon()
-    X = X_pandas.to_numpy() if container == "numpy" else pl.from_pandas(X_pandas)
+    X = X_pandas.to_numpy() if container is np.ndarray else pl.from_pandas(X_pandas)
 
     expected = prince.PCA(n_components=3, engine="scipy").fit_transform(X_pandas)
     pca = prince.PCA(n_components=3, engine="scipy")
@@ -330,12 +342,19 @@ def test_polars_supplementary_columns_match_pandas():
     np.testing.assert_allclose(actual.abs(), expected.reset_index(drop=True).abs())
 
 
-@pytest.mark.parametrize("container", ["numpy", "pandas", "polars"])
+@pytest.mark.parametrize(
+    "container",
+    [
+        pytest.param(np.ndarray, id="numpy"),
+        pytest.param(nw.Implementation.PANDAS, id="pandas"),
+        pytest.param(nw.Implementation.POLARS, id="polars"),
+    ],
+)
 def test_set_output_polars(container):
     X_pandas = prince.datasets.load_decathlon()
-    if container == "numpy":
+    if container is np.ndarray:
         X = X_pandas.to_numpy()
-    elif container == "polars":
+    elif container is nw.Implementation.POLARS:
         X = pl.from_pandas(X_pandas)
     else:
         X = X_pandas

@@ -74,6 +74,9 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
     def _parse_quaternions(self, X):
         """Extract quaternion array (n, 4) in scalar-first format from DataFrame."""
+        frame = utils.as_pandas_dataframe(X)
+        if frame is not None:
+            X = frame
         if isinstance(X, pd.DataFrame):
             if {"qw", "qx", "qy", "qz"}.issubset(X.columns):
                 return X[["qw", "qx", "qy", "qz"]].to_numpy(dtype=np.float64)
@@ -103,6 +106,9 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             Optional sample weights.
 
         """
+        frame = utils.as_pandas_dataframe(X)
+        if frame is not None:
+            X = frame
         quats = self._parse_quaternions(X)
         self.manifold_ = self._get_manifold()
 
@@ -148,6 +154,9 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         pd.DataFrame with projected coordinates.
 
         """
+        frame = utils.as_pandas_dataframe(X)
+        if frame is not None:
+            X = frame
         quats = self._parse_quaternions(X)
         quats = quats / np.linalg.norm(quats, axis=1, keepdims=True)
         index = X.index if isinstance(X, pd.DataFrame) else None
@@ -211,6 +220,9 @@ class PGA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
             Whether to show point labels.
 
         """
+        frame = utils.as_pandas_dataframe(X)
+        if frame is not None:
+            X = frame
         quats = self._parse_quaternions(X)
         quats = quats / np.linalg.norm(quats, axis=1, keepdims=True)
         index = X.index if isinstance(X, pd.DataFrame) else None
