@@ -324,6 +324,17 @@ def test_non_pandas_inputs_match_pandas(container):
     np.testing.assert_allclose(actual.abs(), expected.reset_index(drop=True).abs())
 
 
+def test_numpy_output():
+    X = prince.datasets.load_decathlon().to_numpy()
+    pca = prince.PCA(n_components=3, engine="scipy").fit(X)
+
+    expected = pca.transform(X)
+    actual = pca.transform(X, as_array=True)
+
+    assert isinstance(actual, np.ndarray)
+    np.testing.assert_allclose(actual, expected.to_numpy())
+
+
 def test_polars_supplementary_columns_match_pandas():
     X_pandas = prince.datasets.load_decathlon()
     X_polars = pl.from_pandas(X_pandas)
