@@ -5,26 +5,25 @@
 ```sh
 git clone https://github.com/MaxHalford/prince
 cd prince
-uv sync --extra dev
+uv sync --group test
 ```
 
-Install [prek](https://github.com/j178/prek) to run code quality checks as git hooks:
+Install the [prek](https://github.com/j178/prek) git hooks from the development environment:
 
 ```sh
-uv tool install prek
-prek install --hook-type pre-push
+uv run prek install --hook-type pre-push
 ```
 
 You can optionally run the hooks at any time:
 
 ```sh
-prek run --all-files
+uv run prek run --all-files
 ```
 
 You can also type check with [ty](https://github.com/astral-sh/ty):
 
 ```sh
-uvx ty check
+uv run ty check
 ```
 
 ## Unit tests

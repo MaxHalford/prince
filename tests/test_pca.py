@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import math
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 import rpy2.robjects as robjects
 import sklearn.utils.estimator_checks
@@ -16,27 +18,45 @@ import prince
 from tests import assert_allclose_to_factominer, load_df_from_R
 
 
+def as_container(X, container):
+    if container is np.ndarray:
+        return X.to_numpy()
+    if container is nw.Implementation.POLARS:
+        return pl.from_pandas(X)
+    return X
+
+
 @pytest.mark.parametrize(
-    "sup_rows, sup_cols, scale, sample_weights, column_weights",
+    "container, sup_rows, sup_cols, scale, sample_weights, column_weights",
     [
         pytest.param(
+            container,
             sup_rows,
             sup_cols,
             scale,
             sample_weights,
             column_weights,
-            id=f"{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}:{column_weights=}",
+            id=(
+                f"container={container.__name__ if container is np.ndarray else container}:"
+                f"{sup_rows=}:{sup_cols=}:{scale=}:{sample_weights=}:{column_weights=}"
+            ),
         )
+        for container in [
+            nw.Implementation.PANDAS,
+            np.ndarray,
+            nw.Implementation.POLARS,
+        ]
         for sup_rows in [False, True]
         for sup_cols in [False, True]
         for scale in [False, True]
         for sample_weights in [False, True]
         for column_weights in [False, True]
+        if container is not np.ndarray or not sup_cols
     ],
 )
 class TestPCA:
     @pytest.fixture(autouse=True)
-    def _prepare(self, sup_rows, sup_cols, scale, sample_weights, column_weights):
+    def _prepare(self, container, sup_rows, sup_cols, scale, sample_weights, column_weights):
         self.sup_rows = sup_rows
         self.sup_cols = sup_cols
         self.scale = scale
@@ -49,16 +69,17 @@ class TestPCA:
         self.active = self.dataset.copy()
         if self.sup_rows:
             self.active = self.active.query('competition == "Decastar"')
+        self.dataset_input = as_container(self.dataset, container)
+        self.active_input = as_container(self.active, container)
         self.sample_weights = rng.dirichlet([1] * len(self.active)) if sample_weights else None
         supplementary_columns = ["rank", "points"] if self.sup_cols else []
-        self.column_weights = (
-            rng.random(len(self.active.columns.difference(supplementary_columns)))
-            if column_weights
-            else None
-        )
+        self.active_columns = [
+            column for column in self.active.columns if column not in supplementary_columns
+        ]
+        self.column_weights = rng.random(len(self.active_columns)) if column_weights else None
         self.pca = prince.PCA(n_components=n_components, rescale_with_std=self.scale)
         self.pca.fit(
-            self.active,
+            self.active_input,
             sample_weight=self.sample_weights,
             column_weight=self.column_weights,
             supplementary_columns=supplementary_columns,
@@ -75,7 +96,7 @@ class TestPCA:
                 decomposition.PCA(n_components=n_components),
             )
         # sklearn's PCA doesn't support sample weights
-        self.sk_pca.fit(self.active[self.pca.feature_names_in_])
+        self.sk_pca.fit(self.active[self.active_columns])
 
         # Fit FactoMineR
         robjects.r(
@@ -142,7 +163,7 @@ class TestPCA:
     @pytest.mark.parametrize("method_name", ("row_coordinates", "transform"))
     def test_row_coords(self, method_name):
         method = getattr(self.pca, method_name)
-        P = method(self.dataset)
+        P = method(self.dataset_input)
         # Test againt FactoMineR
         F = load_df_from_R("pca$ind$coord")
         if self.sup_rows:
@@ -150,14 +171,14 @@ class TestPCA:
         assert_allclose_to_factominer(F.abs(), P.abs())
         # Test against scikit-learn
         if self.sample_weights is None and self.column_weights is None:
-            S = self.sk_pca.transform(self.dataset[self.pca.feature_names_in_])
+            S = self.sk_pca.transform(self.dataset[self.active_columns])
             np.testing.assert_allclose(np.abs(S), P.abs())
 
     def test_row_cosine_similarities(self):
         F = load_df_from_R("pca$ind$cos2")
         if self.sup_rows:
             F = pd.concat((F, load_df_from_R("pca$ind.sup$cos2")))
-        P = self.pca.row_cosine_similarities(self.dataset)
+        P = self.pca.row_cosine_similarities(self.dataset_input)
         assert_allclose_to_factominer(F, P)
 
     def test_row_contrib(self):
@@ -276,3 +297,82 @@ def test_fit_transform_uses_fit_params(fit_params):
     expected = prince.PCA(n_components=2).fit(X, **fit_params).transform(X)
     actual = prince.PCA(n_components=2).fit_transform(X, **fit_params)
     np.testing.assert_allclose(actual.abs(), expected.abs())
+
+
+@sklearn.utils.estimator_checks.parametrize_with_checks([prince.PCA()])
+def test_sklearn_estimator_compatibility(estimator, check):
+    check(estimator)
+
+
+@pytest.mark.parametrize(
+    "container",
+    [
+        pytest.param(np.ndarray, id="numpy"),
+        pytest.param(nw.Implementation.POLARS, id="polars"),
+    ],
+)
+def test_non_pandas_inputs_match_pandas(container):
+    X_pandas = prince.datasets.load_decathlon()
+    X = X_pandas.to_numpy() if container is np.ndarray else pl.from_pandas(X_pandas)
+
+    expected = prince.PCA(n_components=3, engine="scipy").fit_transform(X_pandas)
+    pca = prince.PCA(n_components=3, engine="scipy")
+    actual = pca.fit_transform(X)
+
+    assert isinstance(actual, pd.DataFrame)
+    assert actual.index.equals(pd.RangeIndex(len(X_pandas)))
+    np.testing.assert_allclose(actual.abs(), expected.reset_index(drop=True).abs())
+
+
+def test_numpy_output():
+    X = prince.datasets.load_decathlon().to_numpy()
+    pca = prince.PCA(n_components=3, engine="scipy").fit(X)
+
+    expected = pca.transform(X)
+    actual = pca.transform(X, as_array=True)
+
+    assert isinstance(actual, np.ndarray)
+    np.testing.assert_allclose(actual, expected.to_numpy())
+
+
+def test_polars_supplementary_columns_match_pandas():
+    X_pandas = prince.datasets.load_decathlon()
+    X_polars = pl.from_pandas(X_pandas)
+    supplementary_columns = ["rank", "points"]
+
+    expected = prince.PCA(n_components=3, engine="scipy").fit_transform(
+        X_pandas,
+        supplementary_columns=supplementary_columns,
+    )
+    pca = prince.PCA(n_components=3, engine="scipy")
+    actual = pca.fit_transform(X_polars, supplementary_columns=supplementary_columns)
+
+    assert pca.feature_names_in_ == [
+        column for column in X_pandas.columns if column not in supplementary_columns
+    ]
+    np.testing.assert_allclose(actual.abs(), expected.reset_index(drop=True).abs())
+
+
+@pytest.mark.parametrize(
+    "container",
+    [
+        pytest.param(np.ndarray, id="numpy"),
+        pytest.param(nw.Implementation.PANDAS, id="pandas"),
+        pytest.param(nw.Implementation.POLARS, id="polars"),
+    ],
+)
+def test_set_output_polars(container):
+    X_pandas = prince.datasets.load_decathlon()
+    if container is np.ndarray:
+        X = X_pandas.to_numpy()
+    elif container is nw.Implementation.POLARS:
+        X = pl.from_pandas(X_pandas)
+    else:
+        X = X_pandas
+
+    result = (
+        prince.PCA(n_components=3, engine="scipy").set_output(transform="polars").fit_transform(X)
+    )
+
+    assert isinstance(result, pl.DataFrame)
+    assert result.columns == ["0", "1", "2"]

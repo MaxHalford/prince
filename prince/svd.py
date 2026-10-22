@@ -78,7 +78,13 @@ def compute_svd(
     # U, V = extmath.svd_flip(U, V)
 
     if row_weights is not None:
-        U = U / np.sqrt(row_weights)[:, np.newaxis]  # row-wise scaling
+        sqrt_row_weights = np.sqrt(row_weights)[:, np.newaxis]
+        U = np.divide(
+            U,
+            sqrt_row_weights,
+            out=np.zeros_like(U),
+            where=sqrt_row_weights != 0,
+        )
     if column_weights is not None:
         V = V / np.sqrt(column_weights)
 

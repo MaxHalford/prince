@@ -9,8 +9,21 @@ from rpy2.robjects import r as R
 from sklearn.exceptions import NotFittedError
 
 import prince
-from tests import load_df_from_R
+from tests import DATAFRAME_IMPLEMENTATIONS, assert_dataframe_implementation_matches, load_df_from_R
 from tests.test_ca import TestCA as _TestCA
+
+
+@pytest.mark.parametrize("implementation", DATAFRAME_IMPLEMENTATIONS)
+def test_dataframe_input(implementation):
+    X_pandas = pd.DataFrame(
+        {
+            "color": ["red", "blue", "red", "green", "blue", "green"],
+            "size": ["s", "m", "l", "s", "l", "m"],
+        }
+    )
+    assert_dataframe_implementation_matches(
+        prince.MCA(n_components=2, engine="scipy"), X_pandas, implementation
+    )
 
 
 class TestMCA(_TestCA):

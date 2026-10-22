@@ -16,6 +16,14 @@ from typing_extensions import override
 
 from prince import svd, utils
 
+try:
+    from sklearn.utils.validation import validate_data
+except ImportError:  # scikit-learn 1.5
+
+    def validate_data(estimator, X, *, reset):
+        return estimator._validate_data(X, reset=reset)
+
+
 if TYPE_CHECKING:
     import numpy.typing as npt
 
@@ -27,14 +35,14 @@ R = TypeVar("R")
 def select_active_variables(method: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(method)
     def _impl(self: Any, X: Any = None, *method_args: Any, **method_kwargs: Any) -> R:
-        if hasattr(self, "feature_names_in_") and isinstance(X, pd.DataFrame):
-            return method(self, X[self.feature_names_in_], *method_args, **method_kwargs)
+        if hasattr(self, "feature_names_in_"):
+            X = self._select_columns(X, self.feature_names_in_)
         return method(self, X, *method_args, **method_kwargs)
 
     return cast(Callable[P, R], _impl)
 
 
-class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.EigenvaluesMixin):
+class PCA(sklearn.base.TransformerMixin, sklearn.base.BaseEstimator, utils.EigenvaluesMixin):
     """Principal Component Analysis (PCA).
 
     Parameters
@@ -74,15 +82,88 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         self.random_state = random_state
         self.engine = engine
 
+    @override
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        if tags.transformer_tags is not None:
+            tags.transformer_tags.preserves_dtype = []
+        return tags
+
     def _check_input(self, X):
         if self.check_input:
             sklearn.utils.check_array(X)
 
+    @staticmethod
+    def _as_narwhals_dataframe(X):
+        """Return an eager Narwhals dataframe, or ``None`` for non-dataframe input."""
+        if isinstance(X, pd.DataFrame):
+            return None
+        return utils.as_narwhals_dataframe(X)
+
+    @classmethod
+    def _column_names(cls, X):
+        if isinstance(X, pd.DataFrame):
+            return X.columns.tolist()
+        if (frame := cls._as_narwhals_dataframe(X)) is not None:
+            return frame.columns
+        return None
+
+    @classmethod
+    def _select_columns(cls, X, columns):
+        if isinstance(X, pd.DataFrame):
+            return X[columns]
+        if (frame := cls._as_narwhals_dataframe(X)) is not None:
+            return frame.select(columns).to_native()
+        return X
+
+    def _to_numpy(self, X, columns=None):
+        if columns is not None:
+            X = self._select_columns(X, columns)
+        if isinstance(X, pd.DataFrame):
+            return X.to_numpy(dtype=np.float64, copy=self.copy)
+        if (frame := self._as_narwhals_dataframe(X)) is not None:
+            array = np.asarray(frame.to_numpy(), dtype=np.float64)
+        else:
+            array = np.asarray(X, dtype=np.float64)
+        return array.copy() if self.copy else array
+
+    @classmethod
+    def _row_index(cls, X, n_rows=None):
+        if isinstance(X, pd.DataFrame):
+            return X.index
+        if (frame := cls._as_narwhals_dataframe(X)) is not None:
+            return pd.RangeIndex(frame.shape[0])
+        if n_rows is None:
+            n_rows = np.asarray(X).shape[0]
+        return pd.RangeIndex(n_rows)
+
+    def _validate_array(self, X, *, reset):
+        if self.check_input:
+            return validate_data(self, X, reset=reset)
+        if reset:
+            self.n_features_in_ = X.shape[1]
+        return X
+
+    def _validate_transform_input(self, X):
+        if not self.check_input:
+            return
+        if not isinstance(X, pd.DataFrame) and self._as_narwhals_dataframe(X) is not None:
+            X_array = sklearn.utils.check_array(self._to_numpy(X))
+            if X_array.shape[1] != self.n_features_in_:
+                raise ValueError(
+                    f"X has {X_array.shape[1]} features, but PCA is expecting "
+                    f"{self.n_features_in_} features as input"
+                )
+            return
+        validate_data(self, X, reset=False)
+
     @utils.check_is_fitted
     def get_feature_names_out(self, input_features=None):
-        return np.arange(len(self.svd_.s))
+        names = np.arange(len(self.svd_.s))
+        if getattr(self, "_sklearn_output_config", {}).get("transform") == "polars":
+            return names.astype(str)
+        return names
 
-    @utils.check_is_dataframe_input
     def fit(
         self,
         X,
@@ -95,22 +176,56 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         # Massage input
         supplementary_columns = supplementary_columns or []
-        active_variables = X.columns.difference(supplementary_columns, sort=False).tolist()
-        sample_weight = np.ones(len(X)) if sample_weight is None else sample_weight
+        column_names = self._column_names(X)
+        if column_names is None:
+            if supplementary_columns:
+                raise ValueError("supplementary_columns requires dataframe input")
+            X_active = self._to_numpy(X)
+            active_variables = list(range(X_active.shape[1]))
+        else:
+            supplementary_set = set(supplementary_columns)
+            active_variables = [name for name in column_names if name not in supplementary_set]
+            X_active = self._to_numpy(X, active_variables)
+
+        X_active = self._validate_array(X_active, reset=True)
+        sample_weight = (
+            np.ones(len(X_active), dtype=np.float64)
+            if sample_weight is None
+            else np.asarray(sample_weight, dtype=np.float64)
+        )
+        if sample_weight.shape != (len(X_active),):
+            raise ValueError("sample_weight must be one-dimensional with one value per row")
+        if not np.isfinite(sample_weight).all() or (sample_weight < 0).any():
+            raise ValueError("sample_weight must contain only finite, non-negative values")
+        if sample_weight.sum() == 0:
+            raise ValueError("sample_weight must sum to a positive value")
         sample_weight = sample_weight / sample_weight.sum()
-        column_weight = np.ones(len(active_variables)) if column_weight is None else column_weight
+        column_weight = (
+            np.ones(len(active_variables), dtype=np.float64)
+            if column_weight is None
+            else np.asarray(column_weight, dtype=np.float64)
+        )
+        if column_weight.shape != (len(active_variables),):
+            raise ValueError("column_weight must have one value per active column")
+        if not np.isfinite(column_weight).all() or (column_weight < 0).any():
+            raise ValueError("column_weight must contain only finite, non-negative values")
         self.column_weight_ = column_weight
 
         # https://scikit-learn.org/stable/developers/develop.html#universal-attributes
-        self.feature_names_in_ = active_variables
+        self._active_variables_ = active_variables
+        if column_names is not None:
+            self.feature_names_in_ = active_variables
+        elif hasattr(self, "feature_names_in_"):
+            del self.feature_names_in_
         self.n_features_in_ = len(active_variables)
 
-        X_active = X[active_variables].to_numpy(dtype=np.float64, copy=self.copy)
-        X_sup: npt.NDArray[np.float64] = np.empty((len(X), 0), dtype=np.float64)
+        X_sup: npt.NDArray[np.float64] = np.empty((len(X_active), 0), dtype=np.float64)
         if supplementary_columns:
-            X_sup = X[supplementary_columns].to_numpy(dtype=np.float64, copy=self.copy)
+            X_sup = self._to_numpy(X, supplementary_columns)
 
         # Scale datarow_contributions
+        if hasattr(self, "scaler_"):
+            del self.scaler_
         if self.rescale_with_mean or self.rescale_with_std:
             self.scaler_ = preprocessing.StandardScaler(
                 copy=self.copy,
@@ -170,13 +285,12 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         self.column_coordinates_.index.name = "variable"
         row_coords = pd.DataFrame(
             self.svd_.U * self.eigenvalues_**0.5,
-            index=X.index,
+            index=self._row_index(X, len(X_active)),
         )
         row_coords.columns.name = "component"
         self.row_contributions_ = (row_coords**2 * sample_weight[:, np.newaxis]).div(
             self.eigenvalues_, axis=1
         )
-
         return self
 
     @property
@@ -187,30 +301,33 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         return np.square(self.svd_.s)
 
     def _scale(self, X):
-        if not hasattr(self, "scaler_"):
-            return X
+        column_names = self._column_names(X)
+        if column_names is None:
+            X_arr = self._to_numpy(X)
+            return self.scaler_.transform(X_arr) if hasattr(self, "scaler_") else X_arr
 
-        if sup_variables := X.columns.difference(self.feature_names_in_, sort=False).tolist():
-            X = np.concatenate(
+        active = self.feature_names_in_ if hasattr(self, "feature_names_in_") else column_names
+        sup_variables = [name for name in column_names if name not in set(active)]
+        X_active = self._to_numpy(X, active)
+        if not hasattr(self, "scaler_"):
+            return X_active
+        if sup_variables:
+            return np.concatenate(
                 (
-                    self.scaler_.transform(X[self.feature_names_in_].to_numpy()),
+                    self.scaler_.transform(X_active),
                     preprocessing.StandardScaler(
                         copy=self.copy,
                         with_mean=self.rescale_with_mean,
                         with_std=self.rescale_with_std,
-                    ).fit_transform(X[sup_variables]),
+                    ).fit_transform(self._to_numpy(X, sup_variables)),
                 ),
                 axis=1,
             )
-        else:
-            X = self.scaler_.transform(X.to_numpy())
+        return self.scaler_.transform(X_active)
 
-        return X
-
-    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     @select_active_variables
-    def row_coordinates(self, X: pd.DataFrame):
+    def row_coordinates(self, X):
         """Returns the row principal coordinates.
 
         The row principal coordinates are obtained by projecting `X` on the right eigenvectors.
@@ -223,7 +340,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         """
 
-        index = X.index
+        index = self._row_index(X)
+        self._validate_transform_input(X)
         X_arr = np.array(self._scale(X), copy=self.copy)
         X_arr *= self.column_weight_
 
@@ -231,7 +349,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         coord.columns.name = "component"
         return coord
 
-    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def transform(self, X, as_array=False):
         """Computes the row principal coordinates of a dataset.
@@ -244,7 +361,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         rc = self.row_coordinates(X)
         return rc.to_numpy() if as_array else rc
 
-    @utils.check_is_dataframe_input
     @override
     def fit_transform(self, X, y=None, as_array=False, **fit_params):
         """A faster way to fit/transform.
@@ -260,7 +376,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         rc = self.row_coordinates(X)
         return rc.to_numpy() if as_array else rc
 
-    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     def inverse_transform(self, X, as_array=False):
         """Transforms row projections back to their original space.
@@ -269,7 +384,8 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
 
         """
 
-        X_inv = np.dot(X, self.svd_.V)
+        index = X.index if isinstance(X, pd.DataFrame) else None
+        X_inv = np.dot(self._to_numpy(X), self.svd_.V)
 
         if hasattr(self, "scaler_"):
             X_inv = self.scaler_.inverse_transform(X_inv)
@@ -277,13 +393,10 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         if as_array:
             return X_inv
 
-        # Extract index
-        index = X.index if isinstance(X, pd.DataFrame) else None
         return pd.DataFrame(data=X_inv, index=index)
 
-    @utils.check_is_dataframe_input
     @utils.check_is_fitted
-    def row_standard_coordinates(self, X: pd.DataFrame):
+    def row_standard_coordinates(self, X):
         """Returns the row standard coordinates.
 
         The row standard coordinates are obtained by dividing each row principal coordinate
@@ -292,7 +405,6 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
         """
         return self.row_coordinates(X).div(self.eigenvalues_**0.5, axis="columns")
 
-    @utils.check_is_dataframe_input
     @utils.check_is_fitted
     @select_active_variables
     def row_cosine_similarities(self, X):
@@ -334,7 +446,7 @@ class PCA(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin, utils.Eigen
     @utils.check_is_fitted
     def column_contributions_(self):
         return (
-            ((self.column_coordinates_.loc[self.feature_names_in_]) ** 2)
+            ((self.column_coordinates_.loc[self._active_variables_]) ** 2)
             * self.column_weight_[:, np.newaxis]
         ).div(self.eigenvalues_, axis=1)
 

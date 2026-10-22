@@ -14,7 +14,7 @@ from scipy import sparse
 
 import prince
 from prince import ca
-from tests import load_df_from_R
+from tests import DATAFRAME_IMPLEMENTATIONS, assert_dataframe_implementation_matches, load_df_from_R
 
 
 @pytest.mark.parametrize("shape", [(12, 4), (4, 12)], ids=["tall", "wide"])
@@ -30,6 +30,14 @@ def test_smallest_gram_matrix(shape):
     np.testing.assert_allclose(
         np.einsum("ij,ij->", gram, gram),
         np.sum(singular_values**4),
+    )
+
+
+@pytest.mark.parametrize("implementation", DATAFRAME_IMPLEMENTATIONS)
+def test_dataframe_input(implementation):
+    X_pandas = pd.DataFrame([[12, 5, 8], [4, 15, 6], [9, 7, 11]], columns=["a", "b", "c"])
+    assert_dataframe_implementation_matches(
+        prince.CA(n_components=2, engine="scipy"), X_pandas, implementation
     )
 
 
