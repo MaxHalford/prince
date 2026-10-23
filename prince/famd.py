@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import sklearn.utils
 from sklearn import preprocessing
 from typing_extensions import override
 
@@ -81,13 +80,6 @@ class FAMD(pca.PCA):
         )
         self.handle_unknown = handle_unknown
         self.categorical_columns = categorical_columns
-
-    @override
-    def _check_input(self, X):
-        if self.check_input:
-            # sklearn-stubs types `dtype` as `str`, but a list is valid at runtime
-            # (mixed string/numeric columns are expected here).
-            sklearn.utils.check_array(X, dtype=[str, "numeric"])  # pyright: ignore[reportArgumentType]
 
     def _split_column_types(self, X):
         if self.categorical_columns is None:

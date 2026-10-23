@@ -220,7 +220,7 @@ class MFA(pca.PCA, collections.UserDict[Any, Any]):
         # output is consistent with the partial outputs (#242). ``feature_names_in_`` keeps the
         # active columns in Z order and ``column_coordinates_`` lists active rows then
         # supplementary rows, so concatenating the two reproduces the row order exactly.
-        active_columns = cast(list[tuple[Any, Any]], self.feature_names_in_)
+        active_columns = cast(list[tuple[Any, Any]], self.feature_names_in_.tolist())
         self._column_index_ = pd.MultiIndex.from_tuples(
             active_columns + [tuple(c) for c in sup_columns],
             names=["group", "variable"],
