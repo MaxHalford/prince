@@ -379,9 +379,8 @@ class PCA(
         if as_array:
             return X_inv
 
-        return pd.DataFrame(
-            data=X_inv, index=index, columns=getattr(self, "feature_names_in_", None)
-        )
+        columns = self._active_variables_ if hasattr(self, "feature_names_in_") else None
+        return pd.DataFrame(data=X_inv, index=index, columns=columns)
 
     @utils.check_is_fitted
     def row_standard_coordinates(self, X):
