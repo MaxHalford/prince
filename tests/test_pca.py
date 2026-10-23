@@ -250,7 +250,7 @@ def test_get_feature_names_out():
     """get_feature_names_out returns one label per fitted component (sklearn transformer API)."""
     X = pd.DataFrame(np.arange(40, dtype=float).reshape(10, 4), columns=list("abcd"))
     pca = prince.PCA(n_components=3).fit(X)
-    assert pca.get_feature_names_out().tolist() == list(range(len(pca.svd_.s)))
+    assert pca.get_feature_names_out().tolist() == ["pca0", "pca1", "pca2"]
     assert len(pca.get_feature_names_out()) == pca.transform(X).shape[1] == 3
 
 
@@ -347,7 +347,7 @@ def test_polars_supplementary_columns_match_pandas():
     pca = prince.PCA(n_components=3, engine="scipy")
     actual = pca.fit_transform(X_polars, supplementary_columns=supplementary_columns)
 
-    assert pca.feature_names_in_ == [
+    assert pca.feature_names_in_.tolist() == [
         column for column in X_pandas.columns if column not in supplementary_columns
     ]
     np.testing.assert_allclose(actual.abs(), expected.reset_index(drop=True).abs())
@@ -375,4 +375,37 @@ def test_set_output_polars(container):
     )
 
     assert isinstance(result, pl.DataFrame)
-    assert result.columns == ["0", "1", "2"]
+    assert result.columns == ["pca0", "pca1", "pca2"]
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    ["row_coordinates", "row_standard_coordinates", "row_cosine_similarities"],
+)
+def test_polars_row_methods_match_pandas(method_name):
+    X_pandas = prince.datasets.load_decathlon()
+    X_polars = pl.from_pandas(X_pandas)
+    pca = prince.PCA(n_components=3, engine="scipy").fit(X_polars)
+
+    expected = getattr(pca, method_name)(X_pandas)
+    actual = getattr(pca, method_name)(X_polars)
+
+    pd.testing.assert_frame_equal(actual, expected.reset_index(drop=True))
+
+
+def test_inverse_transform_accepts_polars():
+    X = prince.datasets.load_decathlon()
+    pca = prince.PCA(n_components=3, engine="scipy").fit(X)
+    coordinates = pca.transform(X)
+
+    expected = pca.inverse_transform(coordinates)
+    actual = pca.inverse_transform(pl.from_pandas(coordinates))
+
+    pd.testing.assert_frame_equal(actual, expected.reset_index(drop=True))
+
+
+def test_plot_accepts_polars():
+    X = pl.from_pandas(prince.datasets.load_decathlon())
+    pca = prince.PCA(n_components=3, engine="scipy").fit(X)
+
+    assert pca.plot(X) is not None

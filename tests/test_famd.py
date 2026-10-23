@@ -514,7 +514,7 @@ def test_supplementary_columns():
 def test_get_feature_names_out():
     """FAMD exposes get_feature_names_out via PCA (sklearn transformer API)."""
     famd = prince.FAMD(n_components=2, engine="scipy").fit(prince.datasets.load_beers().head(200))
-    assert famd.get_feature_names_out().tolist() == list(range(len(famd.svd_.s)))
+    assert famd.get_feature_names_out().tolist() == [f"famd{i}" for i in range(len(famd.svd_.s))]
     assert (
         len(famd.get_feature_names_out())
         == famd.transform(prince.datasets.load_beers().head(200)).shape[1]
