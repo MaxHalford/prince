@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from sklearn import decomposition, preprocessing
 
@@ -33,6 +34,21 @@ def test_inverse_transform_preserves_active_columns(engine, n_components, supple
     pd.testing.assert_index_equal(restored.index, scores.index)
     pd.testing.assert_frame_equal(pca.transform(restored), scores, atol=1e-12)
     np.testing.assert_allclose(pca.inverse_transform(scores, as_array=True), restored)
+
+
+def test_inverse_transform_supports_polars_frames():
+    X_pandas = make_data()
+    X_pandas.insert(1, "extra", [10.0, 20.0, 15.0, 30.0])
+    X = pl.from_pandas(X_pandas)
+    pca = prince.PCA(n_components=3, engine="scipy").set_output(transform="polars")
+    pca.fit(X, supplementary_columns=["extra"])
+
+    scores = pca.transform(X)
+    restored = pca.inverse_transform(scores)
+
+    assert isinstance(scores, pl.DataFrame)
+    assert restored.columns.tolist() == ["height", "width", "depth"]
+    np.testing.assert_allclose(restored, X.select("height", "width", "depth"), atol=1e-12)
 
 
 def test_inverse_transform_keeps_integer_column_order():
