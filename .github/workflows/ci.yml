@@ -36,15 +36,57 @@ jobs:
 
   tests:
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        pandas-version: ["<3", ">=3,<4"]
-    name: pandas ${{ matrix.pandas-version }}
+    timeout-minutes: 15
+    env:
+      R_VERSION: "4.6.1"
     steps:
       - uses: actions/checkout@v6
+
+      # The R binary download occasionally hangs instead of failing. Bound the
+      # attempt and retry once so a transient mirror issue does not stall CI.
+      - name: Install R
+        id: setup-r
+        continue-on-error: true
+        timeout-minutes: 2
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ env.R_VERSION }}
+
+      - name: Retry installing R
+        if: steps.setup-r.outcome == 'failure'
+        timeout-minutes: 2
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ env.R_VERSION }}
+
       - uses: ./.github/actions/install-env
-      - run: uv pip install 'pandas${{ matrix.pandas-version }}'
-      - run: uv run pytest
+        with:
+          r-version: ${{ env.R_VERSION }}
+
+      # R is the expensive part of this job. Reuse it for both supported pandas
+      # generations, while still running the second suite if the first one fails.
+      - name: Test with pandas 2
+        id: pandas2
+        continue-on-error: true
+        run: |
+          uv pip install 'pandas<3'
+          uv run pytest
+
+      - name: Test with pandas 3
+        id: pandas3
+        continue-on-error: true
+        run: |
+          uv pip install 'pandas>=3,<4'
+          uv run pytest
+
+      - name: Verify pandas test results
+        if: always()
+        env:
+          PANDAS_2_OUTCOME: ${{ steps.pandas2.outcome }}
+          PANDAS_3_OUTCOME: ${{ steps.pandas3.outcome }}
+        run: |
+          test "$PANDAS_2_OUTCOME" = success
+          test "$PANDAS_3_OUTCOME" = success
 
   notebooks:
     runs-on: ubuntu-24.04
