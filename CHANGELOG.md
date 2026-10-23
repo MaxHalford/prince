@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.22.2 — 2026-10-23
+
+### API changes
+
+- `PCA.get_feature_names_out()` and `FAMD.get_feature_names_out()` now use scikit-learn's
+  standard prefixed component names (`pca0`, `famd0`, and so on). Added in
+  [#262](https://github.com/MaxHalford/prince/pull/262).
+
+### Bug fixes
+
+- `PCA.inverse_transform()` now preserves the fitted active column labels, including for
+  Narwhals-supported DataFrames and fits with supplementary columns. Fixed in
+  [#261](https://github.com/MaxHalford/prince/pull/261).
+- PCA now uses scikit-learn's validation path before NumPy conversion while retaining Narwhals
+  support across its implemented row methods. Fixed in
+  [#262](https://github.com/MaxHalford/prince/pull/262).
+
 ## 0.22.1 — 2026-10-22
 
 ### API changes

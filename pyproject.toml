@@ -13,7 +13,7 @@ dependencies = [
     "typing-extensions>=4.6",
 ]
 name = "prince"
-version = "0.22.1"
+version = "0.22.2"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA, PGA"
 
 [project.optional-dependencies]
