@@ -38,26 +38,25 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      R_VERSION: "4.6.1"
+      # Ubuntu 24.04's packaged R is sufficient for the reference tests and is
+      # much smaller than setup-r's full Debian packaging toolchain.
+      R_VERSION: "4.3.3"
     steps:
       - uses: actions/checkout@v6
 
-      # The R binary download occasionally hangs instead of failing. Bound the
-      # attempt and retry once so a transient mirror issue does not stall CI.
-      - name: Install R
-        id: setup-r
-        continue-on-error: true
-        timeout-minutes: 2
-        uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: ${{ env.R_VERSION }}
+      - name: Install minimal R
+        timeout-minutes: 3
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends r-base-core r-base-dev
 
-      - name: Retry installing R
-        if: steps.setup-r.outcome == 'failure'
-        timeout-minutes: 2
+      # Keep setup-r's repository and library configuration, but reuse the
+      # lightweight Ubuntu installation instead of downloading another R.
+      - name: Configure R
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ env.R_VERSION }}
+          install-r: false
 
       - uses: ./.github/actions/install-env
         with:
