@@ -38,15 +38,17 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      # Ubuntu 24.04's packaged R is sufficient for the reference tests and is
-      # much smaller than setup-r's full Debian packaging toolchain.
-      R_VERSION: "4.3.3"
+      R_VERSION: "4.6"
     steps:
       - uses: actions/checkout@v6
 
       - name: Install minimal R
         timeout-minutes: 3
         run: |
+          wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+            | sudo tee /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc > /dev/null
+          echo "deb https://cloud.r-project.org/bin/linux/ubuntu noble-cran40/" \
+            | sudo tee /etc/apt/sources.list.d/cran-r.list > /dev/null
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends r-base-core r-base-dev
 
