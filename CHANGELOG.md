@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.23.0 — 2026-10-24
+
+### Security
+
+- Updated the locked test dependency graph to Pillow 13, which includes fixes for the open Pillow
+  security advisories reported by Dependabot. Pillow is pulled in by the geomstats reference tests
+  and is not a runtime dependency of Prince.
+
+### Compatibility
+
+- Python 3.10 is no longer supported. Prince now requires Python 3.11 or later because Pillow 13,
+  required by the secured test dependency graph, does not support Python 3.10.
+
 ## 0.22.2 — 2026-10-23
 
 ### API changes

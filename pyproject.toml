@@ -3,7 +3,7 @@ authors = [
     {name = "Max Halford", email = "maxhalford25@gmail.com"},
 ]
 license = "MIT"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
     "scikit-learn>=1.5.1",
@@ -13,7 +13,7 @@ dependencies = [
     "typing-extensions>=4.6",
 ]
 name = "prince"
-version = "0.22.2"
+version = "0.23.0"
 description = "Factor analysis in Python: PCA, CA, MCA, MFA, FAMD, GPA, PGA"
 
 [project.optional-dependencies]
@@ -51,13 +51,13 @@ doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS"
 lint.select = ["E", "F", "I", "UP"]  # https://beta.ruff.rs/docs/rules/
 lint.ignore = ["E501"]
 line-length = 100
-target-version = 'py310'
+target-version = 'py311'
 
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
 
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.rules]
 # ty checks unannotated functions by default. These are the additional rules
