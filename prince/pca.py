@@ -330,8 +330,7 @@ class PCA(
         """
 
         index = self._row_index(X)
-        X_arr = np.array(self._scale(X), copy=self.copy)
-        X_arr *= self.column_weight_
+        X_arr = self._scale(X) * self.column_weight_
 
         coord = pd.DataFrame(data=X_arr.dot(self.svd_.V.T), index=index)
         coord.columns.name = "component"

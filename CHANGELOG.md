@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- `PCA.row_coordinates()` and `transform()` no longer raise `ValueError: output array is read-only` with `copy=False` when the input is read-only (a pandas 3 DataFrame, a Polars DataFrame, or a non-writeable NumPy array) and no rescaling is applied.
+
 ## 0.23.0 — 2026-10-24
 
 ### Security
