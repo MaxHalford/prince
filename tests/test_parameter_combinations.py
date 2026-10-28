@@ -10,7 +10,6 @@ from scipy.spatial.transform import Rotation
 
 import prince
 
-
 ESTIMATOR_TYPES = (
     prince.CA,
     prince.MCA,
@@ -37,8 +36,7 @@ BOOLEAN_CONFIGURATION_CASES = [
         estimator_type,
         configuration,
         id="-".join(
-            [estimator_type.__name__]
-            + [f"{name}={value}" for name, value in configuration.items()]
+            [estimator_type.__name__] + [f"{name}={value}" for name, value in configuration.items()]
         ),
     )
     for estimator_type in ESTIMATOR_TYPES
