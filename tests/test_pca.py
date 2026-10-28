@@ -409,3 +409,28 @@ def test_plot_accepts_polars():
     pca = prince.PCA(n_components=3, engine="scipy").fit(X)
 
     assert pca.plot(X) is not None
+
+
+@pytest.mark.parametrize(
+    "container",
+    [
+        pytest.param(np.ndarray, id="numpy"),
+        pytest.param(nw.Implementation.PANDAS, id="pandas"),
+        pytest.param(nw.Implementation.POLARS, id="polars"),
+    ],
+)
+def test_row_coordinates_copy_false_accepts_read_only_input(container):
+    X_pandas = pd.DataFrame(np.random.default_rng(0).normal(size=(20, 4)), columns=list("abcd"))
+    if container is np.ndarray:
+        X = X_pandas.to_numpy()
+        X.setflags(write=False)
+    elif container is nw.Implementation.POLARS:
+        X = pl.DataFrame({column: X_pandas[column].to_numpy() for column in X_pandas.columns})
+    else:
+        X = X_pandas
+    params = dict(n_components=2, engine="scipy", rescale_with_mean=False, rescale_with_std=False)
+
+    expected = prince.PCA(**params, copy=True).fit(X).row_coordinates(X)
+    actual = prince.PCA(**params, copy=False).fit(X).row_coordinates(X)
+
+    pd.testing.assert_frame_equal(actual, expected)
