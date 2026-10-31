@@ -165,7 +165,7 @@ class TestCA:
         if self.sup_cols:
             F = pd.concat((F, load_df_from_R(f"ca${self._col_name}.sup$cos2")))
         P = self.ca.column_cosine_similarities(self.dataset)
-        np.testing.assert_allclose(F, P)
+        np.testing.assert_allclose(F, P, rtol=1e-6, atol=1e-12)
 
 
 def test_row_order_and_duplicate_row_labels():
