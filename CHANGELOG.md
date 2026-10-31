@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### New features
+
+- `PCA.plot()` and `FAMD.plot()` now take a `show_row_ellipses` parameter. This draws a shaded ellipse around each group of rows set by `color_rows_by`, sized to cover about 95% of the group's rows. `show_row_group_means` also marks the mean of each group. See [#207](https://github.com/MaxHalford/prince/issues/207).
+
 ## 0.23.1 — 2026-10-28
 
 ### Bug fixes

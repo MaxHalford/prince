@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import OrderedDict
 
 import numpy as np
-from scipy import linalg
+from scipy import stats
 
 GRAY = OrderedDict([("light", "#bababa"), ("dark", "#404040")])
 
@@ -21,32 +21,31 @@ def stylize_axis(ax, grid=True):
     return ax
 
 
-def build_ellipse(X, Y):
-    """Construct ellipse coordinates from two arrays of numbers.
+def confidence_ellipse(x, y, level=0.95, n_points=100):
+    """Return the coordinates of the confidence ellipse around two arrays of numbers.
+
+    The ellipse is centred on the mean of the points and shaped by their covariance matrix. Its
+    radius is the `level` quantile of the chi-squared distribution with 2 degrees of freedom, so
+    it covers `level` of the points, not of their mean, when they are bivariate normal.
 
     Args:
-        X (1D array_like)
-        Y (1D array_like)
+        x (1D array_like)
+        y (1D array_like)
+        level (float): The confidence level.
+        n_points (int): The number of points used to draw the ellipse.
 
     Returns:
-        float: The mean of `X`.
-        float: The mean of `Y`.
-        float: The width of the ellipse.
-        float: The height of the ellipse.
-        float: The angle of orientation of the ellipse.
+        tuple of 1D numpy arrays: The x and y coordinates of the ellipse.
 
     """
-    x_mean = np.mean(X)
-    y_mean = np.mean(Y)
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
 
-    cov_matrix = np.cov(np.vstack((X, Y)))
-    U, s, V = linalg.svd(cov_matrix, full_matrices=False)
+    eigenvalues, eigenvectors = np.linalg.eigh(np.cov(x, y))
+    radius = np.sqrt(stats.chi2.ppf(level, df=2))
 
-    chi_95 = np.sqrt(4.61)  # 90% quantile of the chi-square distribution
-    width = np.sqrt(cov_matrix[0][0]) * chi_95 * 2
-    height = np.sqrt(cov_matrix[1][1]) * chi_95 * 2
+    t = np.linspace(0, 2 * np.pi, n_points)
+    circle = np.vstack((np.cos(t), np.sin(t)))
+    ellipse = eigenvectors @ (np.sqrt(eigenvalues.clip(min=0))[:, None] * circle) * radius
 
-    eigenvector = V.T[0]
-    angle = np.arctan(eigenvector[1] / eigenvector[0])
-
-    return x_mean, y_mean, width, height, angle
+    return x.mean() + ellipse[0], y.mean() + ellipse[1]

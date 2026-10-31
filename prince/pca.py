@@ -15,7 +15,7 @@ from sklearn import preprocessing
 from sklearn.base import ClassNamePrefixFeaturesOutMixin
 from typing_extensions import override
 
-from prince import svd, utils
+from prince import plot, svd, utils
 
 try:
     from sklearn.utils.validation import validate_data
@@ -449,7 +449,14 @@ class PCA(
         show_row_labels=False,
         show_column_labels=False,
         row_labels_column=None,
+        show_row_ellipses=False,
+        show_row_group_means=False,
     ):
+        if (show_row_ellipses or show_row_group_means) and not color_rows_by:
+            raise ValueError(
+                "show_row_ellipses and show_row_group_means require color_rows_by to be set"
+            )
+
         row_params: dict[str, Any] = {
             "tooltip": (
                 X.index.names
@@ -470,11 +477,20 @@ class PCA(
         row_chart_labels = None
         column_chart_markers = None
         column_chart_labels = None
+        row_ellipses = None
+        row_group_means = None
 
         # Row coordinates are needed both to draw the row chart and to scale the column
         # coordinates into the same space for the biplot, so they are computed once
         # whenever either chart is drawn.
-        if show_row_markers or show_row_labels or show_column_markers or show_column_labels:
+        if (
+            show_row_markers
+            or show_row_labels
+            or show_column_markers
+            or show_column_labels
+            or show_row_ellipses
+            or show_row_group_means
+        ):
             row_coords = self.row_coordinates(X)
             row_coords.columns = [f"component {i}" for i in row_coords.columns]
 
@@ -511,6 +527,51 @@ class PCA(
                 if show_row_labels:
                     row_chart_labels = row_chart.mark_text().encode(text="label:N")
 
+            if show_row_ellipses or show_row_group_means:
+                x_col, y_col = f"component {x_component}", f"component {y_component}"
+                group_col = str(color_rows_by).split(":")[0]
+                groups = row_coords.reset_index().groupby(group_col)
+
+                if show_row_ellipses:
+                    ellipses = []
+                    for group, coords in groups:
+                        if len(coords) < 3:
+                            continue
+                        ellipse_x, ellipse_y = plot.confidence_ellipse(coords[x_col], coords[y_col])
+                        ellipses.append(
+                            pd.DataFrame(
+                                {
+                                    x_col: ellipse_x,
+                                    y_col: ellipse_y,
+                                    group_col: group,
+                                    "order": range(len(ellipse_x)),
+                                }
+                            )
+                        )
+                    if ellipses:
+                        row_ellipses = (
+                            alt.Chart(pd.concat(ellipses, ignore_index=True))
+                            .mark_line(fillOpacity=0.15)
+                            .encode(
+                                alt.X(x_col, scale=alt.Scale(zero=False)),
+                                alt.Y(y_col, scale=alt.Scale(zero=False)),
+                                color=color_rows_by,
+                                fill=alt.Fill(str(color_rows_by), legend=None),
+                                order="order:Q",
+                            )
+                        )
+
+                if show_row_group_means:
+                    row_group_means = (
+                        alt.Chart(groups[[x_col, y_col]].mean().reset_index())
+                        .mark_circle(size=200, opacity=1)
+                        .encode(
+                            alt.X(x_col, scale=alt.Scale(zero=False)),
+                            alt.Y(y_col, scale=alt.Scale(zero=False)),
+                            color=color_rows_by,
+                        )
+                    )
+
             if show_column_markers or show_column_labels:
                 column_coords = self.column_coordinates_.copy()
                 column_coords.columns = [f"component {i}" for i in column_coords.columns]
@@ -536,6 +597,8 @@ class PCA(
             (
                 row_chart_markers,
                 row_chart_labels,
+                row_ellipses,
+                row_group_means,
                 column_chart_markers,
                 column_chart_labels,
             ),

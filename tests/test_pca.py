@@ -447,3 +447,48 @@ def test_row_coordinates_accepts_read_only_input(
     actual = prince.PCA(**params, copy=copy).fit(X).row_coordinates(X)
 
     pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_plot_row_ellipses():
+    X = prince.datasets.load_decathlon()
+    pca = prince.PCA(n_components=2).fit(X)
+
+    chart = pca.plot(X, color_rows_by="competition:N", show_row_ellipses=True)
+
+    lines = [layer for layer in chart.layer if layer.to_dict()["mark"]["type"] == "line"]
+    assert len(lines) == 1
+    assert lines[0].to_dict()["encoding"]["fill"]["field"] == "competition"
+    ellipses = lines[0].data
+    assert set(ellipses["competition"]) == set(X.index.get_level_values("competition"))
+
+    # Every point of a group's ellipse sits at the same Mahalanobis distance from the group mean
+    coords = pca.row_coordinates(X)
+    for competition, ellipse in ellipses.groupby("competition"):
+        group = coords.xs(competition, level="competition")[[0, 1]].to_numpy()
+        diff = ellipse[["component 0", "component 1"]].to_numpy() - group.mean(axis=0)
+        distances = np.einsum("ij,jk,ik->i", diff, np.linalg.inv(np.cov(group.T)), diff)
+        np.testing.assert_allclose(distances, 5.991464547107979)
+
+
+def test_plot_row_ellipses_requires_color_rows_by():
+    X = prince.datasets.load_decathlon()
+    pca = prince.PCA(n_components=2).fit(X)
+
+    with pytest.raises(ValueError, match="color_rows_by"):
+        pca.plot(X, show_row_ellipses=True)
+    with pytest.raises(ValueError, match="color_rows_by"):
+        pca.plot(X, show_row_group_means=True)
+
+
+def test_plot_row_group_means():
+    X = prince.datasets.load_decathlon()
+    pca = prince.PCA(n_components=2).fit(X)
+
+    chart = pca.plot(
+        X, color_rows_by="competition", show_column_markers=False, show_row_group_means=True
+    )
+
+    means = chart.layer[-1].data.set_index("competition")
+    expected = pca.row_coordinates(X).groupby(level="competition").mean()
+    np.testing.assert_allclose(means["component 0"], expected[0])
+    np.testing.assert_allclose(means["component 1"], expected[1])
